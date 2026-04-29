@@ -1,10 +1,525 @@
-// Stub do cliente tRPC durante a migração para Lovable Cloud.
-// Tipo `any` deliberado: as chamadas `trpc.foo.bar.useQuery(...)` espalhadas
-// pelas páginas continuam a compilar, mas devolvem dados vazios em runtime
-// (o cliente real aponta para um endpoint inexistente em main.tsx).
-// À medida que as páginas migram, substituir as chamadas por chamadas
-// directas ao Supabase via `@/integrations/supabase/client`.
-import { createTRPCReact } from "@trpc/react-query";
+// Adapter tRPC -> Supabase para a migração faseada do projecto.
+// Páginas existentes invocam `trpc.<router>.<proc>.useQuery(...)` ou `.useMutation(...)`
+// e este módulo intercepta essas chamadas devolvendo dados reais de Supabase
+// via `@tanstack/react-query`.
+//
+// Procedures suportados (rotas usadas pelas páginas migradas):
+//   obras.list, obras.listWithUltimoDesvio, obras.create, obras.update
+//   fornecedores.list, fornecedores.create, fornecedores.update
+//   desvios.list, desvios.getById, desvios.create, desvios.update
+//   grupos.list
+//   membros.list
+//   historico.addComment
+//   planos.create, planos.update
+//   fotos.upload
+//   plantas.listByObra
+//   kpis.get, kpis.fornecedorPerformance
+//   notificacoes.list, notificacoes.markAsRead
+//
+// Procedures não mapeados devolvem dados vazios (sem erro).
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const trpc: any = createTRPCReact<any>();
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  type UseQueryOptions,
+} from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+// ---------- Resolvers ----------
+
+type Resolver = (input: any) => Promise<any>;
+
+const queryResolvers: Record<string, Resolver> = {
+  // --- OBRAS ---
+  "obras.list": async () => {
+    const { data, error } = await supabase.from("obras").select("*").order("codigo");
+    if (error) throw error;
+    return data || [];
+  },
+  "obras.listWithUltimoDesvio": async () => {
+    const { data: obras, error } = await supabase.from("obras").select("*").order("codigo");
+    if (error) throw error;
+    const { data: desvios } = await supabase.from("desvios").select("obra_id, data_identificacao");
+    const lastByObra = new Map<number, number>();
+    (desvios || []).forEach((d: any) => {
+      const cur = lastByObra.get(d.obra_id) ?? 0;
+      const dt = Number(d.data_identificacao);
+      if (dt > cur) lastByObra.set(d.obra_id, dt);
+    });
+    return (obras || []).map((o: any) => ({ ...o, ultimoDesvio: lastByObra.get(o.id) ?? null }));
+  },
+
+  // --- FORNECEDORES ---
+  "fornecedores.list": async () => {
+    const { data, error } = await supabase.from("fornecedores").select("*").order("nome");
+    if (error) throw error;
+    return data || [];
+  },
+
+  // --- GRUPOS ---
+  "grupos.list": async () => {
+    const { data, error } = await supabase
+      .from("grupos")
+      .select("*")
+      .eq("ativo", 1)
+      .order("codigo");
+    if (error) throw error;
+    return data || [];
+  },
+
+  // --- MEMBROS ---
+  "membros.list": async () => {
+    const { data, error } = await supabase
+      .from("membros_equipe")
+      .select("*")
+      .eq("ativo", 1)
+      .order("nome");
+    if (error) throw error;
+    return data || [];
+  },
+
+  // --- DESVIOS ---
+  "desvios.list": async (filters: any = {}) => {
+    let q = supabase.from("desvios").select("*").order("data_identificacao", { ascending: false });
+    if (filters?.obraId) q = q.eq("obra_id", filters.obraId);
+    if (filters?.status) q = q.eq("status", filters.status);
+    if (filters?.severidade) q = q.eq("severidade", filters.severidade);
+    if (filters?.origem) q = q.eq("origem", filters.origem);
+    if (filters?.tagCritico) q = q.eq("tag_critico", 1);
+    if (filters?.tagSegurancaTrabalho) q = q.eq("tag_seguranca_trabalho", 1);
+    if (filters?.tagSolicitadoCliente) q = q.eq("tag_solicitado_cliente", 1);
+    const { data, error } = await q;
+    if (error) throw error;
+    return (data || []).map(mapDesvioFromDb);
+  },
+  "desvios.getById": async ({ id }: { id: number }) => {
+    const { data: desvio, error } = await supabase.from("desvios").select("*").eq("id", id).maybeSingle();
+    if (error) throw error;
+    if (!desvio) return null;
+    const [{ data: fotos }, { data: planos }, { data: historico }] = await Promise.all([
+      supabase.from("fotos_evidencia").select("*").eq("desvio_id", id).order("created_at"),
+      supabase.from("planos_acao").select("*").eq("desvio_id", id).order("created_at"),
+      supabase.from("historico").select("*").eq("desvio_id", id).order("created_at", { ascending: false }),
+    ]);
+    return {
+      ...mapDesvioFromDb(desvio),
+      fotos: (fotos || []).map((f: any) => ({ ...f, fileKey: f.file_key })),
+      planosAcao: (planos || []).map(mapPlanoFromDb),
+      historico: (historico || []).map((h: any) => ({
+        ...h,
+        userId: h.user_id,
+        userName: h.user_name,
+        createdAt: new Date(h.created_at).getTime(),
+      })),
+    };
+  },
+
+  // --- PLANTAS ---
+  "plantas.listByObra": async ({ obraId }: { obraId: number }) => {
+    const { data, error } = await supabase.from("plantas").select("*").eq("obra_id", obraId).order("ordem");
+    if (error) throw error;
+    return (data || []).map((p: any) => ({ ...p, fileKey: p.file_key, obraId: p.obra_id }));
+  },
+
+  // --- KPIs ---
+  "kpis.get": async (filters: any = {}) => {
+    let q = supabase.from("desvios").select("status, severidade, origem, tag_critico, tag_seguranca_trabalho, tag_solicitado_cliente, prazo_sugerido, data_fechamento, data_identificacao, obra_id");
+    if (filters?.obraId) q = q.eq("obra_id", filters.obraId);
+    const { data, error } = await q;
+    if (error) throw error;
+    const desvios = data || [];
+    const total = desvios.length;
+    const abertos = desvios.filter((d: any) => d.status !== "fechado").length;
+    const fechados = desvios.filter((d: any) => d.status === "fechado").length;
+    const graves = desvios.filter((d: any) => d.severidade === "grave").length;
+    const now = Date.now();
+    const atrasados = desvios.filter((d: any) =>
+      d.status !== "fechado" && d.status !== "aguardando_aceite" && d.prazo_sugerido && Number(d.prazo_sugerido) < now
+    ).length;
+    const criticos = desvios.filter((d: any) => d.tag_critico === 1).length;
+    const segurancaTrabalho = desvios.filter((d: any) => d.tag_seguranca_trabalho === 1).length;
+    const solicitadoCliente = desvios.filter((d: any) => d.tag_solicitado_cliente === 1).length;
+    return { total, abertos, fechados, graves, atrasados, criticos, segurancaTrabalho, solicitadoCliente };
+  },
+  "kpis.fornecedorPerformance": async (filters: any = {}) => {
+    let q = supabase.from("desvios").select("fornecedor_nome, status, severidade, data_identificacao, data_fechamento, obra_id");
+    if (filters?.obraId) q = q.eq("obra_id", filters.obraId);
+    const { data, error } = await q;
+    if (error) throw error;
+    const map = new Map<string, any>();
+    (data || []).forEach((d: any) => {
+      const nome = d.fornecedor_nome || "Sem fornecedor";
+      const cur = map.get(nome) || { nome, totalDesvios: 0, abertos: 0, graves: 0, fechados: 0, _tempos: [] as number[] };
+      cur.totalDesvios++;
+      if (d.status !== "fechado") cur.abertos++;
+      if (d.severidade === "grave") cur.graves++;
+      if (d.status === "fechado") {
+        cur.fechados++;
+        if (d.data_fechamento && d.data_identificacao) {
+          const dias = (Number(d.data_fechamento) - Number(d.data_identificacao)) / (1000 * 60 * 60 * 24);
+          if (dias >= 0) cur._tempos.push(dias);
+        }
+      }
+      map.set(nome, cur);
+    });
+    return Array.from(map.values()).map((v: any) => ({
+      nome: v.nome,
+      totalDesvios: v.totalDesvios,
+      abertos: v.abertos,
+      graves: v.graves,
+      fechados: v.fechados,
+      tempoMedioResolucao: v._tempos.length ? Math.round(v._tempos.reduce((a: number, b: number) => a + b, 0) / v._tempos.length) : null,
+      taxaFechamento: v.totalDesvios > 0 ? Math.round((v.fechados / v.totalDesvios) * 100) : 0,
+    }));
+  },
+
+  // --- NOTIFICACOES ---
+  "notificacoes.list": async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+    const { data, error } = await supabase
+      .from("notificacoes")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (error) throw error;
+    return (data || []).map((n: any) => ({
+      ...n,
+      referenciaTipo: n.referencia_tipo,
+      referenciaId: n.referencia_id,
+      createdAt: new Date(n.created_at).getTime(),
+    }));
+  },
+  "notificacoes.unreadCount": async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return 0;
+    const { count, error } = await supabase
+      .from("notificacoes")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("lida", 0);
+    if (error) throw error;
+    return count || 0;
+  },
+};
+
+const mutationResolvers: Record<string, Resolver> = {
+  // --- OBRAS ---
+  "obras.create": async (input: any) => {
+    const { data, error } = await supabase.from("obras").insert({
+      codigo: input.codigo,
+      nome: input.nome,
+      cliente: input.cliente ?? null,
+      endereco: input.endereco ?? null,
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
+  "obras.update": async (input: any) => {
+    const { id, ...rest } = input;
+    const patch: any = {};
+    if ("codigo" in rest) patch.codigo = rest.codigo;
+    if ("nome" in rest) patch.nome = rest.nome;
+    if ("cliente" in rest) patch.cliente = rest.cliente ?? null;
+    if ("endereco" in rest) patch.endereco = rest.endereco ?? null;
+    if ("status" in rest) patch.status = rest.status;
+    if ("cobertura" in rest) patch.cobertura = rest.cobertura;
+    const { data, error } = await supabase.from("obras").update(patch).eq("id", id).select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  // --- FORNECEDORES ---
+  "fornecedores.create": async (input: any) => {
+    const { data, error } = await supabase.from("fornecedores").insert({
+      nome: input.nome,
+      disciplina: input.disciplina ?? null,
+      contato: input.contato ?? null,
+      telefone: input.telefone ?? null,
+      email: input.email ?? null,
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
+  "fornecedores.update": async (input: any) => {
+    const { id, ...rest } = input;
+    const patch: any = {};
+    ["nome", "disciplina", "contato", "telefone", "email"].forEach(k => {
+      if (k in rest) patch[k] = (rest as any)[k] ?? null;
+    });
+    const { data, error } = await supabase.from("fornecedores").update(patch).eq("id", id).select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  // --- DESVIOS ---
+  "desvios.create": async (input: any) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    const insertObj: any = {
+      obra_id: input.obraId,
+      disciplina: input.disciplina ?? null,
+      grupo_id: input.grupoId ?? null,
+      fornecedor_id: input.fornecedorId ?? null,
+      fornecedor_nome: input.fornecedorNome ?? null,
+      descricao: input.descricao,
+      localizacao: input.localizacao ?? null,
+      severidade: input.severidade,
+      origem: input.origem ?? "qualidade",
+      tag_critico: input.tagCritico ?? 0,
+      tag_seguranca_trabalho: input.tagSegurancaTrabalho ?? 0,
+      tag_solicitado_cliente: input.tagSolicitadoCliente ?? 0,
+      data_identificacao: input.dataIdentificacao,
+      prazo_sugerido: input.prazoSugerido ?? null,
+      planta_id: input.plantaId ?? null,
+      pin_x: input.pinX ?? null,
+      pin_y: input.pinY ?? null,
+      created_by_id: user?.id ?? null,
+      created_by_name: user?.user_metadata?.name || user?.email || null,
+    };
+    const { data, error } = await supabase.from("desvios").insert(insertObj).select().single();
+    if (error) throw error;
+    // historico de criação
+    await supabase.from("historico").insert({
+      desvio_id: data.id, tipo: "criacao", descricao: "Desvio criado",
+      user_id: user?.id ?? null, user_name: user?.email ?? null,
+    });
+    return mapDesvioFromDb(data);
+  },
+  "desvios.update": async (input: any) => {
+    const { id, ...rest } = input;
+    const patch: any = {};
+    const map: Record<string, string> = {
+      disciplina: "disciplina", grupoId: "grupo_id",
+      fornecedorId: "fornecedor_id", fornecedorNome: "fornecedor_nome",
+      descricao: "descricao", localizacao: "localizacao",
+      severidade: "severidade", origem: "origem", status: "status",
+      tagCritico: "tag_critico", tagSegurancaTrabalho: "tag_seguranca_trabalho",
+      tagSolicitadoCliente: "tag_solicitado_cliente",
+      prazoSugerido: "prazo_sugerido", dataFechamento: "data_fechamento",
+      plantaId: "planta_id", pinX: "pin_x", pinY: "pin_y",
+    };
+    Object.entries(rest).forEach(([k, v]) => {
+      if (k in map) patch[map[k]] = v ?? null;
+    });
+    if (rest.status === "fechado" && !patch.data_fechamento) patch.data_fechamento = Date.now();
+    const { data, error } = await supabase.from("desvios").update(patch).eq("id", id).select().single();
+    if (error) throw error;
+    // historico de alteração
+    const { data: { user } } = await supabase.auth.getUser();
+    if (rest.status) {
+      await supabase.from("historico").insert({
+        desvio_id: id, tipo: "status",
+        descricao: `Status alterado para ${rest.status}`,
+        user_id: user?.id ?? null, user_name: user?.email ?? null,
+      });
+    } else {
+      await supabase.from("historico").insert({
+        desvio_id: id, tipo: "edicao", descricao: "Desvio editado",
+        user_id: user?.id ?? null, user_name: user?.email ?? null,
+      });
+    }
+    return mapDesvioFromDb(data);
+  },
+
+  // --- PLANOS ---
+  "planos.create": async (input: any) => {
+    const { data, error } = await supabase.from("planos_acao").insert({
+      desvio_id: input.desvioId,
+      acao: input.acao,
+      responsavel: input.responsavel,
+      responsavel_tipo: input.responsavelTipo ?? "membro",
+      responsavel_id: input.responsavelId ?? null,
+      responsavel_email: input.responsavelEmail ?? null,
+      prioridade: input.prioridade ?? "normal",
+      prazo: input.prazo,
+      observacoes: input.observacoes ?? null,
+    }).select().single();
+    if (error) throw error;
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from("historico").insert({
+      desvio_id: input.desvioId, tipo: "plano_acao",
+      descricao: `Plano de ação criado: ${input.acao}`,
+      user_id: user?.id ?? null, user_name: user?.email ?? null,
+    });
+    return mapPlanoFromDb(data);
+  },
+  "planos.update": async (input: any) => {
+    const { id, ...rest } = input;
+    const patch: any = {};
+    ["acao", "responsavel", "prioridade", "status", "observacoes"].forEach(k => {
+      if (k in rest) patch[k] = (rest as any)[k];
+    });
+    if ("prazo" in rest) patch.prazo = rest.prazo;
+    const { data, error } = await supabase.from("planos_acao").update(patch).eq("id", id).select().single();
+    if (error) throw error;
+    return mapPlanoFromDb(data);
+  },
+
+  // --- HISTORICO ---
+  "historico.addComment": async (input: any) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data, error } = await supabase.from("historico").insert({
+      desvio_id: input.desvioId, tipo: "comentario",
+      descricao: input.texto,
+      user_id: user?.id ?? null,
+      user_name: user?.user_metadata?.name || user?.email || null,
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  // --- FOTOS ---
+  "fotos.upload": async (input: any) => {
+    const bin = Uint8Array.from(atob(input.fileBase64), c => c.charCodeAt(0));
+    const ext = input.fileName?.split(".").pop() || "jpg";
+    const key = `desvio-${input.desvioId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("evidencias").upload(key, bin, {
+      contentType: input.contentType || "image/jpeg",
+      upsert: false,
+    });
+    if (upErr) throw upErr;
+    const { data: pub } = supabase.storage.from("evidencias").getPublicUrl(key);
+    const { data, error } = await supabase.from("fotos_evidencia").insert({
+      desvio_id: input.desvioId,
+      tipo: input.tipo ?? "abertura",
+      file_key: key,
+      url: pub.publicUrl,
+      descricao: input.descricao ?? null,
+    }).select().single();
+    if (error) throw error;
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from("historico").insert({
+      desvio_id: input.desvioId, tipo: "foto",
+      descricao: `Foto de ${input.tipo ?? "abertura"} adicionada`,
+      user_id: user?.id ?? null, user_name: user?.email ?? null,
+    });
+    return { ...data, fileKey: data.file_key };
+  },
+
+  // --- NOTIFICACOES ---
+  "notificacoes.markAsRead": async (input: any) => {
+    const { error } = await supabase.from("notificacoes").update({ lida: 1 }).eq("id", input.id);
+    if (error) throw error;
+    return { ok: true };
+  },
+};
+
+// ---------- Helpers ----------
+
+function mapDesvioFromDb(d: any) {
+  return {
+    ...d,
+    obraId: d.obra_id,
+    grupoId: d.grupo_id,
+    fornecedorId: d.fornecedor_id,
+    fornecedorNome: d.fornecedor_nome,
+    tagCritico: d.tag_critico,
+    tagSegurancaTrabalho: d.tag_seguranca_trabalho,
+    tagSolicitadoCliente: d.tag_solicitado_cliente,
+    dataIdentificacao: d.data_identificacao ? Number(d.data_identificacao) : null,
+    prazoSugerido: d.prazo_sugerido ? Number(d.prazo_sugerido) : null,
+    dataFechamento: d.data_fechamento ? Number(d.data_fechamento) : null,
+    plantaId: d.planta_id,
+    pinX: d.pin_x,
+    pinY: d.pin_y,
+    createdById: d.created_by_id,
+    createdByName: d.created_by_name,
+  };
+}
+
+function mapPlanoFromDb(p: any) {
+  return {
+    ...p,
+    desvioId: p.desvio_id,
+    responsavelTipo: p.responsavel_tipo,
+    responsavelId: p.responsavel_id,
+    responsavelEmail: p.responsavel_email,
+    prazo: p.prazo ? Number(p.prazo) : null,
+    notificadoEm: p.notificado_em ? Number(p.notificado_em) : null,
+  };
+}
+
+// ---------- Proxy ----------
+
+function makeProcedureProxy(path: string): any {
+  return {
+    useQuery: (input?: any, options?: UseQueryOptions<any>) => {
+      const resolver = queryResolvers[path];
+      return useQuery({
+        queryKey: [path, input ?? null],
+        queryFn: async () => (resolver ? resolver(input ?? {}) : null),
+        ...(options || {}),
+      } as any);
+    },
+    useMutation: (options: any = {}) => {
+      const qc = useQueryClient();
+      const resolver = mutationResolvers[path];
+      return useMutation({
+        mutationFn: async (input: any) => {
+          if (!resolver) {
+            console.warn(`[trpc-adapter] mutation '${path}' não implementada`);
+            return null;
+          }
+          return resolver(input);
+        },
+        onSuccess: (data, vars, ctx) => {
+          // Invalida domínios afectados.
+          const root = path.split(".")[0];
+          qc.invalidateQueries({ predicate: (q) => {
+            const key = q.queryKey?.[0];
+            return typeof key === "string" && key.startsWith(`${root}.`);
+          }});
+          // Invalida sempre histórico/desvios quando se mexe em desvios/planos/fotos/historico.
+          if (["desvios", "planos", "fotos", "historico"].includes(root)) {
+            qc.invalidateQueries({ predicate: (q) => {
+              const key = q.queryKey?.[0];
+              return typeof key === "string" && (key.startsWith("desvios.") || key.startsWith("kpis."));
+            }});
+          }
+          options.onSuccess?.(data, vars, ctx);
+        },
+        onError: (err: any, vars, ctx) => {
+          if (options.onError) options.onError(err, vars, ctx);
+          else toast.error(err?.message || `Erro em ${path}`);
+        },
+      });
+    },
+    invalidate: () => {
+      // usado por utils.<router>.<proc>.invalidate()
+      // Não dá para invalidar fora de hooks; devolvemos noop seguro.
+      return;
+    },
+  };
+}
+
+const utilsProxy: any = new Proxy({}, {
+  get(_t, router: string) {
+    return new Proxy({}, {
+      get(_t2, proc: string) {
+        return {
+          invalidate: () => {
+            // Retornado como função noop — invalidações reais ocorrem
+            // automaticamente no onSuccess das mutações via predicate.
+          },
+        };
+      },
+    });
+  },
+});
+
+export const trpc: any = new Proxy({}, {
+  get(_t, key: string) {
+    if (key === "useUtils") return () => utilsProxy;
+    if (key === "Provider") return ({ children }: any) => children;
+    if (key === "createClient") return () => ({});
+    // router proxy
+    return new Proxy({}, {
+      get(_t2, proc: string) {
+        return makeProcedureProxy(`${key}.${proc}`);
+      },
+    });
+  },
+});
