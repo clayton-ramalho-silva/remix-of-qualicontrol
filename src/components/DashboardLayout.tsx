@@ -112,6 +112,11 @@ function DashboardLayoutContent({
     (item) => item.path === "/" ? location === "/" : location.startsWith(item.path)
   );
   const isMobile = useIsMobile();
+  const reservedSidebarWidth = isMobile
+    ? 0
+    : isCollapsed
+      ? "var(--sidebar-width-icon)"
+      : "var(--sidebar-width)";
 
   useEffect(() => {
     if (isCollapsed) setIsResizing(false);
@@ -141,7 +146,10 @@ function DashboardLayoutContent({
 
   return (
     <div className="flex min-h-svh w-full" ref={sidebarRef}>
-      <div className="relative">
+      <div
+        className={`relative shrink-0 ${isResizing ? "transition-none" : "transition-[width] duration-200 ease-linear"}`}
+        style={{ width: reservedSidebarWidth }}
+      >
         <Sidebar collapsible="icon" className="border-r-0" disableTransition={isResizing}>
           <SidebarHeader className="h-16 justify-center">
             <div className="flex items-center gap-3 px-2 transition-all w-full">
