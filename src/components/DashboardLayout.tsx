@@ -120,8 +120,7 @@ function DashboardLayoutContent({
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing) return;
-      const sidebarLeft = sidebarRef.current?.getBoundingClientRect().left ?? 0;
-      const newWidth = e.clientX - sidebarLeft;
+      const newWidth = e.clientX;
       if (newWidth >= MIN_WIDTH && newWidth <= MAX_WIDTH) setSidebarWidth(newWidth);
     };
     const handleMouseUp = () => setIsResizing(false);
@@ -141,8 +140,7 @@ function DashboardLayoutContent({
 
   return (
     <div className="flex min-h-svh w-full" ref={sidebarRef}>
-      <div className="relative">
-        <Sidebar collapsible="icon" className="border-r-0" disableTransition={isResizing}>
+      <Sidebar collapsible="icon" className="border-r-0" disableTransition={isResizing}>
           <SidebarHeader className="h-16 justify-center">
             <div className="flex items-center gap-3 px-2 transition-all w-full">
               <button
@@ -210,12 +208,13 @@ function DashboardLayoutContent({
             </div>
           </SidebarFooter>
         </Sidebar>
+      {!isCollapsed && !isMobile && (
         <div
-          className={`hidden md:block fixed top-0 w-1 h-full cursor-col-resize hover:bg-primary/20 transition-colors ${isCollapsed || isMobile ? "hidden" : ""}`}
-          onMouseDown={() => { if (!isCollapsed) setIsResizing(true); }}
+          className="hidden md:block fixed top-0 w-1 h-full cursor-col-resize hover:bg-primary/20 transition-colors"
+          onMouseDown={() => setIsResizing(true)}
           style={{ zIndex: 50, left: `var(--sidebar-width)` }}
         />
-      </div>
+      )}
 
       <SidebarInset className="flex-1 min-w-0">
         {/* Header bar with notification bell */}
