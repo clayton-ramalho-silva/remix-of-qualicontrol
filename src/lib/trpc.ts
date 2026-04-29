@@ -77,7 +77,7 @@ const queryResolvers: Record<string, Resolver> = {
       .eq("ativo", 1)
       .order("nome");
     if (error) throw error;
-    return data || [];
+    return (data || []).map(mapMembroFromDb);
   },
 
   // --- DESVIOS ---
@@ -121,6 +121,71 @@ const queryResolvers: Record<string, Resolver> = {
     const { data, error } = await supabase.from("plantas").select("*").eq("obra_id", obraId).order("ordem");
     if (error) throw error;
     return (data || []).map((p: any) => ({ ...p, fileKey: p.file_key, obraId: p.obra_id }));
+  },
+
+  "plantas.getById": async ({ id }: { id: number }) => {
+    const { data, error } = await supabase.from("plantas").select("*").eq("id", id).maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+    return { ...data, fileKey: data.file_key, obraId: data.obra_id };
+  },
+
+  "plantas.desviosNaPlanta": async ({ plantaId }: { plantaId: number }) => {
+    const { data, error } = await supabase
+      .from("desvios")
+      .select("*")
+      .eq("planta_id", plantaId)
+      .order("data_identificacao", { ascending: false });
+    if (error) throw error;
+    return (data || []).map(mapDesvioFromDb);
+  },
+
+  // --- VERIFICACOES ---
+  "verificacoes.list": async (filters: any = {}) => {
+    let q = supabase.from("verificacoes").select("*").order("data_vistoria", { ascending: false });
+    if (filters?.obraId) q = q.eq("obra_id", filters.obraId);
+    const { data, error } = await q;
+    if (error) throw error;
+    return (data || []).map(mapVerificacaoFromDb);
+  },
+  "verificacoes.getById": async ({ id }: { id: number }) => {
+    const { data, error } = await supabase.from("verificacoes").select("*").eq("id", id).maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+    const { data: respostas } = await supabase
+      .from("verificacao_respostas")
+      .select("*")
+      .eq("verificacao_id", id);
+    return {
+      ...mapVerificacaoFromDb(data),
+      respostas: (respostas || []).map((r: any) => ({
+        id: r.id,
+        itemId: r.item_id,
+        resposta: r.resposta,
+        observacao: r.observacao,
+      })),
+    };
+  },
+
+  // --- CHECKLIST ---
+  "checklist.getCompleto": async () => {
+    const [{ data: secoes, error: e1 }, { data: itens, error: e2 }] = await Promise.all([
+      supabase.from("checklist_secoes").select("*").eq("ativo", 1).order("ordem"),
+      supabase.from("checklist_itens").select("*").eq("ativo", 1).order("ordem"),
+    ]);
+    if (e1) throw e1;
+    if (e2) throw e2;
+    return (secoes || []).map((s: any) => ({
+      ...s,
+      itens: (itens || []).filter((i: any) => i.secao_id === s.id),
+    }));
+  },
+
+  // --- CONFIG FAIXAS ---
+  "configFaixas.list": async () => {
+    const { data, error } = await supabase.from("config_faixas").select("*").order("ordem");
+    if (error) throw error;
+    return data || [];
   },
 
   // --- KPIs ---
