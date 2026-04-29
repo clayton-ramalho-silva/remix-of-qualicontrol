@@ -140,8 +140,8 @@ function DashboardLayoutContent({
   }, [isResizing, setSidebarWidth]);
 
   return (
-    <>
-      <div className="relative" ref={sidebarRef}>
+    <div className="flex min-h-svh w-full" ref={sidebarRef}>
+      <div className="relative">
         <Sidebar collapsible="icon" className="border-r-0" disableTransition={isResizing}>
           <SidebarHeader className="h-16 justify-center">
             <div className="flex items-center gap-3 px-2 transition-all w-full">
@@ -217,7 +217,7 @@ function DashboardLayoutContent({
         />
       </div>
 
-      <SidebarInset>
+      <SidebarInset className="flex-1 min-w-0">
         {/* Header bar with notification bell */}
         <div className={`flex border-b h-14 items-center justify-between bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40 ${isMobile ? '' : ''}`}>
           <div className="flex items-center gap-2">
@@ -250,6 +250,6 @@ function DashboardLayoutContent({
         </div>
         <main className="flex-1 p-6">{children}</main>
       </SidebarInset>
-    </>
+    </div>
   );
 }
