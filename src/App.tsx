@@ -1,10 +1,14 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import DashboardLayout from "./components/DashboardLayout";
+import Auth from "./pages/Auth";
 import Home from "./pages/Home";
 import DesviosList from "./pages/DesviosList";
 import DesvioNovo from "./pages/DesvioNovo";
@@ -21,7 +25,22 @@ import Usuarios from "./pages/Usuarios";
 import Plantas from "./pages/Plantas";
 import PlantaView from "./pages/PlantaView";
 
-function Router() {
+function ProtectedShell() {
+  const { user, loading } = useAuth();
+  const [, navigate] = useLocation();
+
+  useEffect(() => {
+    if (!loading && !user) navigate("/auth");
+  }, [loading, user, navigate]);
+
+  if (loading || !user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <DashboardLayout>
       <Switch>
@@ -43,6 +62,15 @@ function Router() {
         <Route component={NotFound} />
       </Switch>
     </DashboardLayout>
+  );
+}
+
+function Router() {
+  return (
+    <Switch>
+      <Route path="/auth" component={Auth} />
+      <Route component={ProtectedShell} />
+    </Switch>
   );
 }
 
