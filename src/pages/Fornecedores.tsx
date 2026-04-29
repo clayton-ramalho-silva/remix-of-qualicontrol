@@ -1,4 +1,5 @@
-import { trpc } from "@/lib/trpc";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,27 +11,94 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import {
-  Truck, PlusCircle, Trophy, AlertTriangle, Clock, TrendingDown,
-  TrendingUp, Loader2, Medal, Search, Pencil, Mail, Phone, User,
+  Truck, PlusCircle, Trophy, AlertTriangle,
+  TrendingDown, TrendingUp, Loader2, Medal, Search, Pencil, Mail, Phone, User,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
 
+type Fornecedor = {
+  id: number;
+  nome: string;
+  disciplina: string | null;
+  contato: string | null;
+  telefone: string | null;
+  email: string | null;
+};
+
+type Obra = { id: number; codigo: string; nome: string };
+
+type PerfRow = {
+  nome: string;
+  totalDesvios: number;
+  abertos: number;
+  graves: number;
+  fechados: number;
+  tempoMedioResolucao: number | null;
+  taxaFechamento: number;
+};
+
 export default function Fornecedores() {
-  const utils = trpc.useUtils();
-  const { data: fornecedores, isLoading: fornLoading } = trpc.fornecedores.list.useQuery();
+  const qc = useQueryClient();
+
+  const { data: fornecedores, isLoading: fornLoading } = useQuery({
+    queryKey: ["fornecedores"],
+    queryFn: async (): Promise<Fornecedor[]> => {
+      const { data, error } = await supabase.from("fornecedores").select("*").order("nome");
+      if (error) throw error;
+      return (data || []) as Fornecedor[];
+    },
+  });
+
+  const { data: obras } = useQuery({
+    queryKey: ["obras", "list"],
+    queryFn: async (): Promise<Obra[]> => {
+      const { data, error } = await supabase.from("obras").select("id, codigo, nome").order("codigo");
+      if (error) throw error;
+      return (data || []) as Obra[];
+    },
+  });
+
   const [selectedObraId, setSelectedObraId] = useState<string>("all");
-  const { data: obras } = trpc.obras.list.useQuery();
   const obraIdNum = selectedObraId === "all" ? undefined : parseInt(selectedObraId);
-  const { data: performance, isLoading: perfLoading } = trpc.kpis.fornecedorPerformance.useQuery(
-    obraIdNum ? { obraId: obraIdNum } : undefined
-  );
 
-  // Filtro de busca
+  const { data: performance, isLoading: perfLoading } = useQuery({
+    queryKey: ["fornecedor-performance", obraIdNum ?? "all"],
+    queryFn: async (): Promise<PerfRow[]> => {
+      let q = supabase.from("desvios").select("fornecedor_nome, status, severidade, data_identificacao, data_fechamento, obra_id");
+      if (obraIdNum) q = q.eq("obra_id", obraIdNum);
+      const { data, error } = await q;
+      if (error) throw error;
+      const map = new Map<string, { total: number; abertos: number; graves: number; fechados: number; tempos: number[] }>();
+      (data || []).forEach((d: any) => {
+        const nome = d.fornecedor_nome || "Sem fornecedor";
+        const cur = map.get(nome) || { total: 0, abertos: 0, graves: 0, fechados: 0, tempos: [] as number[] };
+        cur.total++;
+        if (d.status !== "fechado") cur.abertos++;
+        if (d.severidade === "grave") cur.graves++;
+        if (d.status === "fechado") {
+          cur.fechados++;
+          if (d.data_fechamento && d.data_identificacao) {
+            const dias = (Number(d.data_fechamento) - Number(d.data_identificacao)) / (1000 * 60 * 60 * 24);
+            if (dias >= 0) cur.tempos.push(dias);
+          }
+        }
+        map.set(nome, cur);
+      });
+      return Array.from(map.entries()).map(([nome, v]) => ({
+        nome,
+        totalDesvios: v.total,
+        abertos: v.abertos,
+        graves: v.graves,
+        fechados: v.fechados,
+        tempoMedioResolucao: v.tempos.length ? Math.round(v.tempos.reduce((a, b) => a + b, 0) / v.tempos.length) : null,
+        taxaFechamento: v.total > 0 ? Math.round((v.fechados / v.total) * 100) : 0,
+      }));
+    },
+  });
+
   const [searchTerm, setSearchTerm] = useState("");
-
-  // Dialog de criação
   const [showDialog, setShowDialog] = useState(false);
   const [nome, setNome] = useState("");
   const [disciplina, setDisciplina] = useState("");
@@ -38,7 +106,6 @@ export default function Fornecedores() {
   const [telefone, setTelefone] = useState("");
   const [email, setEmail] = useState("");
 
-  // Dialog de edição
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [editNome, setEditNome] = useState("");
@@ -47,9 +114,13 @@ export default function Fornecedores() {
   const [editTelefone, setEditTelefone] = useState("");
   const [editEmail, setEditEmail] = useState("");
 
-  const createFornecedor = trpc.fornecedores.create.useMutation({
+  const createFornecedor = useMutation({
+    mutationFn: async (input: Partial<Fornecedor>) => {
+      const { error } = await supabase.from("fornecedores").insert(input as any);
+      if (error) throw error;
+    },
     onSuccess: () => {
-      utils.fornecedores.list.invalidate();
+      qc.invalidateQueries({ queryKey: ["fornecedores"] });
       setShowDialog(false);
       setNome(""); setDisciplina(""); setContato(""); setTelefone(""); setEmail("");
       toast.success("Fornecedor cadastrado com sucesso!");
@@ -57,9 +128,14 @@ export default function Fornecedores() {
     onError: () => toast.error("Erro ao cadastrar fornecedor"),
   });
 
-  const updateFornecedor = trpc.fornecedores.update.useMutation({
+  const updateFornecedor = useMutation({
+    mutationFn: async (input: { id: number } & Partial<Fornecedor>) => {
+      const { id, ...rest } = input;
+      const { error } = await supabase.from("fornecedores").update(rest as any).eq("id", id);
+      if (error) throw error;
+    },
     onSuccess: () => {
-      utils.fornecedores.list.invalidate();
+      qc.invalidateQueries({ queryKey: ["fornecedores"] });
       setShowEditDialog(false);
       setEditId(null);
       toast.success("Fornecedor atualizado com sucesso!");
@@ -67,17 +143,16 @@ export default function Fornecedores() {
     onError: () => toast.error("Erro ao atualizar fornecedor"),
   });
 
-  const openEditDialog = (f: NonNullable<typeof fornecedores>[number]) => {
+  const openEditDialog = (f: Fornecedor) => {
     setEditId(f.id);
     setEditNome(f.nome);
     setEditDisciplina(f.disciplina || "");
     setEditContato(f.contato || "");
     setEditTelefone(f.telefone || "");
-    setEditEmail((f as any).email || "");
+    setEditEmail(f.email || "");
     setShowEditDialog(true);
   };
 
-  // Filtrar fornecedores
   const filteredFornecedores = useMemo(() => {
     if (!fornecedores) return [];
     if (!searchTerm.trim()) return fornecedores;
@@ -86,25 +161,19 @@ export default function Fornecedores() {
       f.nome.toLowerCase().includes(term) ||
       (f.disciplina && f.disciplina.toLowerCase().includes(term)) ||
       (f.contato && f.contato.toLowerCase().includes(term)) ||
-      ((f as any).email && (f as any).email.toLowerCase().includes(term))
+      (f.email && f.email.toLowerCase().includes(term))
     );
   }, [fornecedores, searchTerm]);
 
   const ranking = useMemo(() => {
     if (!performance) return [];
-    return performance.sort((a, b) => b.totalDesvios - a.totalDesvios);
+    return [...performance].sort((a, b) => b.totalDesvios - a.totalDesvios);
   }, [performance]);
 
-  const chartData = useMemo(() => {
-    if (!ranking) return [];
-    return ranking.slice(0, 10).map(r => ({
-      name: r.nome.length > 18 ? r.nome.substring(0, 18) + "..." : r.nome,
-      total: r.totalDesvios,
-      abertos: r.abertos,
-      graves: r.graves,
-      fechados: r.fechados,
-    }));
-  }, [ranking]);
+  const chartData = useMemo(() => ranking.slice(0, 10).map(r => ({
+    name: r.nome.length > 18 ? r.nome.substring(0, 18) + "..." : r.nome,
+    total: r.totalDesvios, abertos: r.abertos, graves: r.graves, fechados: r.fechados,
+  })), [ranking]);
 
   const isLoading = fornLoading || perfLoading;
 
@@ -115,62 +184,37 @@ export default function Fornecedores() {
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Truck className="h-6 w-6 text-primary" /> Fornecedores
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Cadastro, performance e ranking de fornecedores
-          </p>
+          <p className="text-muted-foreground text-sm mt-1">Cadastro, performance e ranking de fornecedores</p>
         </div>
         <div className="flex items-center gap-3">
           <Select value={selectedObraId} onValueChange={setSelectedObraId}>
-            <SelectTrigger className="w-[200px] bg-card">
-              <SelectValue placeholder="Filtrar por obra" />
-            </SelectTrigger>
+            <SelectTrigger className="w-[200px] bg-card"><SelectValue placeholder="Filtrar por obra" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas as obras</SelectItem>
-              {obras?.map((o) => (
-                <SelectItem key={o.id} value={String(o.id)}>{o.codigo} - {o.nome}</SelectItem>
-              ))}
+              {obras?.map((o) => <SelectItem key={o.id} value={String(o.id)}>{o.codigo} - {o.nome}</SelectItem>)}
             </SelectContent>
           </Select>
           <Dialog open={showDialog} onOpenChange={setShowDialog}>
             <DialogTrigger asChild>
-              <Button size="sm">
-                <PlusCircle className="h-4 w-4 mr-1.5" /> Novo Fornecedor
-              </Button>
+              <Button size="sm"><PlusCircle className="h-4 w-4 mr-1.5" /> Novo Fornecedor</Button>
             </DialogTrigger>
             <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Cadastrar Fornecedor</DialogTitle>
-              </DialogHeader>
+              <DialogHeader><DialogTitle>Cadastrar Fornecedor</DialogTitle></DialogHeader>
               <div className="space-y-4 mt-2">
-                <div>
-                  <Label className="text-sm">Nome *</Label>
-                  <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do fornecedor" className="mt-1" />
-                </div>
-                <div>
-                  <Label className="text-sm">Disciplina</Label>
-                  <Input value={disciplina} onChange={(e) => setDisciplina(e.target.value)} placeholder="Ex: Marcenaria, Pintura" className="mt-1" />
-                </div>
-                <div>
-                  <Label className="text-sm flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> E-mail</Label>
-                  <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="fornecedor@empresa.com" className="mt-1" />
-                </div>
+                <div><Label className="text-sm">Nome *</Label><Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do fornecedor" className="mt-1" /></div>
+                <div><Label className="text-sm">Disciplina</Label><Input value={disciplina} onChange={(e) => setDisciplina(e.target.value)} placeholder="Ex: Marcenaria, Pintura" className="mt-1" /></div>
+                <div><Label className="text-sm flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> E-mail</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="fornecedor@empresa.com" className="mt-1" /></div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-sm flex items-center gap-1.5"><User className="h-3.5 w-3.5" /> Contato</Label>
-                    <Input value={contato} onChange={(e) => setContato(e.target.value)} placeholder="Nome do contato" className="mt-1" />
-                  </div>
-                  <div>
-                    <Label className="text-sm flex items-center gap-1.5"><Phone className="h-3.5 w-3.5" /> Telefone</Label>
-                    <Input value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="(11) 99999-9999" className="mt-1" />
-                  </div>
+                  <div><Label className="text-sm flex items-center gap-1.5"><User className="h-3.5 w-3.5" /> Contato</Label><Input value={contato} onChange={(e) => setContato(e.target.value)} placeholder="Nome do contato" className="mt-1" /></div>
+                  <div><Label className="text-sm flex items-center gap-1.5"><Phone className="h-3.5 w-3.5" /> Telefone</Label><Input value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="(11) 99999-9999" className="mt-1" /></div>
                 </div>
                 <Button className="w-full" disabled={!nome || createFornecedor.isPending}
                   onClick={() => createFornecedor.mutate({
                     nome,
-                    disciplina: disciplina || undefined,
-                    contato: contato || undefined,
-                    telefone: telefone || undefined,
-                    email: email || undefined,
+                    disciplina: disciplina || null,
+                    contato: contato || null,
+                    telefone: telefone || null,
+                    email: email || null,
                   })}>
                   {createFornecedor.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   Cadastrar
@@ -181,36 +225,24 @@ export default function Fornecedores() {
         </div>
       </div>
 
-      {/* Lista de Fornecedores com Filtro */}
       <Card className="shadow-sm border-0 bg-card">
         <CardHeader className="pb-3">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <Truck className="h-4 w-4 text-primary" /> Cadastro de Fornecedores
-              {fornecedores && (
-                <Badge variant="secondary" className="ml-1 font-normal">{fornecedores.length}</Badge>
-              )}
+              {fornecedores && <Badge variant="secondary" className="ml-1 font-normal">{fornecedores.length}</Badge>}
             </CardTitle>
             <div className="relative w-full sm:w-72">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por nome, disciplina, e-mail..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 bg-background"
-              />
+              <Input placeholder="Buscar por nome, disciplina, e-mail..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-9 bg-background" />
             </div>
           </div>
         </CardHeader>
         <CardContent>
           {fornLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16" />)}
-            </div>
+            <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16" />)}</div>
           ) : filteredFornecedores.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              {searchTerm ? "Nenhum fornecedor encontrado para esta busca." : "Nenhum fornecedor cadastrado."}
-            </p>
+            <p className="text-sm text-muted-foreground text-center py-8">{searchTerm ? "Nenhum fornecedor encontrado para esta busca." : "Nenhum fornecedor cadastrado."}</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -228,28 +260,12 @@ export default function Fornecedores() {
                   {filteredFornecedores.map((f) => (
                     <tr key={f.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                       <td className="py-3 px-2 font-medium">{f.nome}</td>
-                      <td className="py-3 px-2">
-                        {f.disciplina ? (
-                          <Badge variant="outline" className="font-normal">{f.disciplina}</Badge>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-2">
-                        {(f as any).email ? (
-                          <a href={`mailto:${(f as any).email}`} className="text-primary hover:underline flex items-center gap-1">
-                            <Mail className="h-3 w-3" /> {(f as any).email}
-                          </a>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </td>
+                      <td className="py-3 px-2">{f.disciplina ? <Badge variant="outline" className="font-normal">{f.disciplina}</Badge> : <span className="text-muted-foreground">—</span>}</td>
+                      <td className="py-3 px-2">{f.email ? <a href={`mailto:${f.email}`} className="text-primary hover:underline flex items-center gap-1"><Mail className="h-3 w-3" /> {f.email}</a> : <span className="text-muted-foreground">—</span>}</td>
                       <td className="py-3 px-2">{f.contato || <span className="text-muted-foreground">—</span>}</td>
                       <td className="py-3 px-2">{f.telefone || <span className="text-muted-foreground">—</span>}</td>
                       <td className="py-3 px-2 text-center">
-                        <Button variant="ghost" size="sm" onClick={() => openEditDialog(f)} className="h-8 w-8 p-0">
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => openEditDialog(f)} className="h-8 w-8 p-0"><Pencil className="h-3.5 w-3.5" /></Button>
                       </td>
                     </tr>
                   ))}
@@ -260,45 +276,24 @@ export default function Fornecedores() {
         </CardContent>
       </Card>
 
-      {/* Dialog de Edição */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar Fornecedor</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Editar Fornecedor</DialogTitle></DialogHeader>
           <div className="space-y-4 mt-2">
-            <div>
-              <Label className="text-sm">Nome *</Label>
-              <Input value={editNome} onChange={(e) => setEditNome(e.target.value)} placeholder="Nome do fornecedor" className="mt-1" />
-            </div>
-            <div>
-              <Label className="text-sm">Disciplina</Label>
-              <Input value={editDisciplina} onChange={(e) => setEditDisciplina(e.target.value)} placeholder="Ex: Marcenaria, Pintura" className="mt-1" />
-            </div>
-            <div>
-              <Label className="text-sm flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> E-mail</Label>
-              <Input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} placeholder="fornecedor@empresa.com" className="mt-1" />
-            </div>
+            <div><Label className="text-sm">Nome *</Label><Input value={editNome} onChange={(e) => setEditNome(e.target.value)} placeholder="Nome do fornecedor" className="mt-1" /></div>
+            <div><Label className="text-sm">Disciplina</Label><Input value={editDisciplina} onChange={(e) => setEditDisciplina(e.target.value)} placeholder="Ex: Marcenaria, Pintura" className="mt-1" /></div>
+            <div><Label className="text-sm flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> E-mail</Label><Input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} placeholder="fornecedor@empresa.com" className="mt-1" /></div>
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-sm flex items-center gap-1.5"><User className="h-3.5 w-3.5" /> Contato</Label>
-                <Input value={editContato} onChange={(e) => setEditContato(e.target.value)} placeholder="Nome do contato" className="mt-1" />
-              </div>
-              <div>
-                <Label className="text-sm flex items-center gap-1.5"><Phone className="h-3.5 w-3.5" /> Telefone</Label>
-                <Input value={editTelefone} onChange={(e) => setEditTelefone(e.target.value)} placeholder="(11) 99999-9999" className="mt-1" />
-              </div>
+              <div><Label className="text-sm flex items-center gap-1.5"><User className="h-3.5 w-3.5" /> Contato</Label><Input value={editContato} onChange={(e) => setEditContato(e.target.value)} placeholder="Nome do contato" className="mt-1" /></div>
+              <div><Label className="text-sm flex items-center gap-1.5"><Phone className="h-3.5 w-3.5" /> Telefone</Label><Input value={editTelefone} onChange={(e) => setEditTelefone(e.target.value)} placeholder="(11) 99999-9999" className="mt-1" /></div>
             </div>
             <Button className="w-full" disabled={!editNome || updateFornecedor.isPending}
               onClick={() => {
                 if (editId === null) return;
                 updateFornecedor.mutate({
-                  id: editId,
-                  nome: editNome,
-                  disciplina: editDisciplina || undefined,
-                  contato: editContato || undefined,
-                  telefone: editTelefone || undefined,
-                  email: editEmail || undefined,
+                  id: editId, nome: editNome,
+                  disciplina: editDisciplina || null, contato: editContato || null,
+                  telefone: editTelefone || null, email: editEmail || null,
                 });
               }}>
               {updateFornecedor.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
@@ -308,7 +303,6 @@ export default function Fornecedores() {
         </DialogContent>
       </Dialog>
 
-      {/* Chart */}
       <Card className="shadow-sm border-0 bg-card">
         <CardHeader className="pb-2">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
@@ -316,12 +310,8 @@ export default function Fornecedores() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <Skeleton className="h-[300px]" />
-          ) : chartData.length === 0 ? (
-            <div className="h-[300px] flex items-center justify-center text-muted-foreground text-sm">
-              Nenhum dado de performance disponível
-            </div>
+          {isLoading ? <Skeleton className="h-[300px]" /> : chartData.length === 0 ? (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground text-sm">Nenhum dado de performance disponível</div>
           ) : (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
@@ -339,7 +329,6 @@ export default function Fornecedores() {
         </CardContent>
       </Card>
 
-      {/* Ranking Table */}
       <Card className="shadow-sm border-0 bg-card">
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
@@ -348,9 +337,7 @@ export default function Fornecedores() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12" />)}
-            </div>
+            <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12" />)}</div>
           ) : ranking.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">Nenhum fornecedor com desvios registrados.</p>
           ) : (
@@ -374,16 +361,10 @@ export default function Fornecedores() {
                       <td className="py-3 px-2 font-mono text-muted-foreground">{i + 1}</td>
                       <td className="py-3 px-2 font-medium">{r.nome}</td>
                       <td className="py-3 px-2 text-center">{r.totalDesvios}</td>
-                      <td className="py-3 px-2 text-center">
-                        <span className={r.abertos > 0 ? "text-amber-600 font-medium" : ""}>{r.abertos}</span>
-                      </td>
-                      <td className="py-3 px-2 text-center">
-                        <span className={r.graves > 0 ? "text-red-600 font-medium" : ""}>{r.graves}</span>
-                      </td>
+                      <td className="py-3 px-2 text-center"><span className={r.abertos > 0 ? "text-amber-600 font-medium" : ""}>{r.abertos}</span></td>
+                      <td className="py-3 px-2 text-center"><span className={r.graves > 0 ? "text-red-600 font-medium" : ""}>{r.graves}</span></td>
                       <td className="py-3 px-2 text-center text-emerald-600">{r.fechados}</td>
-                      <td className="py-3 px-2 text-center">
-                        {r.tempoMedioResolucao ? `${r.tempoMedioResolucao}d` : "—"}
-                      </td>
+                      <td className="py-3 px-2 text-center">{r.tempoMedioResolucao ? `${r.tempoMedioResolucao}d` : "—"}</td>
                       <td className="py-3 px-2 text-center">
                         <span className={`inline-flex items-center gap-1 ${r.taxaFechamento >= 70 ? "text-emerald-600" : r.taxaFechamento >= 40 ? "text-amber-600" : "text-red-600"}`}>
                           {r.taxaFechamento >= 70 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
