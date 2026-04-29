@@ -1,10 +1,10 @@
 // Stub do cliente tRPC durante a migração para Lovable Cloud.
-// Todas as chamadas devem ser progressivamente substituídas por
-// chamadas diretas ao Supabase (`@/integrations/supabase/client`).
-// Por agora, este stub evita erros de compilação mantendo a UI montável.
+// Tipo `any` deliberado: as chamadas `trpc.foo.bar.useQuery(...)` espalhadas
+// pelas páginas continuam a compilar, mas devolvem dados vazios em runtime
+// (o cliente real aponta para um endpoint inexistente em main.tsx).
+// À medida que as páginas migram, substituir as chamadas por chamadas
+// directas ao Supabase via `@/integrations/supabase/client`.
 import { createTRPCReact } from "@trpc/react-query";
 
-// Tipo permissivo: aceita qualquer caminho de chamada (`trpc.foo.bar.useQuery(...)`).
-// O cliente real é criado em main.tsx mas as chamadas devolvem dados vazios.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const trpc = createTRPCReact<any>();
+export const trpc: any = createTRPCReact<any>();
