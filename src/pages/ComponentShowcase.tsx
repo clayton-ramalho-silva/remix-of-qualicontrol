@@ -171,7 +171,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast as sonnerToast } from "sonner";
-import { AIChatBox, type Message } from "@/components/AIChatBox";
+import AIChatBox from "@/components/AIChatBox";
+type Message = { role: "user" | "assistant"; content: string };
 
 export default function ComponentsShowcase() {
   const { theme, toggleTheme } = useTheme();

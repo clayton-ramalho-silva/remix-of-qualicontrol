@@ -145,8 +145,8 @@ export default function DesviosList() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os grupos</SelectItem>
-                {disciplinas.map((d) => (
-                  <SelectItem key={d} value={d || "sem-grupo"}>{d || "Sem grupo"}</SelectItem>
+                {(disciplinas as string[]).map((d) => (
+                  <SelectItem key={String(d)} value={d || "sem-grupo"}>{d || "Sem grupo"}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

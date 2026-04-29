@@ -1,7 +1,7 @@
 /**
  * Unified type exports
- * Import shared types from this single entry point.
+ * Os tipos do schema MySQL/Drizzle foram removidos durante a migração
+ * para Lovable Cloud (PostgreSQL). Os novos tipos vivem em
+ * `@/integrations/supabase/types` (gerados automaticamente).
  */
-
-export type * from "../drizzle/schema";
 export * from "./_core/errors";

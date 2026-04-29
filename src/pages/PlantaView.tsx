@@ -21,7 +21,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export default function PlantaView() {
-  const [, params] = useRoute("/plantas/:id");
+  const [, params] = useRoute<{ id: string }>("/plantas/:id");
   const [, navigate] = useLocation();
   const plantaId = params?.id ? Number(params.id) : 0;
 

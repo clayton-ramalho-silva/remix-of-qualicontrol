@@ -84,11 +84,14 @@ export default function Home() {
 
   const fornecedorData = useMemo(() => {
     if (!kpis?.porFornecedor) return [];
-    return Object.entries(kpis.porFornecedor).map(([name, val]) => ({
-      name: name.length > 18 ? name.substring(0, 18) + "…" : name,
-      fullName: name,
-      total: val.total, abertos: val.abertos, graves: val.graves,
-    })).sort((a, b) => b.total - a.total).slice(0, 8);
+    return Object.entries(kpis.porFornecedor).map(([name, raw]) => {
+      const val = raw as { total: number; abertos: number; graves: number };
+      return {
+        name: name.length > 18 ? name.substring(0, 18) + "…" : name,
+        fullName: name,
+        total: val.total, abertos: val.abertos, graves: val.graves,
+      };
+    }).sort((a, b) => b.total - a.total).slice(0, 8);
   }, [kpis]);
 
   const sevData = useMemo(() => {
