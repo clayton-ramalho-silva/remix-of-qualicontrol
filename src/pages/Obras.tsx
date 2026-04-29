@@ -41,7 +41,7 @@ export default function Obras() {
   });
 
   const updateObra = useMutation({
-    mutationFn: async (input: { id: number } & Partial<Obra>) => {
+    mutationFn: async (input: { id: number } & Partial<Omit<Obra, "ultimoDesvio">>) => {
       const { id, ...rest } = input;
       const { error } = await supabase.from("obras").update(rest).eq("id", id);
       if (error) throw error;
