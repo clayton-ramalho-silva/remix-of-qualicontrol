@@ -172,7 +172,7 @@ import {
 import { useState } from "react";
 import { toast as sonnerToast } from "sonner";
 import AIChatBox from "@/components/AIChatBox";
-type Message = { role: "user" | "assistant"; content: string };
+type Message = { role: "user" | "assistant" | "system"; content: string };
 
 export default function ComponentsShowcase() {
   const { theme, toggleTheme } = useTheme();

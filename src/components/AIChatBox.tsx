@@ -5,7 +5,9 @@
 import { Sparkles } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
-export default function AIChatBox() {
+// Aceita quaisquer props para retrocompatibilidade com o componente original.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default function AIChatBox(_props: any) {
   return (
     <Card className="flex h-full min-h-64 flex-col items-center justify-center gap-2 border-dashed p-6 text-center text-muted-foreground">
       <Sparkles className="h-8 w-8" />
