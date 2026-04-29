@@ -77,7 +77,7 @@ const queryResolvers: Record<string, Resolver> = {
       .eq("ativo", 1)
       .order("nome");
     if (error) throw error;
-    return data || [];
+    return (data || []).map(mapMembroFromDb);
   },
 
   // --- DESVIOS ---
@@ -121,6 +121,71 @@ const queryResolvers: Record<string, Resolver> = {
     const { data, error } = await supabase.from("plantas").select("*").eq("obra_id", obraId).order("ordem");
     if (error) throw error;
     return (data || []).map((p: any) => ({ ...p, fileKey: p.file_key, obraId: p.obra_id }));
+  },
+
+  "plantas.getById": async ({ id }: { id: number }) => {
+    const { data, error } = await supabase.from("plantas").select("*").eq("id", id).maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+    return { ...data, fileKey: data.file_key, obraId: data.obra_id };
+  },
+
+  "plantas.desviosNaPlanta": async ({ plantaId }: { plantaId: number }) => {
+    const { data, error } = await supabase
+      .from("desvios")
+      .select("*")
+      .eq("planta_id", plantaId)
+      .order("data_identificacao", { ascending: false });
+    if (error) throw error;
+    return (data || []).map(mapDesvioFromDb);
+  },
+
+  // --- VERIFICACOES ---
+  "verificacoes.list": async (filters: any = {}) => {
+    let q = supabase.from("verificacoes").select("*").order("data_vistoria", { ascending: false });
+    if (filters?.obraId) q = q.eq("obra_id", filters.obraId);
+    const { data, error } = await q;
+    if (error) throw error;
+    return (data || []).map(mapVerificacaoFromDb);
+  },
+  "verificacoes.getById": async ({ id }: { id: number }) => {
+    const { data, error } = await supabase.from("verificacoes").select("*").eq("id", id).maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+    const { data: respostas } = await supabase
+      .from("verificacao_respostas")
+      .select("*")
+      .eq("verificacao_id", id);
+    return {
+      ...mapVerificacaoFromDb(data),
+      respostas: (respostas || []).map((r: any) => ({
+        id: r.id,
+        itemId: r.item_id,
+        resposta: r.resposta,
+        observacao: r.observacao,
+      })),
+    };
+  },
+
+  // --- CHECKLIST ---
+  "checklist.getCompleto": async () => {
+    const [{ data: secoes, error: e1 }, { data: itens, error: e2 }] = await Promise.all([
+      supabase.from("checklist_secoes").select("*").eq("ativo", 1).order("ordem"),
+      supabase.from("checklist_itens").select("*").eq("ativo", 1).order("ordem"),
+    ]);
+    if (e1) throw e1;
+    if (e2) throw e2;
+    return (secoes || []).map((s: any) => ({
+      ...s,
+      itens: (itens || []).filter((i: any) => i.secao_id === s.id),
+    }));
+  },
+
+  // --- CONFIG FAIXAS ---
+  "configFaixas.list": async () => {
+    const { data, error } = await supabase.from("config_faixas").select("*").order("ordem");
+    if (error) throw error;
+    return data || [];
   },
 
   // --- KPIs ---
@@ -405,6 +470,211 @@ const mutationResolvers: Record<string, Resolver> = {
     if (error) throw error;
     return { ok: true };
   },
+
+  // --- MEMBROS ---
+  "membros.create": async (input: any) => {
+    const { data, error } = await supabase.from("membros_equipe").insert({
+      nome: input.nome,
+      email: input.email ?? null,
+      telefone: input.telefone ?? null,
+      cargo: input.cargo,
+      obra_ids: input.obraIds ?? null,
+    }).select().single();
+    if (error) throw error;
+    return mapMembroFromDb(data);
+  },
+  "membros.update": async (input: any) => {
+    const { id, ...rest } = input;
+    const patch: any = {};
+    if ("nome" in rest) patch.nome = rest.nome;
+    if ("email" in rest) patch.email = rest.email ?? null;
+    if ("telefone" in rest) patch.telefone = rest.telefone ?? null;
+    if ("cargo" in rest) patch.cargo = rest.cargo;
+    if ("obraIds" in rest) patch.obra_ids = rest.obraIds ?? null;
+    if ("ativo" in rest) patch.ativo = rest.ativo;
+    const { data, error } = await supabase.from("membros_equipe").update(patch).eq("id", id).select().single();
+    if (error) throw error;
+    return mapMembroFromDb(data);
+  },
+
+  // --- PLANTAS ---
+  "plantas.upload": async (input: any) => {
+    const bin = Uint8Array.from(atob(input.fileBase64), c => c.charCodeAt(0));
+    const ext = input.fileName?.split(".").pop() || "jpg";
+    const key = `obra-${input.obraId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("plantas").upload(key, bin, {
+      contentType: input.contentType || "image/jpeg",
+      upsert: false,
+    });
+    if (upErr) throw upErr;
+    const { data: pub } = supabase.storage.from("plantas").getPublicUrl(key);
+    const { data, error } = await supabase.from("plantas").insert({
+      obra_id: input.obraId,
+      nome: input.nome,
+      file_key: key,
+      url: pub.publicUrl,
+      ordem: input.ordem ?? 0,
+    }).select().single();
+    if (error) throw error;
+    return { ...data, fileKey: data.file_key, obraId: data.obra_id };
+  },
+  "plantas.update": async (input: any) => {
+    const { id, ...rest } = input;
+    const patch: any = {};
+    if ("nome" in rest) patch.nome = rest.nome;
+    if ("ordem" in rest) patch.ordem = rest.ordem;
+    const { data, error } = await supabase.from("plantas").update(patch).eq("id", id).select().single();
+    if (error) throw error;
+    return { ...data, fileKey: data.file_key, obraId: data.obra_id };
+  },
+  "plantas.delete": async (input: any) => {
+    const { data: planta } = await supabase.from("plantas").select("file_key").eq("id", input.id).maybeSingle();
+    if (planta?.file_key) {
+      await supabase.storage.from("plantas").remove([planta.file_key]);
+    }
+    const { error } = await supabase.from("plantas").delete().eq("id", input.id);
+    if (error) throw error;
+    return { ok: true };
+  },
+
+  // --- VERIFICACOES ---
+  "verificacoes.create": async (input: any) => {
+    // Calcular scores a partir das respostas + seções
+    const { data: secoes } = await supabase.from("checklist_secoes").select("*").eq("ativo", 1);
+    const { data: itens } = await supabase.from("checklist_itens").select("*").eq("ativo", 1);
+    const { data: faixas } = await supabase.from("config_faixas").select("*").order("ordem");
+
+    const respostasArr = input.respostas || [];
+    const respMap = new Map<number, string>(respostasArr.map((r: any) => [r.itemId, r.resposta]));
+
+    const scoreSecao = (secaoId: number) => {
+      const its = (itens || []).filter((i: any) => i.secao_id === secaoId);
+      const validos = its.filter((i: any) => respMap.get(i.id) && respMap.get(i.id) !== "NA");
+      if (validos.length === 0) return null;
+      const pontos = validos.reduce((acc: number, i: any) => {
+        const r = respMap.get(i.id);
+        if (r === "AT") return acc + 1;
+        if (r === "NAT") return acc + 0.5;
+        return acc; // GR = 0
+      }, 0);
+      return Math.round((pontos / validos.length) * 100);
+    };
+
+    const ponderado = (titulosFiltro?: string[]) => {
+      const list = (secoes || []).filter((s: any) =>
+        !titulosFiltro || titulosFiltro.some(t => s.titulo?.toLowerCase().includes(t))
+      );
+      let totalPeso = 0;
+      let acc = 0;
+      list.forEach((s: any) => {
+        const sc = scoreSecao(s.id);
+        if (sc != null) {
+          acc += sc * (s.peso || 0);
+          totalPeso += (s.peso || 0);
+        }
+      });
+      return totalPeso > 0 ? Math.round(acc / totalPeso) : null;
+    };
+
+    const scoreGeral = ponderado();
+    const scoreQualidade = ponderado(["qualidade"]);
+    const scoreCronograma = ponderado(["cronograma", "prazo"]);
+    const scoreCondicao = ponderado(["condi", "limpeza", "organiza"]);
+
+    const statusFromScore = (sc: number | null) => {
+      if (sc == null) return null;
+      const f = (faixas || []).find((x: any) => sc >= x.minimo && sc <= x.maximo);
+      return f?.nome || null;
+    };
+
+    const insertObj: any = {
+      obra_id: input.obraId,
+      avaliador: input.avaliador,
+      data_vistoria: input.dataVistoria,
+      go: input.go ?? null,
+      gc: input.gc ?? null,
+      nucleo: input.nucleo ?? null,
+      diretoria: input.diretoria ?? null,
+      observacoes: input.observacoes ?? null,
+      score_geral: scoreGeral,
+      score_qualidade: scoreQualidade,
+      score_cronograma: scoreCronograma,
+      score_condicao: scoreCondicao,
+      status_geral: statusFromScore(scoreGeral),
+      status_qualidade: statusFromScore(scoreQualidade),
+      status_cronograma: statusFromScore(scoreCronograma),
+      status_condicao: statusFromScore(scoreCondicao),
+    };
+
+    const { data: verif, error } = await supabase.from("verificacoes").insert(insertObj).select().single();
+    if (error) throw error;
+
+    if (respostasArr.length > 0) {
+      const rows = respostasArr.map((r: any) => ({
+        verificacao_id: verif.id,
+        item_id: r.itemId,
+        resposta: r.resposta,
+        observacao: r.observacao ?? null,
+      }));
+      const { error: rErr } = await supabase.from("verificacao_respostas").insert(rows);
+      if (rErr) throw rErr;
+    }
+
+    return {
+      ...mapVerificacaoFromDb(verif),
+      scores: {
+        scoreGeral,
+        scoreQualidade,
+        scoreCronograma,
+        scoreCondicao,
+        statusGeral: statusFromScore(scoreGeral),
+      },
+    };
+  },
+
+  // --- CHECKLIST ADMIN ---
+  "checklist.updateSecao": async (input: any) => {
+    const { id, ...rest } = input;
+    const patch: any = {};
+    ["peso", "reincidencia", "titulo", "ordem", "ativo"].forEach(k => {
+      if (k in rest) patch[k] = (rest as any)[k];
+    });
+    const { data, error } = await supabase.from("checklist_secoes").update(patch).eq("id", id).select().single();
+    if (error) throw error;
+    return data;
+  },
+  "checklist.updateItem": async (input: any) => {
+    const { id, ...rest } = input;
+    const patch: any = {};
+    ["codigo", "descricao", "ordem", "ativo"].forEach(k => {
+      if (k in rest) patch[k] = (rest as any)[k];
+    });
+    const { data, error } = await supabase.from("checklist_itens").update(patch).eq("id", id).select().single();
+    if (error) throw error;
+    return data;
+  },
+  "checklist.createItem": async (input: any) => {
+    const { data, error } = await supabase.from("checklist_itens").insert({
+      secao_id: input.secaoId,
+      codigo: input.codigo,
+      descricao: input.descricao,
+      ordem: input.ordem ?? 0,
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  // --- CONFIG FAIXAS ---
+  "configFaixas.update": async (input: any) => {
+    const { id, ...rest } = input;
+    const patch: any = {};
+    ["minimo", "maximo", "cor", "nome", "ordem"].forEach(k => {
+      if (k in rest) patch[k] = (rest as any)[k];
+    });
+    const { data, error } = await supabase.from("config_faixas").update(patch).eq("id", id).select().single();
+    if (error) throw error;
+    return data;
+  },
 };
 
 // ---------- Helpers ----------
@@ -439,6 +709,29 @@ function mapPlanoFromDb(p: any) {
     responsavelEmail: p.responsavel_email,
     prazo: p.prazo ? Number(p.prazo) : null,
     notificadoEm: p.notificado_em ? Number(p.notificado_em) : null,
+  };
+}
+
+function mapMembroFromDb(m: any) {
+  return {
+    ...m,
+    obraIds: Array.isArray(m.obra_ids) ? m.obra_ids : (m.obra_ids ?? []),
+  };
+}
+
+function mapVerificacaoFromDb(v: any) {
+  return {
+    ...v,
+    obraId: v.obra_id,
+    dataVistoria: v.data_vistoria ? Number(v.data_vistoria) : null,
+    scoreGeral: v.score_geral,
+    scoreQualidade: v.score_qualidade,
+    scoreCronograma: v.score_cronograma,
+    scoreCondicao: v.score_condicao,
+    statusGeral: v.status_geral,
+    statusQualidade: v.status_qualidade,
+    statusCronograma: v.status_cronograma,
+    statusCondicao: v.status_condicao,
   };
 }
 
