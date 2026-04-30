@@ -153,9 +153,10 @@ const queryResolvers: Record<string, Resolver> = {
     const { data, error } = await supabase.from("verificacoes").select("*").eq("id", id).maybeSingle();
     if (error) throw error;
     if (!data) return null;
+    const categoria = (data as any).categoria || "qualidade";
     const [{ data: respostas }, { data: secoes }, { data: itens }, { data: fotos }] = await Promise.all([
       supabase.from("verificacao_respostas").select("*").eq("verificacao_id", id),
-      supabase.from("checklist_secoes").select("*").eq("ativo", 1).order("ordem"),
+      supabase.from("checklist_secoes").select("*").eq("ativo", 1).eq("categoria", categoria).order("ordem"),
       supabase.from("checklist_itens").select("*").eq("ativo", 1).order("ordem"),
       supabase.from("verificacao_resposta_fotos" as any).select("*").eq("verificacao_id", id),
     ]);
