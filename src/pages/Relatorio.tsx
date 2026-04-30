@@ -187,7 +187,7 @@ export default function Relatorio() {
 
         let metaItems = [
           `<div><strong>Grupo:</strong> ${d.disciplina}</div>`,
-          `<div><strong>Origem:</strong> ${oLabels[d.origem] || d.origem}</div>`,
+          `<div><strong>Vertical:</strong> ${oLabels[d.origem] || d.origem}</div>`,
           `<div><strong>Local:</strong> ${d.localizacao || "—"}</div>`,
           `<div><strong>Identificação:</strong> ${fmtDate(d.dataIdentificacao)}</div>`,
         ];
