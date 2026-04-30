@@ -7,7 +7,7 @@ import { useLocation } from "wouter";
 import {
   AlertTriangle, CheckCircle2, Clock, FileWarning, TrendingUp,
   ArrowRight, BarChart3, Activity, UserCheck,
-  Search, ClipboardList, Wrench, Siren, HardHat, UserRoundCheck,
+  Search, ClipboardList, Wrench, Siren, HardHat, UserRoundCheck, ClipboardCheck,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -17,7 +17,7 @@ import {
 
 const SEV_COLORS: Record<string, string> = { leve: "#10b981", moderado: "#f59e0b", grave: "#ef4444" };
 
-type OrigemFilter = "qualidade" | "checklist" | "qsms" | null;
+type OrigemFilter = "qualidade" | "checklist" | "qsms" | "vistoria" | null;
 
 const ORIGENS = [
   {
@@ -49,6 +49,16 @@ const ORIGENS = [
     bgInactive: "bg-orange-50/60 hover:bg-orange-100/80",
     iconBg: "bg-orange-500",
     description: "QSMS",
+  },
+  {
+    key: "vistoria" as const,
+    label: "Vistoria",
+    icon: ClipboardCheck,
+    color: "text-emerald-600",
+    bgActive: "bg-emerald-100 ring-2 ring-emerald-400 shadow-md",
+    bgInactive: "bg-emerald-50/60 hover:bg-emerald-100/80",
+    iconBg: "bg-emerald-500",
+    description: "Vistoria de Recebimento",
   },
 ] as const;
 
@@ -159,7 +169,7 @@ export default function Home() {
               </button>
             )}
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {ORIGENS.map((o) => {
               const Icon = o.icon;
               const isActive = selectedOrigem === o.key;

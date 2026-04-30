@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 
-export type Vertical = "qualidade" | "checklist" | "qsms";
+export type Vertical = "qualidade" | "checklist" | "qsms" | "vistoria";
 export type VerticalFilter = Vertical | "all";
 
 type VerticalConfig = {
@@ -50,15 +50,27 @@ export const VERTICAL_CONFIG: Record<Vertical, VerticalConfig> = {
     borderClass: "border-orange-200",
     ringClass: "ring-orange-500",
   },
+  vistoria: {
+    id: "vistoria",
+    label: "Vistoria de Recebimento",
+    shortLabel: "Vistoria",
+    description: "Vistoria de recebimento de andar",
+    color: "emerald",
+    bgClass: "bg-emerald-50",
+    textClass: "text-emerald-700",
+    borderClass: "border-emerald-200",
+    ringClass: "ring-emerald-500",
+  },
 };
 
 export const VERTICAL_LABELS: Record<Vertical, string> = {
   qualidade: "Qualidade",
   checklist: "Checklist",
   qsms: "QSMS",
+  vistoria: "Vistoria",
 };
 
-export const VERTICAL_LIST: Vertical[] = ["qualidade", "checklist", "qsms"];
+export const VERTICAL_LIST: Vertical[] = ["qualidade", "checklist", "qsms", "vistoria"];
 
 const STORAGE_KEY = "active-vertical";
 
@@ -74,7 +86,13 @@ const VerticalContext = createContext<VerticalContextValue | undefined>(undefine
 export function VerticalProvider({ children }: { children: ReactNode }) {
   const [vertical, setVerticalState] = useState<VerticalFilter>(() => {
     const saved = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
-    if (saved === "qualidade" || saved === "checklist" || saved === "qsms" || saved === "all") {
+    if (
+      saved === "qualidade" ||
+      saved === "checklist" ||
+      saved === "qsms" ||
+      saved === "vistoria" ||
+      saved === "all"
+    ) {
       return saved;
     }
     return "all";
