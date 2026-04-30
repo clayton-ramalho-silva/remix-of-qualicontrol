@@ -121,16 +121,16 @@ export default function PlanosAcao() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
             <Select value={obraFilter} onValueChange={setObraFilter}>
-              <SelectTrigger><SelectValue placeholder="Obra" /></SelectTrigger>
+              <SelectTrigger className="min-w-0"><SelectValue placeholder="Obra" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas as obras</SelectItem>
+                <SelectItem value="all">Todas</SelectItem>
                 {obras?.map(o => <SelectItem key={o.id} value={String(o.id)}>{o.codigo} - {o.nome}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={verticalFilter} onValueChange={setVerticalFilter}>
-              <SelectTrigger><SelectValue placeholder="Vertical" /></SelectTrigger>
+              <SelectTrigger className="min-w-0"><SelectValue placeholder="Vertical" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas as verticais</SelectItem>
+                <SelectItem value="all">Todas</SelectItem>
                 <SelectItem value="qualidade">Qualidade</SelectItem>
                 <SelectItem value="checklist">Checklist</SelectItem>
                 <SelectItem value="qsms">QSMS</SelectItem>
@@ -138,7 +138,7 @@ export default function PlanosAcao() {
               </SelectContent>
             </Select>
             <Select value={prioFilter} onValueChange={setPrioFilter}>
-              <SelectTrigger><SelectValue placeholder="Prioridade" /></SelectTrigger>
+              <SelectTrigger className="min-w-0"><SelectValue placeholder="Prioridade" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
                 <SelectItem value="urgente">Urgente</SelectItem>
