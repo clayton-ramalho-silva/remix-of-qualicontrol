@@ -33,7 +33,7 @@ export default function DesvioNovo() {
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
   const { data: obrasAll } = trpc.obras.list.useQuery();
-  const obras = obrasAll?.filter((o: any) => Number(o.cobertura) > 0);
+  // O filtro real por vertical é feito abaixo, depois que `vertical` for definido.
   const { data: fornecedoresDb } = trpc.fornecedores.list.useQuery();
   const { data: grupos } = trpc.grupos.list.useQuery();
 
@@ -46,6 +46,12 @@ export default function DesvioNovo() {
   const [obraId, setObraId] = useState("");
   const [ambiente, setAmbiente] = useState("");
   const [vertical, setVertical] = useState<"qualidade" | "checklist" | "qsms">("qualidade");
+  const coverColByVertical = {
+    qualidade: "cobertura_qualidade",
+    checklist: "cobertura_checklist",
+    qsms: "cobertura_qsms",
+  } as const;
+  const obras = obrasAll?.filter((o: any) => Number(o[coverColByVertical[vertical]] ?? 0) > 0);
   const [dataInspecao, setDataInspecao] = useState(new Date().toISOString().split("T")[0]);
   const [plantaId, setPlantaId] = useState<number | null>(null);
   const [pinX, setPinX] = useState<string | null>(null);
