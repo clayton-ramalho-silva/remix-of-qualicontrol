@@ -6,7 +6,7 @@ import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import {
   AlertTriangle, CheckCircle2, Clock, FileWarning, TrendingUp,
-  ArrowRight, BarChart3, Activity, ClipboardCheck, UserCheck,
+  ArrowRight, BarChart3, Activity, UserCheck,
   Search, ClipboardList, Wrench, Siren, HardHat, UserRoundCheck,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
