@@ -336,6 +336,36 @@ const queryResolvers: Record<string, Resolver> = {
     if (error) throw error;
     return count || 0;
   },
+
+  // --- PLANTA AMBIENTES ---
+  "plantaAmbientes.listByPlanta": async ({ plantaId }: { plantaId: number }) => {
+    const { data, error } = await supabase
+      .from("planta_ambientes")
+      .select("*")
+      .eq("planta_id", plantaId)
+      .eq("ativo", 1)
+      .order("pavimento", { ascending: true })
+      .order("numero", { ascending: true })
+      .order("nome", { ascending: true });
+    if (error) throw error;
+    return data || [];
+  },
+  "plantaAmbientes.listByObra": async ({ obraId }: { obraId: number }) => {
+    const { data: plantas } = await supabase.from("plantas").select("id, nome").eq("obra_id", obraId);
+    const ids = (plantas || []).map((p: any) => p.id);
+    if (ids.length === 0) return [];
+    const { data, error } = await supabase
+      .from("planta_ambientes")
+      .select("*")
+      .in("planta_id", ids)
+      .eq("ativo", 1)
+      .order("pavimento", { ascending: true })
+      .order("numero", { ascending: true })
+      .order("nome", { ascending: true });
+    if (error) throw error;
+    const plantaMap = new Map((plantas || []).map((p: any) => [p.id, p.nome]));
+    return (data || []).map((a: any) => ({ ...a, plantaNome: plantaMap.get(a.planta_id) || "" }));
+  },
 };
 
 const mutationResolvers: Record<string, Resolver> = {
