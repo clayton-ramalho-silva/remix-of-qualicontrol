@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import VoiceRecorderButton from "@/components/VoiceRecorderButton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
@@ -357,12 +358,22 @@ export default function NovaVerificacao() {
           <CardTitle className="text-lg">Observações Gerais</CardTitle>
         </CardHeader>
         <CardContent>
-          <Textarea
-            placeholder="Registre observações gerais sobre a verificação..."
-            rows={4}
-            value={observacoes}
-            onChange={e => setObservacoes(e.target.value)}
-          />
+          <div className="relative">
+            <Textarea
+              placeholder="Registre observações gerais sobre a verificação... ou clique no microfone para ditar."
+              rows={4}
+              value={observacoes}
+              onChange={e => setObservacoes(e.target.value)}
+              className="pr-12"
+            />
+            <div className="absolute top-2 right-2">
+              <VoiceRecorderButton
+                value={observacoes}
+                onAppend={setObservacoes}
+                contexto="observações gerais sobre verificação em obra"
+              />
+            </div>
+          </div>
         </CardContent>
       </Card>
 
