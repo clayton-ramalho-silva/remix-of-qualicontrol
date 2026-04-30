@@ -1,12 +1,13 @@
 import { useVertical, VERTICAL_LIST, VERTICAL_CONFIG, type VerticalFilter } from "@/contexts/VerticalContext";
 import { useSidebar } from "@/components/ui/sidebar";
-import { Layers3, ShieldCheck, ListChecks, HardHat } from "lucide-react";
+import { Layers3, ShieldCheck, ListChecks, HardHat, ClipboardCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ICONS = {
   qualidade: ShieldCheck,
   checklist: ListChecks,
   qsms: HardHat,
+  vistoria: ClipboardCheck,
 } as const;
 
 export default function VerticalSwitcher() {
