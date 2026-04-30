@@ -46,7 +46,9 @@ export default function PlanosAcao() {
   const [atrasados, setAtrasados] = useState(false);
 
   const { data: obras } = trpc.obras.list.useQuery();
-  const { data: planos, isLoading } = trpc.planos.list.useQuery({});
+  const planosQuery = trpc.planos.list.useQuery({});
+  const { data: planos, isLoading } = planosQuery;
+  console.log("[PlanosAcao] status:", planosQuery.status, "data:", planos, "error:", planosQuery.error);
 
   const filtered = useMemo(() => {
     let r = planos || [];
