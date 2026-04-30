@@ -25,6 +25,8 @@ type Obra = {
   scoreGeral?: number | null;
 };
 
+type ObraEditable = Pick<Obra, "codigo" | "nome" | "cliente" | "endereco" | "status" | "cobertura">;
+
 const classificacaoClasses: Record<string, string> = {
   "ÓTIMA": "border-emerald-200 bg-emerald-50 text-emerald-700",
   "REGULAR": "border-amber-200 bg-amber-50 text-amber-700",
@@ -89,7 +91,7 @@ export default function Obras() {
   });
 
   const updateObra = useMutation({
-    mutationFn: async (input: { id: number } & Partial<Omit<Obra, "ultimoDesvio">>) => {
+    mutationFn: async (input: { id: number } & Partial<ObraEditable>) => {
       const { id, ...rest } = input;
       const { error } = await supabase.from("obras").update(rest).eq("id", id);
       if (error) throw error;
