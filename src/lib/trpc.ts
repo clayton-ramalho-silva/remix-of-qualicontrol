@@ -26,6 +26,7 @@ import {
 } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { shouldPersistQuery } from "@/lib/offline-cache";
 
 // ---------- Resolvers ----------
 
@@ -1110,9 +1111,15 @@ function makeProcedureProxy(path: string): any {
   return {
     useQuery: (input?: any, options?: UseQueryOptions<any>) => {
       const resolver = queryResolvers[path];
+      const queryKey = [path, input ?? null];
+      const persist = shouldPersistQuery(queryKey);
       return useQuery({
-        queryKey: [path, input ?? null],
+        queryKey,
         queryFn: async () => (resolver ? resolver(input ?? {}) : null),
+        // Queries persistíveis usam o cache mesmo quando offline (em vez de
+        // lançar erro). Mutations e queries não-persistíveis continuam padrão.
+        networkMode: persist ? "offlineFirst" : "online",
+        meta: persist ? { persist: true } : undefined,
         ...(options || {}),
       } as any);
     },

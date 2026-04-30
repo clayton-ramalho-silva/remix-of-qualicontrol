@@ -44,6 +44,7 @@ import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
 import { Button } from "./ui/button";
 import NotificationBell from "./NotificationBell";
+import OfflineIndicator from "./OfflineIndicator";
 import { trpc } from "@/lib/trpc";
 
 const AW_LOGO_WHITE = "https://d2xsxph8kpxj0f.cloudfront.net/310519663403343148/3awzRPTf7NtQjpo8LEDXgX/Logo athie l wohnrath_White_462306ea.png";
@@ -236,6 +237,7 @@ function DashboardLayoutContent({
       )}
 
       <SidebarInset className="flex-1 min-w-0">
+        <OfflineIndicator />
         {/* Header bar with notification bell */}
         <div className={`flex border-b h-14 items-center justify-between bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40 ${isMobile ? '' : ''}`}>
           <div className="flex items-center gap-2">
