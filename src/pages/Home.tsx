@@ -21,6 +21,16 @@ type OrigemFilter = "qualidade" | "checklist" | "qsms" | "vistoria" | null;
 
 const ORIGENS = [
   {
+    key: "vistoria" as const,
+    label: "Vistoria",
+    icon: ClipboardCheck,
+    color: "text-emerald-600",
+    bgActive: "bg-emerald-100 ring-2 ring-emerald-400 shadow-md",
+    bgInactive: "bg-emerald-50/60 hover:bg-emerald-100/80",
+    iconBg: "bg-emerald-500",
+    description: "Vistoria de Recebimento",
+  },
+  {
     key: "qualidade" as const,
     label: "Qualidade",
     icon: Search,
@@ -29,16 +39,6 @@ const ORIGENS = [
     bgInactive: "bg-sky-50/60 hover:bg-sky-100/80",
     iconBg: "bg-sky-500",
     description: "Inspeção de qualidade",
-  },
-  {
-    key: "checklist" as const,
-    label: "Checklist",
-    icon: ClipboardList,
-    color: "text-violet-600",
-    bgActive: "bg-violet-100 ring-2 ring-violet-400 shadow-md",
-    bgInactive: "bg-violet-50/60 hover:bg-violet-100/80",
-    iconBg: "bg-violet-500",
-     description: "Vistoria de Entrega de Obra",
   },
   {
     key: "qsms" as const,
@@ -51,14 +51,14 @@ const ORIGENS = [
     description: "Inspeção de Segurança",
   },
   {
-    key: "vistoria" as const,
-    label: "Vistoria",
-    icon: ClipboardCheck,
-    color: "text-emerald-600",
-    bgActive: "bg-emerald-100 ring-2 ring-emerald-400 shadow-md",
-    bgInactive: "bg-emerald-50/60 hover:bg-emerald-100/80",
-    iconBg: "bg-emerald-500",
-    description: "Vistoria de Recebimento",
+    key: "checklist" as const,
+    label: "Checklist",
+    icon: ClipboardList,
+    color: "text-violet-600",
+    bgActive: "bg-violet-100 ring-2 ring-violet-400 shadow-md",
+    bgInactive: "bg-violet-50/60 hover:bg-violet-100/80",
+    iconBg: "bg-violet-500",
+    description: "Vistoria de Entrega de Obra",
   },
 ] as const;
 
