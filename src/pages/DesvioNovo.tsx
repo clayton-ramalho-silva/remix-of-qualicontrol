@@ -45,7 +45,7 @@ export default function DesvioNovo() {
   const [contextCollapsed, setContextCollapsed] = useState(false);
   const [obraId, setObraId] = useState("");
   const [ambiente, setAmbiente] = useState("");
-  const [vertical, setVertical] = useState<"qualidade" | "punch_list" | "pos_obra">("qualidade");
+  const [vertical, setVertical] = useState<"qualidade" | "checklist" | "qsms">("qualidade");
   const [dataInspecao, setDataInspecao] = useState(new Date().toISOString().split("T")[0]);
   const [plantaId, setPlantaId] = useState<number | null>(null);
   const [pinX, setPinX] = useState<string | null>(null);
@@ -216,8 +216,8 @@ export default function DesvioNovo() {
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="qualidade">Qualidade</SelectItem>
-                    <SelectItem value="punch_list">Check List</SelectItem>
-                    <SelectItem value="pos_obra">Assistência Técnica</SelectItem>
+                    <SelectItem value="checklist">Check List</SelectItem>
+                    <SelectItem value="qsms">Assistência Técnica</SelectItem>
                   </SelectContent>
                 </Select>
               </Field>

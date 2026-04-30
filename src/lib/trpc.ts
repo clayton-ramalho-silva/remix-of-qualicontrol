@@ -240,7 +240,7 @@ const queryResolvers: Record<string, Resolver> = {
       grave: desvios.filter((d: any) => d.severidade === "grave").length,
     };
 
-    const porOrigem: Record<string, number> = { qualidade: 0, punch_list: 0, pos_obra: 0 };
+    const porOrigem: Record<string, number> = { qualidade: 0, checklist: 0, qsms: 0 };
     desvios.forEach((d: any) => {
       if (d.origem && porOrigem[d.origem] !== undefined) porOrigem[d.origem]++;
     });

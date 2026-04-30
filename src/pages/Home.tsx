@@ -17,7 +17,7 @@ import {
 
 const SEV_COLORS: Record<string, string> = { leve: "#10b981", moderado: "#f59e0b", grave: "#ef4444" };
 
-type OrigemFilter = "qualidade" | "punch_list" | "pos_obra" | null;
+type OrigemFilter = "qualidade" | "checklist" | "qsms" | null;
 
 const ORIGENS = [
   {
@@ -31,7 +31,7 @@ const ORIGENS = [
     description: "Inspeção de qualidade",
   },
   {
-    key: "punch_list" as const,
+    key: "checklist" as const,
     label: "Check List",
     icon: ClipboardList,
     color: "text-violet-600",
@@ -41,7 +41,7 @@ const ORIGENS = [
     description: "Pendências de entrega",
   },
   {
-    key: "pos_obra" as const,
+    key: "qsms" as const,
     label: "Assistência Técnica",
     icon: Wrench,
     color: "text-orange-600",

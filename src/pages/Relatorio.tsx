@@ -20,7 +20,7 @@ const statusLabels: Record<string, string> = {
   fechado: "Fechado", aguardando_aceite: "Ag. Aceite",
 };
 const origemLabels: Record<string, string> = {
-  qualidade: "Qualidade", punch_list: "Check List", pos_obra: "Assistência Técnica",
+  qualidade: "Qualidade", checklist: "Check List", qsms: "Assistência Técnica",
 };
 const sevColors: Record<string, string> = {
   grave: "bg-red-100 text-red-700",
@@ -76,10 +76,10 @@ export default function Relatorio() {
   const generateMutation = trpc.relatorio.generate.useMutation();
 
   const handleGenerate = () => {
-    const origens: ("qualidade" | "punch_list" | "pos_obra")[] = [];
+    const origens: ("qualidade" | "checklist" | "qsms")[] = [];
     if (origemQualidade) origens.push("qualidade");
-    if (origemPunchList) origens.push("punch_list");
-    if (origemPosObra) origens.push("pos_obra");
+    if (origemPunchList) origens.push("checklist");
+    if (origemPosObra) origens.push("qsms");
 
     generateMutation.mutate({
       obraId: obraId === "all" ? undefined : parseInt(obraId),
@@ -131,7 +131,7 @@ export default function Relatorio() {
       return `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:600;${m[s] || ''}">${labels[s] || s}</span>`;
     };
     const fmtDate = (ts: number | null) => ts ? new Date(ts).toLocaleDateString("pt-BR") : "—";
-    const oLabels: Record<string, string> = { qualidade: "Qualidade", punch_list: "Check List", pos_obra: "Assistência Técnica" };
+    const oLabels: Record<string, string> = { qualidade: "Qualidade", checklist: "Check List", qsms: "Assistência Técnica" };
 
     // Build KPI cards HTML
     const kpiItems = kpis ? [
