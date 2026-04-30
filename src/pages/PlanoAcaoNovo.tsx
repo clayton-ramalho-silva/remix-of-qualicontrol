@@ -21,7 +21,6 @@ export default function PlanoAcaoNovo() {
   const utils = trpc.useUtils();
   const { data: desvios } = trpc.desvios.list.useQuery();
   const { data: obras } = trpc.obras.list.useQuery();
-  const { data: membros } = trpc.membros.list.useQuery?.() || { data: [] as any[] };
 
   const [acao, setAcao] = useState("");
   const [responsavel, setResponsavel] = useState("");
