@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { VerticalProvider } from "./contexts/VerticalContext";
 import DashboardLayout from "./components/DashboardLayout";
 import Auth from "./pages/Auth";
 import Home from "./pages/Home";
