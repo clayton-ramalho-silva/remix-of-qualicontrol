@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import VoiceRecorderButton from "@/components/VoiceRecorderButton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Calendar, ChevronLeft, ChevronRight, Filter, Plus, Check, X, Clock, ShieldCheck, ListChecks, HardHat, Trash2 } from "lucide-react";
@@ -430,7 +431,21 @@ export default function Alocacao() {
               </div>
               <div>
                 <Label>Observação</Label>
-                <Textarea value={editing.observacao ?? ""} onChange={e => setEditing({ ...editing, observacao: e.target.value })} className="mt-1" rows={3} />
+                <div className="relative mt-1">
+                  <Textarea
+                    value={editing.observacao ?? ""}
+                    onChange={e => setEditing({ ...editing, observacao: e.target.value })}
+                    className="pr-12"
+                    rows={3}
+                  />
+                  <div className="absolute top-2 right-2">
+                    <VoiceRecorderButton
+                      value={editing.observacao ?? ""}
+                      onAppend={(novo) => setEditing({ ...editing, observacao: novo })}
+                      contexto="observação sobre alocação de equipe em obra"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           )}
