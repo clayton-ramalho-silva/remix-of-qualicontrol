@@ -75,8 +75,8 @@ export default function Alocacao() {
     () => (obrasAll || []).filter((o: any) => Number(o[verticalAtiva.coverCol] ?? 0) > 0),
     [obrasAll, vertical]
   );
-  const obraById = useMemo(() => new Map((obrasAll || []).map((o: any) => [o.id, o])), [obrasAll]);
-  const membroById = useMemo(() => new Map((membros || []).map((m: any) => [m.id, m])), [membros]);
+  const obraById = useMemo(() => new Map<number, any>((obrasAll || []).map((o: any) => [o.id, o])), [obrasAll]);
+  const membroById = useMemo(() => new Map<number, any>((membros || []).map((m: any) => [m.id, m])), [membros]);
 
   // Range do mês visível (com slack pra cobrir as 6 semanas exibidas)
   const grid = useMemo(() => buildMonthGrid(refDate), [refDate]);
