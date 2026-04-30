@@ -188,6 +188,16 @@ const queryResolvers: Record<string, Resolver> = {
     return data || [];
   },
 
+  // --- LLM (Assistente IA) ---
+  "llm.suggestQuestions": async (input: any = {}) => {
+    const { data, error } = await supabase.functions.invoke("assistente-ia", {
+      body: { mode: "suggest", obraId: input?.obraId },
+    });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    return data; // { suggestions: string[] }
+  },
+
   // --- KPIs ---
   "kpis.get": async (filters: any = {}) => {
     let q = supabase.from("desvios").select("status, severidade, origem, tag_critico, tag_seguranca_trabalho, tag_solicitado_cliente, prazo_sugerido, data_fechamento, data_identificacao, obra_id");
@@ -673,6 +683,26 @@ const mutationResolvers: Record<string, Resolver> = {
     });
     const { data, error } = await supabase.from("config_faixas").update(patch).eq("id", id).select().single();
     if (error) throw error;
+    return data;
+  },
+
+  // --- LLM (Assistente IA) ---
+  "llm.ask": async (input: any) => {
+    const { data, error } = await supabase.functions.invoke("assistente-ia", {
+      body: { mode: "ask", question: input.question, obraId: input.obraId },
+    });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    return data; // { answer: string }
+  },
+
+  // --- RELATORIO ---
+  "relatorio.generate": async (input: any) => {
+    const { data, error } = await supabase.functions.invoke("gerar-relatorio", {
+      body: input,
+    });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
     return data;
   },
 };
