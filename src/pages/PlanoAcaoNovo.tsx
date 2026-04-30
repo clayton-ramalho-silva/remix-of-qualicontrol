@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
@@ -153,14 +153,19 @@ export default function PlanoAcaoNovo() {
             </div>
           )}
 
-          <Popover open={picker} onOpenChange={setPicker}>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="w-full justify-start">
-                <Search className="h-4 w-4 mr-2" />
-                {selecionados.length === 0 ? "Adicionar desvios..." : "Adicionar mais desvios..."}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[520px] p-0" align="start">
+          <Button type="button" variant="outline" className="w-full justify-start" onClick={() => setPicker(true)}>
+            <Search className="h-4 w-4 mr-2" />
+            {selecionados.length === 0 ? "Adicionar desvios..." : "Adicionar mais desvios..."}
+          </Button>
+
+          <Dialog open={picker} onOpenChange={setPicker}>
+            <DialogContent className="max-w-2xl p-0 gap-0">
+              <DialogHeader className="p-4 border-b">
+                <DialogTitle className="flex items-center gap-2 text-base">
+                  <Link2 className="h-4 w-4 text-teal-600" /> Vincular desvios
+                  <Badge variant="secondary" className="ml-1">{selecionados.length} selecionado(s)</Badge>
+                </DialogTitle>
+              </DialogHeader>
               <div className="p-3 border-b space-y-2">
                 <Input placeholder="Buscar por #id ou descrição..." value={search} onChange={e => setSearch(e.target.value)} className="h-9" />
                 <div className="flex gap-2">
@@ -182,7 +187,7 @@ export default function PlanoAcaoNovo() {
                   </Select>
                 </div>
               </div>
-              <div className="max-h-[320px] overflow-y-auto">
+              <div className="max-h-[50vh] overflow-y-auto">
                 {desviosDisponiveis.length === 0 && (
                   <div className="p-6 text-center text-sm text-slate-400">Nenhum desvio encontrado</div>
                 )}
@@ -190,6 +195,7 @@ export default function PlanoAcaoNovo() {
                   const checked = selecionados.includes(d.id);
                   return (
                     <button
+                      type="button"
                       key={d.id}
                       onClick={() => toggle(d.id)}
                       className={`w-full text-left p-2.5 border-b hover:bg-slate-50 flex items-start gap-3 ${checked ? "bg-teal-50" : ""}`}
@@ -207,8 +213,14 @@ export default function PlanoAcaoNovo() {
                   );
                 })}
               </div>
-            </PopoverContent>
-          </Popover>
+              <DialogFooter className="p-3 border-t">
+                <Button variant="outline" onClick={() => setPicker(false)}>Fechar</Button>
+                <Button onClick={() => setPicker(false)} className="bg-teal-600 hover:bg-teal-700 text-white">
+                  Confirmar ({selecionados.length})
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </CardContent>
       </Card>
 
