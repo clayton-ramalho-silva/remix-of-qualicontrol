@@ -6,13 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import {
   HelpCircle, Upload, X, ArrowLeft, Loader2, MapPin, ClipboardList,
-  Camera, CheckCircle2, Save, ChevronDown, ChevronUp,
+  Camera, CheckCircle2, Save, ChevronDown, ChevronUp, Sparkles, Check,
 } from "lucide-react";
 import PlantaPinSelector from "@/components/PlantaPinSelector";
 
@@ -56,6 +57,14 @@ export default function DesvioNovo() {
   const [plantaId, setPlantaId] = useState<number | null>(null);
   const [pinX, setPinX] = useState<string | null>(null);
   const [pinY, setPinY] = useState<string | null>(null);
+
+  // Ambientes detectados nas plantas da obra
+  const { data: ambientesObra } = trpc.plantaAmbientes.listByObra.useQuery(
+    { obraId: parseInt(obraId) },
+    { enabled: !!obraId }
+  );
+  const [ambienteOpen, setAmbienteOpen] = useState(false);
+  const [ambienteSearch, setAmbienteSearch] = useState("");
 
   // ---------- Etapa 2: Desvio (form atual + contador) ----------
   const [grupoId, setGrupoId] = useState("");
@@ -210,10 +219,14 @@ export default function DesvioNovo() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <Field label="Ambiente / Local" hint={HINTS.ambiente} required>
-                <Input
+                <AmbienteCombo
                   value={ambiente}
-                  onChange={e => setAmbiente(e.target.value)}
-                  placeholder="Ex: Banheiro Suíte - Apto 301"
+                  onChange={setAmbiente}
+                  ambientes={ambientesObra || []}
+                  open={ambienteOpen}
+                  setOpen={setAmbienteOpen}
+                  search={ambienteSearch}
+                  setSearch={setAmbienteSearch}
                 />
               </Field>
 
