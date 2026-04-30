@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import VoiceRecorderButton from "@/components/VoiceRecorderButton";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -403,12 +404,21 @@ export default function DesvioDetalhe() {
 
                   <div>
                     <Label className="text-sm font-medium">Descrição *</Label>
-                    <Textarea
-                      value={editDescricao}
-                      onChange={(e) => setEditDescricao(e.target.value)}
-                      rows={3}
-                      className="mt-1 bg-background resize-none"
-                    />
+                    <div className="relative mt-1">
+                      <Textarea
+                        value={editDescricao}
+                        onChange={(e) => setEditDescricao(e.target.value)}
+                        rows={3}
+                        className="bg-background resize-none pr-12"
+                      />
+                      <div className="absolute top-2 right-2">
+                        <VoiceRecorderButton
+                          value={editDescricao}
+                          onAppend={setEditDescricao}
+                          contexto="descrição de desvio em obra civil"
+                        />
+                      </div>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -651,8 +661,17 @@ export default function DesvioDetalhe() {
                   <div className="space-y-4 mt-2">
                     <div>
                       <Label className="text-sm">Ação Corretiva *</Label>
-                      <Textarea value={planoAcao} onChange={(e) => setPlanoAcao(e.target.value)}
-                        placeholder="Descreva a ação corretiva..." className="mt-1" rows={3} />
+                      <div className="relative mt-1">
+                        <Textarea value={planoAcao} onChange={(e) => setPlanoAcao(e.target.value)}
+                          placeholder="Descreva a ação corretiva..." className="pr-12" rows={3} />
+                        <div className="absolute top-2 right-2">
+                          <VoiceRecorderButton
+                            value={planoAcao}
+                            onAppend={setPlanoAcao}
+                            contexto="ação corretiva para desvio em obra"
+                          />
+                        </div>
+                      </div>
                     </div>
                     {/* Prioridade */}
                     <div>
@@ -722,8 +741,17 @@ export default function DesvioDetalhe() {
                     </div>
                     <div>
                       <Label className="text-sm">Observações</Label>
-                      <Textarea value={planoObs} onChange={(e) => setPlanoObs(e.target.value)}
-                        placeholder="Observações adicionais..." className="mt-1" rows={2} />
+                      <div className="relative mt-1">
+                        <Textarea value={planoObs} onChange={(e) => setPlanoObs(e.target.value)}
+                          placeholder="Observações adicionais..." className="pr-12" rows={2} />
+                        <div className="absolute top-2 right-2">
+                          <VoiceRecorderButton
+                            value={planoObs}
+                            onAppend={setPlanoObs}
+                            contexto="observações sobre plano de ação em obra"
+                          />
+                        </div>
+                      </div>
                     </div>
                     <Button className="w-full" disabled={!planoAcao || !planoRespId || !planoPrazo || createPlano.isPending}
                       onClick={() => {
@@ -812,13 +840,22 @@ export default function DesvioDetalhe() {
           <Card className="shadow-sm border-0">
             <CardContent className="p-4">
               <div className="flex gap-3">
-                <Textarea
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder="Adicionar um comentário..."
-                  rows={2}
-                  className="flex-1 resize-none bg-background"
-                />
+                <div className="relative flex-1">
+                  <Textarea
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder="Adicionar um comentário..."
+                    rows={2}
+                    className="w-full resize-none bg-background pr-12"
+                  />
+                  <div className="absolute top-2 right-2">
+                    <VoiceRecorderButton
+                      value={comment}
+                      onAppend={setComment}
+                      contexto="comentário sobre desvio em obra"
+                    />
+                  </div>
+                </div>
                 <Button
                   size="icon"
                   disabled={!comment.trim() || addComment.isPending}
