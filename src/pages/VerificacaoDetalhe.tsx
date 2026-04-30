@@ -163,6 +163,25 @@ export default function VerificacaoDetalhe({ rotaBase = "/verificacoes", titulo 
                       {resp?.observacao && (
                         <p className="mt-1 text-sm text-slate-500 italic ml-0">Obs: {resp.observacao}</p>
                       )}
+                      {resp?.fotos && resp.fotos.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {resp.fotos.map((f: any, idx: number) => (
+                            <a
+                              key={idx}
+                              href={f.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block"
+                            >
+                              <img
+                                src={f.url}
+                                alt={`Evidência ${idx + 1}`}
+                                className="h-16 w-16 object-cover rounded-md border border-slate-200 hover:opacity-80 transition-opacity"
+                              />
+                            </a>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <Badge className={`shrink-0 ${respInfo?.bg || ""} ${respInfo?.color || ""} border-0`}>
                       {respInfo?.label || "—"}
