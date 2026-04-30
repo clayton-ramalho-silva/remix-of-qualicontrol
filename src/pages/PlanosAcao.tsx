@@ -119,16 +119,16 @@ export default function PlanosAcao() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Buscar ação, responsável, desvio vinculado..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Select value={obraFilter} onValueChange={setObraFilter}>
-              <SelectTrigger><SelectValue placeholder="Obra" /></SelectTrigger>
+              <SelectTrigger className="min-w-0"><SelectValue placeholder="Obra">{obraFilter === "all" ? "Obra: todas" : undefined}</SelectValue></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas as obras</SelectItem>
                 {obras?.map(o => <SelectItem key={o.id} value={String(o.id)}>{o.codigo} - {o.nome}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={verticalFilter} onValueChange={setVerticalFilter}>
-              <SelectTrigger><SelectValue placeholder="Vertical" /></SelectTrigger>
+              <SelectTrigger className="min-w-0"><SelectValue placeholder="Vertical">{verticalFilter === "all" ? "Vertical: todas" : undefined}</SelectValue></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas as verticais</SelectItem>
                 <SelectItem value="qualidade">Qualidade</SelectItem>
@@ -138,7 +138,7 @@ export default function PlanosAcao() {
               </SelectContent>
             </Select>
             <Select value={prioFilter} onValueChange={setPrioFilter}>
-              <SelectTrigger><SelectValue placeholder="Prioridade" /></SelectTrigger>
+              <SelectTrigger className="min-w-0"><SelectValue placeholder="Prioridade">{prioFilter === "all" ? "Prioridade: todas" : undefined}</SelectValue></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
                 <SelectItem value="urgente">Urgente</SelectItem>
@@ -146,6 +146,7 @@ export default function PlanosAcao() {
                 <SelectItem value="baixa">Baixa</SelectItem>
               </SelectContent>
             </Select>
+            <div className="flex-1" />
             <Button variant={meus ? "default" : "outline"} onClick={() => setMeus(v => !v)} className={meus ? "bg-teal-600 hover:bg-teal-700 text-white" : ""}>
               <User className="h-4 w-4 mr-2" /> Meus Planos
             </Button>
