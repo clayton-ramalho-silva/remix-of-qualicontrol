@@ -404,6 +404,12 @@ export default function NovaVerificacao({
                             </div>
                           </div>
                         )}
+                        {exigeFoto && currentResp && currentResp !== "NA" && (
+                          <RespostaFotosUploader
+                            fotos={respostas[item.id]?.fotos || []}
+                            onChange={(f) => setFotosItem(item.id, f)}
+                          />
+                        )}
                       </div>
                     );
                   })}
