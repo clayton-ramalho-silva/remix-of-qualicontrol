@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import VoiceRecorderButton from "@/components/VoiceRecorderButton";
+import RespostaFotosUploader, { type RespostaFoto } from "@/components/RespostaFotosUploader";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useLocation, useParams } from "wouter";
@@ -30,9 +31,11 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
   const [nucleo, setNucleo] = useState("");
   const [diretoria, setDiretoria] = useState("");
   const [observacoes, setObservacoes] = useState("");
-  const [respostas, setRespostas] = useState<Record<number, { itemId: number; resposta: Resposta; observacao: string }>>({});
+  const [respostas, setRespostas] = useState<Record<number, { itemId: number; resposta: Resposta; observacao: string; fotos?: RespostaFoto[] }>>({});
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const [submitting, setSubmitting] = useState(false);
+
+  const exigeFoto = (verificacao as any)?.categoria === "vistoria";
 
   useEffect(() => {
     if (!verificacao) return;
@@ -42,7 +45,12 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
     setObservacoes(verificacao.observacoes || "");
     const map: Record<number, any> = {};
     (verificacao.respostas || []).forEach((r: any) => {
-      map[r.itemId] = { itemId: r.itemId, resposta: r.resposta, observacao: r.observacao || "" };
+      map[r.itemId] = {
+        itemId: r.itemId,
+        resposta: r.resposta,
+        observacao: r.observacao || "",
+        fotos: r.fotos || [],
+      };
     });
     setRespostas(map);
   }, [verificacao]);
@@ -50,13 +58,25 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
   const setResposta = (itemId: number, resposta: Resposta) => {
     setRespostas(prev => ({
       ...prev,
-      [itemId]: { ...prev[itemId], itemId, resposta, observacao: prev[itemId]?.observacao || "" },
+      [itemId]: { ...prev[itemId], itemId, resposta, observacao: prev[itemId]?.observacao || "", fotos: prev[itemId]?.fotos || [] },
     }));
   };
   const setObsItem = (itemId: number, observacao: string) => {
     setRespostas(prev => ({
       ...prev,
-      [itemId]: { ...prev[itemId], itemId, resposta: prev[itemId]?.resposta || "NA", observacao },
+      [itemId]: { ...prev[itemId], itemId, resposta: prev[itemId]?.resposta || "NA", observacao, fotos: prev[itemId]?.fotos || [] },
+    }));
+  };
+  const setFotosItem = (itemId: number, fotos: RespostaFoto[]) => {
+    setRespostas(prev => ({
+      ...prev,
+      [itemId]: {
+        ...prev[itemId],
+        itemId,
+        resposta: prev[itemId]?.resposta || "NA",
+        observacao: prev[itemId]?.observacao || "",
+        fotos,
+      },
     }));
   };
 
@@ -72,6 +92,13 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
   };
 
   const handleSubmit = async () => {
+    if (exigeFoto) {
+      const semFoto = Object.values(respostas).filter(r => r.resposta !== "NA" && !(r.fotos && r.fotos.length > 0));
+      if (semFoto.length > 0) {
+        toast.error(`${semFoto.length} item(ns) sem foto de evidência. Adicione ao menos 1 foto em cada item Atende, Não Atende ou Grave.`);
+        return;
+      }
+    }
     setSubmitting(true);
     try {
       const result = await updateVerificacao.mutateAsync({
@@ -84,6 +111,7 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
           itemId: r.itemId,
           resposta: r.resposta,
           observacao: r.observacao || undefined,
+          fotos: r.fotos || [],
         })),
       });
       toast.success(`Verificação atualizada! Score: ${result.scores.scoreGeral}% — ${result.scores.statusGeral}`);
@@ -196,6 +224,12 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
                             />
                           </div>
                         </div>
+                      )}
+                      {exigeFoto && cur && cur !== "NA" && (
+                        <RespostaFotosUploader
+                          fotos={respostas[item.id]?.fotos || []}
+                          onChange={(f) => setFotosItem(item.id, f)}
+                        />
                       )}
                     </div>
                   );

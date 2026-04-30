@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import VoiceRecorderButton from "@/components/VoiceRecorderButton";
+import RespostaFotosUploader, { type RespostaFoto } from "@/components/RespostaFotosUploader";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,7 @@ interface RespostaItem {
   itemId: number;
   resposta: Resposta;
   observacao: string;
+  fotos?: RespostaFoto[];
 }
 
 type Props = {
@@ -84,17 +86,44 @@ export default function NovaVerificacao({
   const [expandedSections, setExpandedSections] = useState<Record<number, boolean>>({});
   const [submitting, setSubmitting] = useState(false);
 
+  const exigeFoto = categoria === "vistoria";
+
   const setResposta = (itemId: number, resposta: Resposta) => {
     setRespostas(prev => ({
       ...prev,
-      [itemId]: { ...prev[itemId], itemId, resposta, observacao: prev[itemId]?.observacao || "" },
+      [itemId]: {
+        ...prev[itemId],
+        itemId,
+        resposta,
+        observacao: prev[itemId]?.observacao || "",
+        fotos: prev[itemId]?.fotos || [],
+      },
     }));
   };
 
   const setObsItem = (itemId: number, observacao: string) => {
     setRespostas(prev => ({
       ...prev,
-      [itemId]: { ...prev[itemId], itemId, resposta: prev[itemId]?.resposta || "NA", observacao },
+      [itemId]: {
+        ...prev[itemId],
+        itemId,
+        resposta: prev[itemId]?.resposta || "NA",
+        observacao,
+        fotos: prev[itemId]?.fotos || [],
+      },
+    }));
+  };
+
+  const setFotosItem = (itemId: number, fotos: RespostaFoto[]) => {
+    setRespostas(prev => ({
+      ...prev,
+      [itemId]: {
+        ...prev[itemId],
+        itemId,
+        resposta: prev[itemId]?.resposta || "NA",
+        observacao: prev[itemId]?.observacao || "",
+        fotos,
+      },
     }));
   };
 
@@ -139,6 +168,18 @@ export default function NovaVerificacao({
       return;
     }
 
+    if (exigeFoto) {
+      const semFoto = allItems.filter(item => {
+        const r = respostas[item.id];
+        if (!r || r.resposta === "NA") return false;
+        return !(r.fotos && r.fotos.length > 0);
+      });
+      if (semFoto.length > 0) {
+        toast.error(`${semFoto.length} item(ns) sem foto de evidência. Adicione ao menos 1 foto em cada item Atende, Não Atende ou Grave.`);
+        return;
+      }
+    }
+
     setSubmitting(true);
     try {
       const result = await createVerificacao.mutateAsync({
@@ -155,6 +196,7 @@ export default function NovaVerificacao({
           itemId: r.itemId,
           resposta: r.resposta,
           observacao: r.observacao || undefined,
+          fotos: r.fotos || [],
         })),
       });
       toast.success(`Verificação salva! Score geral: ${result.scores.scoreGeral}% — ${result.scores.statusGeral}`);
@@ -361,6 +403,12 @@ export default function NovaVerificacao({
                               />
                             </div>
                           </div>
+                        )}
+                        {exigeFoto && currentResp && currentResp !== "NA" && (
+                          <RespostaFotosUploader
+                            fotos={respostas[item.id]?.fotos || []}
+                            onChange={(f) => setFotosItem(item.id, f)}
+                          />
                         )}
                       </div>
                     );
