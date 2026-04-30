@@ -54,10 +54,22 @@ function ProtectedShell() {
         <Route path="/obras" component={Obras} />
         <Route path="/assistente" component={Assistente} />
         <Route path="/relatorio" component={Relatorio} />
-        <Route path="/verificacoes" component={Verificacoes} />
-        <Route path="/verificacoes/nova" component={NovaVerificacao} />
-        <Route path="/verificacoes/:id/editar" component={EditarVerificacao} />
-        <Route path="/verificacoes/:id" component={VerificacaoDetalhe} />
+        <Route path="/verificacoes">{() => <Verificacoes />}</Route>
+        <Route path="/verificacoes/nova">{() => <NovaVerificacao />}</Route>
+        <Route path="/verificacoes/:id/editar">{() => <EditarVerificacao />}</Route>
+        <Route path="/verificacoes/:id">{() => <VerificacaoDetalhe />}</Route>
+        <Route path="/vistoria-recebimento">
+          {() => <Verificacoes categoria="vistoria" titulo="Vistoria de Recebimento" rotaBase="/vistoria-recebimento" />}
+        </Route>
+        <Route path="/vistoria-recebimento/nova">
+          {() => <NovaVerificacao categoria="vistoria" titulo="Nova Vistoria de Recebimento" rotaBase="/vistoria-recebimento" />}
+        </Route>
+        <Route path="/vistoria-recebimento/:id/editar">
+          {() => <EditarVerificacao rotaBase="/vistoria-recebimento" />}
+        </Route>
+        <Route path="/vistoria-recebimento/:id">
+          {() => <VerificacaoDetalhe rotaBase="/vistoria-recebimento" titulo="Vistoria de Recebimento" />}
+        </Route>
         <Route path="/plantas" component={Plantas} />
         <Route path="/plantas/:id" component={PlantaView} />
         <Route path="/usuarios" component={Usuarios} />
