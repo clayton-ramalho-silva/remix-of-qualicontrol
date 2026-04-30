@@ -16,7 +16,9 @@ import {
 
 type Resposta = "AT" | "NAT" | "GR" | "NA";
 
-export default function EditarVerificacao() {
+type Props = { rotaBase?: string };
+
+export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props) {
   const [, navigate] = useLocation();
   const params = useParams<{ id: string }>();
   const id = Number(params.id);
@@ -85,7 +87,7 @@ export default function EditarVerificacao() {
         })),
       });
       toast.success(`Verificação atualizada! Score: ${result.scores.scoreGeral}% — ${result.scores.statusGeral}`);
-      navigate(`/verificacoes/${id}`);
+      navigate(`${rotaBase}/${id}`);
     } catch (e: any) {
       toast.error(e.message || "Erro ao atualizar");
     } finally {
@@ -106,7 +108,7 @@ export default function EditarVerificacao() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => navigate(`/verificacoes/${id}`)}>
+          <Button variant="ghost" size="sm" onClick={() => navigate(`${rotaBase}/${id}`)}>
             <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
           </Button>
           <div>
@@ -217,7 +219,7 @@ export default function EditarVerificacao() {
       </Card>
 
       <div className="flex justify-end gap-3 pb-8">
-        <Button variant="outline" onClick={() => navigate(`/verificacoes/${id}`)}>Cancelar</Button>
+        <Button variant="outline" onClick={() => navigate(`${rotaBase}/${id}`)}>Cancelar</Button>
         <Button onClick={handleSubmit} disabled={submitting} className="bg-teal-600 hover:bg-teal-700 text-white px-8">
           {submitting ? "Salvando..." : (<><Save className="h-4 w-4 mr-2" /> Salvar Alterações</>)}
         </Button>
