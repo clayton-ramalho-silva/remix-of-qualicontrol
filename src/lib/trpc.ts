@@ -144,6 +144,7 @@ const queryResolvers: Record<string, Resolver> = {
   "verificacoes.list": async (filters: any = {}) => {
     let q = supabase.from("verificacoes").select("*").order("data_vistoria", { ascending: false });
     if (filters?.obraId) q = q.eq("obra_id", filters.obraId);
+    if (filters?.categoria) q = q.eq("categoria", filters.categoria);
     const { data, error } = await q;
     if (error) throw error;
     return (data || []).map(mapVerificacaoFromDb);
@@ -174,9 +175,11 @@ const queryResolvers: Record<string, Resolver> = {
   },
 
   // --- CHECKLIST ---
-  "checklist.getCompleto": async () => {
+  "checklist.getCompleto": async (input: any = {}) => {
+    let secoesQuery = supabase.from("checklist_secoes").select("*").eq("ativo", 1).order("ordem");
+    if (input?.categoria) secoesQuery = secoesQuery.eq("categoria", input.categoria);
     const [{ data: secoes, error: e1 }, { data: itens, error: e2 }] = await Promise.all([
-      supabase.from("checklist_secoes").select("*").eq("ativo", 1).order("ordem"),
+      secoesQuery,
       supabase.from("checklist_itens").select("*").eq("ativo", 1).order("ordem"),
     ]);
     if (e1) throw e1;
@@ -188,8 +191,10 @@ const queryResolvers: Record<string, Resolver> = {
   },
 
   // --- CONFIG FAIXAS ---
-  "configFaixas.list": async () => {
-    const { data, error } = await supabase.from("config_faixas").select("*").order("ordem");
+  "configFaixas.list": async (input: any = {}) => {
+    let q = supabase.from("config_faixas").select("*").order("ordem");
+    if (input?.categoria) q = q.eq("categoria", input.categoria);
+    const { data, error } = await q;
     if (error) throw error;
     return data || [];
   },
@@ -691,8 +696,9 @@ const mutationResolvers: Record<string, Resolver> = {
   // --- VERIFICACOES ---
   "verificacoes.create": async (input: any) => {
     const respostasArr = input.respostas || [];
+    const categoria = input.categoria || "qualidade";
     const { scoreGeral, scoreQualidade, scoreCronograma, scoreCondicao, statusFromScore } =
-      await computeVerificacaoScores(respostasArr);
+      await computeVerificacaoScores(respostasArr, categoria);
 
     const insertObj: any = {
       obra_id: input.obraId,
@@ -703,6 +709,7 @@ const mutationResolvers: Record<string, Resolver> = {
       nucleo: input.nucleo ?? null,
       diretoria: input.diretoria ?? null,
       observacoes: input.observacoes ?? null,
+      categoria,
       score_geral: scoreGeral,
       score_qualidade: scoreQualidade,
       score_cronograma: scoreCronograma,
@@ -742,8 +749,11 @@ const mutationResolvers: Record<string, Resolver> = {
   "verificacoes.update": async (input: any) => {
     const { id } = input;
     const respostasArr = input.respostas || [];
+    // Buscar categoria existente para usar faixas certas
+    const { data: existing } = await supabase.from("verificacoes").select("categoria").eq("id", id).maybeSingle();
+    const categoria = (existing as any)?.categoria || "qualidade";
     const { scoreGeral, scoreQualidade, scoreCronograma, scoreCondicao, statusFromScore } =
-      await computeVerificacaoScores(respostasArr);
+      await computeVerificacaoScores(respostasArr, categoria);
 
     const patch: any = {
       score_geral: scoreGeral,
@@ -811,6 +821,26 @@ const mutationResolvers: Record<string, Resolver> = {
       codigo: input.codigo,
       descricao: input.descricao,
       ordem: input.ordem ?? 0,
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
+  "checklist.createSecao": async (input: any) => {
+    const categoria = input.categoria || "qualidade";
+    // próximo numero/ordem dentro da categoria
+    const { data: existing } = await supabase
+      .from("checklist_secoes")
+      .select("numero, ordem")
+      .eq("categoria", categoria);
+    const maxNumero = (existing || []).reduce((m: number, s: any) => Math.max(m, s.numero || 0), 0);
+    const maxOrdem = (existing || []).reduce((m: number, s: any) => Math.max(m, s.ordem || 0), 0);
+    const { data, error } = await supabase.from("checklist_secoes").insert({
+      titulo: input.titulo,
+      peso: input.peso ?? 10,
+      reincidencia: input.reincidencia ?? 0,
+      numero: input.numero ?? maxNumero + 1,
+      ordem: input.ordem ?? maxOrdem + 1,
+      categoria,
     }).select().single();
     if (error) throw error;
     return data;
@@ -891,11 +921,11 @@ function mapMembroFromDb(m: any) {
   };
 }
 
-async function computeVerificacaoScores(respostasArr: any[]) {
+async function computeVerificacaoScores(respostasArr: any[], rootCategoria: string = "qualidade") {
   const [{ data: secoes }, { data: itens }, { data: faixas }] = await Promise.all([
     supabase.from("checklist_secoes").select("*").eq("ativo", 1),
     supabase.from("checklist_itens").select("*").eq("ativo", 1),
-    supabase.from("config_faixas").select("*").order("ordem"),
+    supabase.from("config_faixas").select("*").eq("categoria", rootCategoria).order("ordem"),
   ]);
   const respMap = new Map<number, string>(respostasArr.map((r: any) => [r.itemId, r.resposta]));
   const scoreSecao = (secaoId: number) => {

@@ -24,12 +24,22 @@ interface RespostaItem {
   observacao: string;
 }
 
-export default function NovaVerificacao() {
+type Props = {
+  categoria?: string;
+  titulo?: string;
+  rotaBase?: string;
+};
+
+export default function NovaVerificacao({
+  categoria = "qualidade",
+  titulo = "Nova Verificação de Qualidade",
+  rotaBase = "/verificacoes",
+}: Props) {
   const [, navigate] = useLocation();
   const { data: obrasAll } = trpc.obras.list.useQuery();
   // Verificação de qualidade só lista obras cobertas pela equipe de Qualidade.
   const obras = obrasAll?.filter((o: any) => Number(o.cobertura_qualidade ?? 0) > 0);
-  const { data: checklist, isLoading } = trpc.checklist.getCompleto.useQuery();
+  const { data: checklist, isLoading } = trpc.checklist.getCompleto.useQuery({ categoria });
   const createVerificacao = trpc.verificacoes.create.useMutation();
 
   const { data: membros } = trpc.membros.list.useQuery();
@@ -133,6 +143,7 @@ export default function NovaVerificacao() {
     try {
       const result = await createVerificacao.mutateAsync({
         obraId,
+        categoria,
         avaliador: avaliadorNome,
         dataVistoria: new Date(dataVistoria).getTime(),
         go: goNome || undefined,
@@ -147,7 +158,7 @@ export default function NovaVerificacao() {
         })),
       });
       toast.success(`Verificação salva! Score geral: ${result.scores.scoreGeral}% — ${result.scores.statusGeral}`);
-      navigate(`/verificacoes/${result.id}`);
+      navigate(`${rotaBase}/${result.id}`);
     } catch (e: any) {
       toast.error(e.message || "Erro ao salvar verificação");
     } finally {
@@ -166,7 +177,7 @@ export default function NovaVerificacao() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             <ClipboardCheck className="h-7 w-7 text-teal-600" />
-            Nova Verificação de Qualidade
+            {titulo}
           </h1>
           <p className="text-slate-500 mt-1">Preencha o checklist de verificação conforme inspeção em campo</p>
         </div>
@@ -379,7 +390,7 @@ export default function NovaVerificacao() {
 
       {/* Botão de Envio */}
       <div className="flex justify-end gap-3 pb-8">
-        <Button variant="outline" onClick={() => navigate("/verificacoes")}>Cancelar</Button>
+        <Button variant="outline" onClick={() => navigate(rotaBase)}>Cancelar</Button>
         <Button
           onClick={handleSubmit}
           disabled={submitting || progresso < 100}

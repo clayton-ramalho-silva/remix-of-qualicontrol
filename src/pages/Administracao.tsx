@@ -17,8 +17,9 @@ import {
 
 export default function Administracao() {
   const utils = trpc.useUtils();
-  const { data: checklist, isLoading: loadingChecklist } = trpc.checklist.getCompleto.useQuery();
-  const { data: faixas, isLoading: loadingFaixas } = trpc.configFaixas.list.useQuery();
+  const [categoria, setCategoria] = useState<string>("qualidade");
+  const { data: checklist, isLoading: loadingChecklist } = trpc.checklist.getCompleto.useQuery({ categoria });
+  const { data: faixas, isLoading: loadingFaixas } = trpc.configFaixas.list.useQuery({ categoria });
 
   const updateSecao = trpc.checklist.updateSecao.useMutation({
     onSuccess: () => { utils.checklist.getCompleto.invalidate(); toast.success("Seção atualizada!"); },
@@ -32,6 +33,9 @@ export default function Administracao() {
   const updateFaixa = trpc.configFaixas.update.useMutation({
     onSuccess: () => { utils.configFaixas.list.invalidate(); toast.success("Faixa atualizada!"); },
   });
+  const createSecao = trpc.checklist.createSecao.useMutation({
+    onSuccess: () => { utils.checklist.getCompleto.invalidate(); toast.success("Seção criada!"); setNewSecaoTitulo(""); },
+  });
 
   // State for editing
   const [editingSecao, setEditingSecao] = useState<number | null>(null);
@@ -43,6 +47,7 @@ export default function Administracao() {
   const [newItemDialog, setNewItemDialog] = useState(false);
   const [newItemSecaoId, setNewItemSecaoId] = useState<number | null>(null);
   const [newItemForm, setNewItemForm] = useState({ codigo: "", descricao: "" });
+  const [newSecaoTitulo, setNewSecaoTitulo] = useState("");
 
   const startEditSecao = (secao: any) => {
     setEditingSecao(secao.id);
@@ -106,6 +111,29 @@ export default function Administracao() {
           Parâmetros
         </h1>
         <p className="text-slate-500 mt-1">Configure pesos, itens do checklist e faixas de classificação</p>
+      </div>
+
+      {/* Seletor de categoria/vertical */}
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-slate-600">Vertical:</span>
+        <div className="inline-flex rounded-lg border border-slate-200 bg-white p-1">
+          {[
+            { id: "qualidade", label: "Qualidade" },
+            { id: "vistoria", label: "Vistoria de Recebimento" },
+          ].map(opt => (
+            <button
+              key={opt.id}
+              onClick={() => setCategoria(opt.id)}
+              className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                categoria === opt.id
+                  ? "bg-teal-600 text-white"
+                  : "text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <Tabs defaultValue="pesos">
@@ -205,6 +233,32 @@ export default function Administracao() {
 
         {/* Tab: Itens do Checklist */}
         <TabsContent value="itens" className="space-y-4 mt-4">
+          {/* Criar nova seção */}
+          <Card className="border-dashed">
+            <CardContent className="p-4 flex items-center gap-2">
+              <Input
+                placeholder="Título da nova seção (ex: Estrutura, Acabamento...)"
+                value={newSecaoTitulo}
+                onChange={e => setNewSecaoTitulo(e.target.value)}
+                className="flex-1"
+              />
+              <Button
+                onClick={() => {
+                  if (!newSecaoTitulo.trim()) { toast.error("Informe o título"); return; }
+                  createSecao.mutate({ titulo: newSecaoTitulo.trim(), categoria });
+                }}
+                className="bg-teal-600 hover:bg-teal-700 text-white"
+              >
+                <Plus className="h-4 w-4 mr-1" /> Nova Seção
+              </Button>
+            </CardContent>
+          </Card>
+
+          {checklist?.length === 0 && (
+            <p className="text-sm text-slate-500 text-center py-6">
+              Nenhuma seção cadastrada para esta vertical. Crie a primeira acima.
+            </p>
+          )}
           {checklist?.map(secao => (
             <Card key={secao.id}>
               <CardHeader className="pb-3">

@@ -21,13 +21,24 @@ const statusIcon = (status: string | null) => {
   return <TrendingDown className="h-4 w-4 text-red-600" />;
 };
 
-export default function Verificacoes() {
+type Props = {
+  categoria?: string;
+  titulo?: string;
+  rotaBase?: string;
+};
+
+export default function Verificacoes({
+  categoria = "qualidade",
+  titulo = "Verificações de Qualidade",
+  rotaBase = "/verificacoes",
+}: Props) {
   const [, navigate] = useLocation();
   const { data: obras } = trpc.obras.list.useQuery();
   const [obraFilter, setObraFilter] = useState<string>("all");
-  const { data: verificacoes, isLoading } = trpc.verificacoes.list.useQuery(
-    obraFilter !== "all" ? { obraId: Number(obraFilter) } : undefined
-  );
+  const { data: verificacoes, isLoading } = trpc.verificacoes.list.useQuery({
+    ...(obraFilter !== "all" ? { obraId: Number(obraFilter) } : {}),
+    categoria,
+  });
 
   const getObraNome = (obraId: number) => {
     const obra = obras?.find(o => o.id === obraId);
@@ -41,11 +52,11 @@ export default function Verificacoes() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             <ClipboardList className="h-7 w-7 text-teal-600" />
-             Verificações de Qualidade
+             {titulo}
           </h1>
            <p className="text-slate-500 mt-1">Histórico de vistorias e checklists preenchidos</p>
         </div>
-        <Button onClick={() => navigate("/verificacoes/nova")} className="bg-teal-600 hover:bg-teal-700 text-white">
+        <Button onClick={() => navigate(`${rotaBase}/nova`)} className="bg-teal-600 hover:bg-teal-700 text-white">
            <Plus className="h-4 w-4 mr-2" /> Nova Verificação
         </Button>
       </div>
@@ -77,7 +88,7 @@ export default function Verificacoes() {
       ) : (
         <div className="grid gap-4">
           {verificacoes.map(v => (
-            <Card key={v.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/verificacoes/${v.id}`)}>
+            <Card key={v.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`${rotaBase}/${v.id}`)}>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
