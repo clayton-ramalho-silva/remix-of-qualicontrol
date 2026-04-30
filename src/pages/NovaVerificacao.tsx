@@ -26,7 +26,8 @@ interface RespostaItem {
 export default function NovaVerificacao() {
   const [, navigate] = useLocation();
   const { data: obrasAll } = trpc.obras.list.useQuery();
-  const obras = obrasAll?.filter((o: any) => Number(o.cobertura) > 0);
+  // Verificação de qualidade só lista obras cobertas pela equipe de Qualidade.
+  const obras = obrasAll?.filter((o: any) => Number(o.cobertura_qualidade ?? 0) > 0);
   const { data: checklist, isLoading } = trpc.checklist.getCompleto.useQuery();
   const createVerificacao = trpc.verificacoes.create.useMutation();
 
