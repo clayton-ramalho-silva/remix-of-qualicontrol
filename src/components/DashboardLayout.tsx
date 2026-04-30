@@ -37,17 +37,19 @@ import {
   Users,
   Layers,
   CalendarDays,
+  Target,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
 import { Button } from "./ui/button";
 import NotificationBell from "./NotificationBell";
+import { trpc } from "@/lib/trpc";
 
 const AW_LOGO_WHITE = "https://d2xsxph8kpxj0f.cloudfront.net/310519663403343148/3awzRPTf7NtQjpo8LEDXgX/Logo athie l wohnrath_White_462306ea.png";
 const AW_LOGO_BLACK = "https://d2xsxph8kpxj0f.cloudfront.net/310519663403343148/3awzRPTf7NtQjpo8LEDXgX/Logo athie l wohnrath_Black_c476567f.png";
 
-type MenuItem = { icon: typeof LayoutDashboard; label: string; path: string; separator?: false } | { separator: true };
+type MenuItem = { icon: typeof LayoutDashboard; label: string; path: string; badgeKey?: "planosPendentes"; separator?: false } | { separator: true };
 
 const menuItems: MenuItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
@@ -55,6 +57,7 @@ const menuItems: MenuItem[] = [
   { icon: ClipboardCheck, label: "Vistoria de Recebimento", path: "/vistoria-recebimento" },
   { icon: PlusCircle, label: "Novo Desvio", path: "/desvios/novo" },
   { icon: ClipboardList, label: "Desvios", path: "/desvios" },
+  { icon: Target, label: "Planos de Ação", path: "/planos-acao", badgeKey: "planosPendentes" },
   { icon: BrainCircuit, label: "Assistente IA", path: "/assistente" },
   { icon: FileText, label: "Relatório", path: "/relatorio" },
   { separator: true },
@@ -115,6 +118,13 @@ function DashboardLayoutContent({
     (item) => item.path === "/" ? location === "/" : location.startsWith(item.path)
   );
   const isMobile = useIsMobile();
+  const { data: meusPlanos } = trpc.planos.list.useQuery(
+    { responsavelEmail: user?.email },
+    { enabled: !!user?.email, refetchInterval: 60000 }
+  );
+  const badgeCounts: Record<string, number> = {
+    planosPendentes: (meusPlanos || []).filter((p: any) => p.status !== "concluido").length,
+  };
 
   useEffect(() => {
     if (isCollapsed) setIsResizing(false);
@@ -176,6 +186,7 @@ function DashboardLayoutContent({
                 const isActive = navItem.path === "/"
                   ? location === "/"
                   : location.startsWith(navItem.path);
+                const badgeCount = navItem.badgeKey ? badgeCounts[navItem.badgeKey] : 0;
                 return (
                   <SidebarMenuItem key={navItem.path}>
                     <SidebarMenuButton
@@ -185,7 +196,12 @@ function DashboardLayoutContent({
                       className="h-10 transition-all font-normal"
                     >
                       <navItem.icon className={`h-4 w-4 ${isActive ? "text-sidebar-primary" : ""}`} />
-                      <span>{navItem.label}</span>
+                      <span className="flex-1 truncate">{navItem.label}</span>
+                      {badgeCount > 0 && !isCollapsed && (
+                        <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold">
+                          {badgeCount}
+                        </span>
+                      )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );

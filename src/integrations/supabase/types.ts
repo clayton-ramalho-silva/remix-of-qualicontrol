@@ -542,6 +542,27 @@ export type Database = {
         }
         Relationships: []
       }
+      plano_desvios: {
+        Row: {
+          created_at: string
+          desvio_id: number
+          id: number
+          plano_id: number
+        }
+        Insert: {
+          created_at?: string
+          desvio_id: number
+          id?: number
+          plano_id: number
+        }
+        Update: {
+          created_at?: string
+          desvio_id?: number
+          id?: number
+          plano_id?: number
+        }
+        Relationships: []
+      }
       planos_acao: {
         Row: {
           acao: string
