@@ -89,15 +89,15 @@ export default function Verificacoes({
         <div className="grid gap-4">
           {verificacoes.map(v => (
             <Card key={v.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`${rotaBase}/${v.id}`)}>
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex items-center justify-between gap-3">
+              <CardContent className="p-4 sm:p-6 overflow-hidden">
+                <div className="flex items-center justify-between gap-3 min-w-0">
                   <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                     <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-teal-50 text-teal-600 shrink-0">
                       <ClipboardList className="h-6 w-6" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-semibold text-slate-900 truncate">{getObraNome(v.obraId)}</h3>
+                      <div className="flex items-center gap-2 flex-wrap min-w-0">
+                        <h3 className="font-semibold text-slate-900 truncate max-w-full">{getObraNome(v.obraId)}</h3>
                         <Badge className={statusColors[v.statusGeral || ""] || "bg-slate-100 text-slate-600"}>
                           {statusIcon(v.statusGeral)} {v.statusGeral || "—"}
                         </Badge>
