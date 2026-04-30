@@ -32,7 +32,6 @@ const classificacaoClasses: Record<string, string> = {
   "EXCELENTE": "border-emerald-200 bg-emerald-50 text-emerald-700",
   "BOM": "border-sky-200 bg-sky-50 text-sky-700",
   "REGULAR": "border-amber-200 bg-amber-50 text-amber-700",
-  "RUIM": "border-orange-200 bg-orange-50 text-orange-700",
   "RUIM": "border-red-200 bg-red-50 text-red-700",
   "CRÍTICO": "border-red-300 bg-red-100 text-red-900",
   "CRITICO": "border-red-300 bg-red-100 text-red-900",
