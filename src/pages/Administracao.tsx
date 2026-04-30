@@ -17,8 +17,9 @@ import {
 
 export default function Administracao() {
   const utils = trpc.useUtils();
-  const { data: checklist, isLoading: loadingChecklist } = trpc.checklist.getCompleto.useQuery();
-  const { data: faixas, isLoading: loadingFaixas } = trpc.configFaixas.list.useQuery();
+  const [categoria, setCategoria] = useState<string>("qualidade");
+  const { data: checklist, isLoading: loadingChecklist } = trpc.checklist.getCompleto.useQuery({ categoria });
+  const { data: faixas, isLoading: loadingFaixas } = trpc.configFaixas.list.useQuery({ categoria });
 
   const updateSecao = trpc.checklist.updateSecao.useMutation({
     onSuccess: () => { utils.checklist.getCompleto.invalidate(); toast.success("Seção atualizada!"); },
