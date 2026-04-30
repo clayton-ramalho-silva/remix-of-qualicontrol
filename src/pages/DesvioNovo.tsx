@@ -236,7 +236,7 @@ export default function DesvioNovo() {
 
               <Field label="Vertical" hint={HINTS.vertical} required>
                 <Select value={vertical} onValueChange={v => setVertical(v as any)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Selecione a vertical..." /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="qualidade">Qualidade</SelectItem>
                     <SelectItem value="checklist">Checklist</SelectItem>
