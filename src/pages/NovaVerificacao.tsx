@@ -346,12 +346,21 @@ export default function NovaVerificacao({
                           </button>
                         </div>
                         {(currentResp === "NAT" || currentResp === "GR") && (
-                          <Textarea
-                            placeholder="Descreva o desvio encontrado..."
-                            className="text-sm"
-                            value={respostas[item.id]?.observacao || ""}
-                            onChange={e => setObsItem(item.id, e.target.value)}
-                          />
+                          <div className="relative">
+                            <Textarea
+                              placeholder="Descreva o desvio encontrado... ou clique no microfone para ditar."
+                              className="text-sm pr-12"
+                              value={respostas[item.id]?.observacao || ""}
+                              onChange={e => setObsItem(item.id, e.target.value)}
+                            />
+                            <div className="absolute top-2 right-2">
+                              <VoiceRecorderButton
+                                value={respostas[item.id]?.observacao || ""}
+                                onAppend={(v) => setObsItem(item.id, v)}
+                                contexto={`desvio do item ${item.codigo}: ${item.descricao}`}
+                              />
+                            </div>
+                          </div>
                         )}
                       </div>
                     );
