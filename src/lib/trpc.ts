@@ -749,8 +749,11 @@ const mutationResolvers: Record<string, Resolver> = {
   "verificacoes.update": async (input: any) => {
     const { id } = input;
     const respostasArr = input.respostas || [];
+    // Buscar categoria existente para usar faixas certas
+    const { data: existing } = await supabase.from("verificacoes").select("categoria").eq("id", id).maybeSingle();
+    const categoria = (existing as any)?.categoria || "qualidade";
     const { scoreGeral, scoreQualidade, scoreCronograma, scoreCondicao, statusFromScore } =
-      await computeVerificacaoScores(respostasArr);
+      await computeVerificacaoScores(respostasArr, categoria);
 
     const patch: any = {
       score_geral: scoreGeral,
