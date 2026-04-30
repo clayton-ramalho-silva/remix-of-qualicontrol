@@ -233,6 +233,32 @@ export default function Administracao() {
 
         {/* Tab: Itens do Checklist */}
         <TabsContent value="itens" className="space-y-4 mt-4">
+          {/* Criar nova seção */}
+          <Card className="border-dashed">
+            <CardContent className="p-4 flex items-center gap-2">
+              <Input
+                placeholder="Título da nova seção (ex: Estrutura, Acabamento...)"
+                value={newSecaoTitulo}
+                onChange={e => setNewSecaoTitulo(e.target.value)}
+                className="flex-1"
+              />
+              <Button
+                onClick={() => {
+                  if (!newSecaoTitulo.trim()) { toast.error("Informe o título"); return; }
+                  createSecao.mutate({ titulo: newSecaoTitulo.trim(), categoria });
+                }}
+                className="bg-teal-600 hover:bg-teal-700 text-white"
+              >
+                <Plus className="h-4 w-4 mr-1" /> Nova Seção
+              </Button>
+            </CardContent>
+          </Card>
+
+          {checklist?.length === 0 && (
+            <p className="text-sm text-slate-500 text-center py-6">
+              Nenhuma seção cadastrada para esta vertical. Crie a primeira acima.
+            </p>
+          )}
           {checklist?.map(secao => (
             <Card key={secao.id}>
               <CardHeader className="pb-3">
