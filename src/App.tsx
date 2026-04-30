@@ -26,6 +26,9 @@ import Usuarios from "./pages/Usuarios";
 import Plantas from "./pages/Plantas";
 import PlantaView from "./pages/PlantaView";
 import Alocacao from "./pages/Alocacao";
+import PlanosAcao from "./pages/PlanosAcao";
+import PlanoAcaoNovo from "./pages/PlanoAcaoNovo";
+import PlanoAcaoDetalhe from "./pages/PlanoAcaoDetalhe";
 
 function ProtectedShell() {
   const { user, loading } = useAuth();
@@ -50,6 +53,9 @@ function ProtectedShell() {
         <Route path="/desvios" component={DesviosList} />
         <Route path="/desvios/novo" component={DesvioNovo} />
         <Route path="/desvios/:id" component={DesvioDetalhe} />
+        <Route path="/planos-acao" component={PlanosAcao} />
+        <Route path="/planos-acao/novo" component={PlanoAcaoNovo} />
+        <Route path="/planos-acao/:id" component={PlanoAcaoDetalhe} />
         <Route path="/fornecedores" component={Fornecedores} />
         <Route path="/obras" component={Obras} />
         <Route path="/assistente" component={Assistente} />
