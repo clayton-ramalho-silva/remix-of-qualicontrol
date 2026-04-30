@@ -37,17 +37,20 @@ import {
   Users,
   Layers,
   CalendarDays,
+  Target,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
 import { Button } from "./ui/button";
 import NotificationBell from "./NotificationBell";
+import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 const AW_LOGO_WHITE = "https://d2xsxph8kpxj0f.cloudfront.net/310519663403343148/3awzRPTf7NtQjpo8LEDXgX/Logo athie l wohnrath_White_462306ea.png";
 const AW_LOGO_BLACK = "https://d2xsxph8kpxj0f.cloudfront.net/310519663403343148/3awzRPTf7NtQjpo8LEDXgX/Logo athie l wohnrath_Black_c476567f.png";
 
-type MenuItem = { icon: typeof LayoutDashboard; label: string; path: string; separator?: false } | { separator: true };
+type MenuItem = { icon: typeof LayoutDashboard; label: string; path: string; badgeKey?: "planosPendentes"; separator?: false } | { separator: true };
 
 const menuItems: MenuItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
@@ -55,6 +58,7 @@ const menuItems: MenuItem[] = [
   { icon: ClipboardCheck, label: "Vistoria de Recebimento", path: "/vistoria-recebimento" },
   { icon: PlusCircle, label: "Novo Desvio", path: "/desvios/novo" },
   { icon: ClipboardList, label: "Desvios", path: "/desvios" },
+  { icon: Target, label: "Planos de Ação", path: "/planos-acao", badgeKey: "planosPendentes" },
   { icon: BrainCircuit, label: "Assistente IA", path: "/assistente" },
   { icon: FileText, label: "Relatório", path: "/relatorio" },
   { separator: true },
