@@ -152,12 +152,18 @@ const queryResolvers: Record<string, Resolver> = {
     const { data, error } = await supabase.from("verificacoes").select("*").eq("id", id).maybeSingle();
     if (error) throw error;
     if (!data) return null;
-    const { data: respostas } = await supabase
-      .from("verificacao_respostas")
-      .select("*")
-      .eq("verificacao_id", id);
+    const [{ data: respostas }, { data: secoes }, { data: itens }] = await Promise.all([
+      supabase.from("verificacao_respostas").select("*").eq("verificacao_id", id),
+      supabase.from("checklist_secoes").select("*").eq("ativo", 1).order("ordem"),
+      supabase.from("checklist_itens").select("*").eq("ativo", 1).order("ordem"),
+    ]);
+    const checklist = (secoes || []).map((s: any) => ({
+      ...s,
+      itens: (itens || []).filter((i: any) => i.secao_id === s.id),
+    }));
     return {
       ...mapVerificacaoFromDb(data),
+      checklist,
       respostas: (respostas || []).map((r: any) => ({
         id: r.id,
         itemId: r.item_id,
