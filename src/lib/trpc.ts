@@ -756,6 +756,54 @@ function mapMembroFromDb(m: any) {
   };
 }
 
+async function computeVerificacaoScores(respostasArr: any[]) {
+  const [{ data: secoes }, { data: itens }, { data: faixas }] = await Promise.all([
+    supabase.from("checklist_secoes").select("*").eq("ativo", 1),
+    supabase.from("checklist_itens").select("*").eq("ativo", 1),
+    supabase.from("config_faixas").select("*").order("ordem"),
+  ]);
+  const respMap = new Map<number, string>(respostasArr.map((r: any) => [r.itemId, r.resposta]));
+  const scoreSecao = (secaoId: number) => {
+    const its = (itens || []).filter((i: any) => i.secao_id === secaoId);
+    const validos = its.filter((i: any) => respMap.get(i.id) && respMap.get(i.id) !== "NA");
+    if (validos.length === 0) return null;
+    const pontos = validos.reduce((acc: number, i: any) => {
+      const r = respMap.get(i.id);
+      if (r === "AT") return acc + 1;
+      if (r === "NAT") return acc + 0.5;
+      return acc;
+    }, 0);
+    return Math.round((pontos / validos.length) * 100);
+  };
+  const ponderado = (titulosFiltro?: string[]) => {
+    const list = (secoes || []).filter((s: any) =>
+      !titulosFiltro || titulosFiltro.some(t => s.titulo?.toLowerCase().includes(t))
+    );
+    let totalPeso = 0;
+    let acc = 0;
+    list.forEach((s: any) => {
+      const sc = scoreSecao(s.id);
+      if (sc != null) {
+        acc += sc * (s.peso || 0);
+        totalPeso += (s.peso || 0);
+      }
+    });
+    return totalPeso > 0 ? Math.round(acc / totalPeso) : null;
+  };
+  const statusFromScore = (sc: number | null) => {
+    if (sc == null) return null;
+    const f = (faixas || []).find((x: any) => sc >= x.minimo && sc <= x.maximo);
+    return f?.nome || null;
+  };
+  return {
+    scoreGeral: ponderado(),
+    scoreQualidade: ponderado(["qualidade"]),
+    scoreCronograma: ponderado(["cronograma", "prazo"]),
+    scoreCondicao: ponderado(["condi", "limpeza", "organiza"]),
+    statusFromScore,
+  };
+}
+
 function mapVerificacaoFromDb(v: any) {
   return {
     ...v,
