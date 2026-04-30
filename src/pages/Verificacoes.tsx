@@ -89,33 +89,33 @@ export default function Verificacoes({
         <div className="grid gap-4">
           {verificacoes.map(v => (
             <Card key={v.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`${rotaBase}/${v.id}`)}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-teal-50 text-teal-600">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                    <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-teal-50 text-teal-600 shrink-0">
                       <ClipboardList className="h-6 w-6" />
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-slate-900">{getObraNome(v.obraId)}</h3>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-semibold text-slate-900 truncate">{getObraNome(v.obraId)}</h3>
                         <Badge className={statusColors[v.statusGeral || ""] || "bg-slate-100 text-slate-600"}>
                           {statusIcon(v.statusGeral)} {v.statusGeral || "—"}
                         </Badge>
                       </div>
-                      <div className="flex items-center gap-4 mt-1 text-sm text-slate-500">
+                      <div className="flex items-center gap-3 sm:gap-4 mt-1 text-xs sm:text-sm text-slate-500 flex-wrap">
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3.5 w-3.5" />
                           {new Date(v.dataVistoria).toLocaleDateString("pt-BR")}
                         </span>
-                        <span className="flex items-center gap-1">
+                        <span className="flex items-center gap-1 truncate max-w-[140px]">
                           <User className="h-3.5 w-3.5" />
-                          {v.avaliador}
+                          <span className="truncate">{v.avaliador}</span>
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-6 shrink-0">
                     {/* Scores */}
                     <div className="hidden md:flex items-center gap-4">
                       <div className="text-center">
