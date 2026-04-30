@@ -121,14 +121,14 @@ export default function PlanosAcao() {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <Select value={obraFilter} onValueChange={setObraFilter}>
-              <SelectTrigger className="min-w-0"><SelectValue placeholder="Obra">{obraFilter === "all" ? "Obra: todas" : undefined}</SelectValue></SelectTrigger>
-              <SelectContent>
+              <SelectTrigger className="w-[200px] shrink-0"><div className="truncate text-left"><SelectValue placeholder="Obra">{obraFilter === "all" ? "Obra: todas" : undefined}</SelectValue></div></SelectTrigger>
+              <SelectContent className="max-w-[320px]">
                 <SelectItem value="all">Todas as obras</SelectItem>
-                {obras?.map(o => <SelectItem key={o.id} value={String(o.id)}>{o.codigo} - {o.nome}</SelectItem>)}
+                {obras?.map(o => <SelectItem key={o.id} value={String(o.id)}><span className="truncate block">{o.codigo} - {o.nome}</span></SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={verticalFilter} onValueChange={setVerticalFilter}>
-              <SelectTrigger className="min-w-0"><SelectValue placeholder="Vertical">{verticalFilter === "all" ? "Vertical: todas" : undefined}</SelectValue></SelectTrigger>
+              <SelectTrigger className="w-[180px] shrink-0"><SelectValue placeholder="Vertical">{verticalFilter === "all" ? "Vertical: todas" : undefined}</SelectValue></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas as verticais</SelectItem>
                 <SelectItem value="qualidade">Qualidade</SelectItem>
@@ -138,7 +138,7 @@ export default function PlanosAcao() {
               </SelectContent>
             </Select>
             <Select value={prioFilter} onValueChange={setPrioFilter}>
-              <SelectTrigger className="min-w-0"><SelectValue placeholder="Prioridade">{prioFilter === "all" ? "Prioridade: todas" : undefined}</SelectValue></SelectTrigger>
+              <SelectTrigger className="w-[180px] shrink-0"><SelectValue placeholder="Prioridade">{prioFilter === "all" ? "Prioridade: todas" : undefined}</SelectValue></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
                 <SelectItem value="urgente">Urgente</SelectItem>
