@@ -240,7 +240,7 @@ export default function DesvioNovo() {
                   <SelectContent>
                     <SelectItem value="qualidade">Qualidade</SelectItem>
                     <SelectItem value="checklist">Checklist</SelectItem>
-                     <SelectItem value="qsms">Inspeção de Segurança</SelectItem>
+                     <SelectItem value="qsms">QSMS</SelectItem>
                   </SelectContent>
                 </Select>
               </Field>
