@@ -20,7 +20,7 @@ export default function PlantaAmbientesDialog({ plantaId, plantaNome, plantaUrl,
   const utils = trpc.useUtils();
   const { data: ambientes, isLoading, refetch } = trpc.plantaAmbientes.listByPlanta.useQuery(
     { plantaId: plantaId! },
-    { enabled: !!plantaId && open, refetchInterval: open ? 4000 : false }
+    { enabled: !!plantaId && open }
   );
 
   const reextract = trpc.plantaAmbientes.reextract.useMutation();
@@ -69,8 +69,8 @@ export default function PlantaAmbientesDialog({ plantaId, plantaNome, plantaUrl,
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-5xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6">
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-violet-600" />
             Ambientes detectados — {plantaNome}
@@ -80,16 +80,18 @@ export default function PlantaAmbientesDialog({ plantaId, plantaNome, plantaUrl,
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-4 flex-1 overflow-hidden">
+        <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_380px] gap-4 flex-1 overflow-hidden px-6 min-h-0">
           {/* Preview da planta */}
-          {plantaUrl && (
-            <div className="hidden md:flex bg-slate-50 rounded-lg overflow-hidden border items-center justify-center p-2">
+          <div className="hidden md:flex bg-slate-50 rounded-lg overflow-hidden border items-center justify-center p-2 min-h-0">
+            {plantaUrl ? (
               <img src={plantaUrl} alt={plantaNome} className="max-w-full max-h-full object-contain" />
-            </div>
-          )}
+            ) : (
+              <span className="text-xs text-muted-foreground">Sem preview</span>
+            )}
+          </div>
 
           {/* Lista */}
-          <div className="flex flex-col overflow-hidden min-w-0">
+          <div className="flex flex-col overflow-hidden min-w-0 min-h-0">
             <div className="flex items-center justify-between gap-2 mb-3">
               <span className="text-sm font-medium whitespace-nowrap">
                 {list.length} ambiente{list.length === 1 ? "" : "s"}
@@ -179,7 +181,7 @@ export default function PlantaAmbientesDialog({ plantaId, plantaNome, plantaUrl,
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 pt-3 border-t">
+        <div className="flex justify-end gap-2 px-6 py-4 border-t mt-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
           <Button onClick={handleConfirm} disabled={markAll.isPending || list.length === 0}>
             <CheckCircle2 className="h-4 w-4 mr-1.5" />
