@@ -775,9 +775,9 @@ async function computeVerificacaoScores(respostasArr: any[]) {
     }, 0);
     return Math.round((pontos / validos.length) * 100);
   };
-  const ponderado = (titulosFiltro?: string[]) => {
+  const ponderado = (categoria?: string) => {
     const list = (secoes || []).filter((s: any) =>
-      !titulosFiltro || titulosFiltro.some(t => s.titulo?.toLowerCase().includes(t))
+      !categoria || s.categoria === categoria
     );
     let totalPeso = 0;
     let acc = 0;
@@ -797,9 +797,9 @@ async function computeVerificacaoScores(respostasArr: any[]) {
   };
   return {
     scoreGeral: ponderado(),
-    scoreQualidade: ponderado(["qualidade"]),
-    scoreCronograma: ponderado(["cronograma", "prazo"]),
-    scoreCondicao: ponderado(["condi", "limpeza", "organiza"]),
+    scoreQualidade: ponderado("qualidade"),
+    scoreCronograma: ponderado("cronograma"),
+    scoreCondicao: ponderado("condicao"),
     statusFromScore,
   };
 }
