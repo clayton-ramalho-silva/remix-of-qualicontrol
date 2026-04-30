@@ -152,10 +152,10 @@ export default function DesviosList() {
             </Select>
             <Select value={origemFilter} onValueChange={setOrigemFilter}>
               <SelectTrigger className="w-full bg-background">
-                <SelectValue placeholder="Origem" />
+                <SelectValue placeholder="Vertical" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Origem</SelectItem>
+                <SelectItem value="all">Vertical</SelectItem>
                 <SelectItem value="qualidade">Qualidade</SelectItem>
                 <SelectItem value="checklist">Checklist</SelectItem>
                  <SelectItem value="qsms">Inspeção de Segurança</SelectItem>
