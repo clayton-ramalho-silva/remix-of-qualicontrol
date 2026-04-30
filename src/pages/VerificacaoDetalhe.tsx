@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useLocation, useParams } from "wouter";
 import {
   ClipboardCheck, ArrowLeft, Calendar, User, Building2,
-  CheckCircle2, XCircle, AlertTriangle, MinusCircle, Printer
+  CheckCircle2, XCircle, AlertTriangle, MinusCircle, Printer, Pencil
 } from "lucide-react";
 
 const statusColors: Record<string, string> = {
@@ -52,9 +52,14 @@ export default function VerificacaoDetalhe() {
             </h1>
           </div>
         </div>
-        <Button variant="outline" onClick={() => window.print()}>
-          <Printer className="h-4 w-4 mr-2" /> Imprimir
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate(`/verificacoes/${data.id}/editar`)}>
+            <Pencil className="h-4 w-4 mr-2" /> Editar
+          </Button>
+          <Button variant="outline" onClick={() => window.print()}>
+            <Printer className="h-4 w-4 mr-2" /> Imprimir
+          </Button>
+        </div>
       </div>
 
       {/* Dados Gerais */}
