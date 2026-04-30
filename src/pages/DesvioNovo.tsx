@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import PlantaPinSelector from "@/components/PlantaPinSelector";
 import VoiceRecorderButton from "@/components/VoiceRecorderButton";
+import { PhotoPickerButton } from "@/components/PhotoPickerButton";
 
 type Foto = { file: File; preview: string };
 
@@ -328,11 +329,7 @@ export default function DesvioNovo() {
                       </button>
                     </div>
                   ))}
-                  <label className="w-24 h-24 rounded-lg border-2 border-dashed border-muted-foreground/20 flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-primary/40 hover:bg-primary/5">
-                    <Upload className="h-5 w-5 text-muted-foreground/50" />
-                    <span className="text-[10px] text-muted-foreground/50">Foto</span>
-                    <input type="file" accept="image/*" multiple onChange={handleFileChange} className="hidden" />
-                  </label>
+                  <PhotoPickerButton onFiles={handleFileChange} />
                 </div>
               </div>
 
