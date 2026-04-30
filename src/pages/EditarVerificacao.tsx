@@ -225,6 +225,12 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
                           </div>
                         </div>
                       )}
+                      {exigeFoto && cur && cur !== "NA" && (
+                        <RespostaFotosUploader
+                          fotos={respostas[item.id]?.fotos || []}
+                          onChange={(f) => setFotosItem(item.id, f)}
+                        />
+                      )}
                     </div>
                   );
                 })}
