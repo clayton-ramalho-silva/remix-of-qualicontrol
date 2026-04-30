@@ -109,6 +109,29 @@ export default function Administracao() {
         <p className="text-slate-500 mt-1">Configure pesos, itens do checklist e faixas de classificação</p>
       </div>
 
+      {/* Seletor de categoria/vertical */}
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-slate-600">Vertical:</span>
+        <div className="inline-flex rounded-lg border border-slate-200 bg-white p-1">
+          {[
+            { id: "qualidade", label: "Qualidade" },
+            { id: "vistoria", label: "Vistoria de Recebimento" },
+          ].map(opt => (
+            <button
+              key={opt.id}
+              onClick={() => setCategoria(opt.id)}
+              className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                categoria === opt.id
+                  ? "bg-teal-600 text-white"
+                  : "text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <Tabs defaultValue="pesos">
         <TabsList className="grid w-full grid-cols-3 max-w-lg">
           <TabsTrigger value="pesos" className="flex items-center gap-1.5">
