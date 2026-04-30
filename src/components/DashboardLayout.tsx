@@ -110,7 +110,7 @@ function DashboardLayoutContent({
 }: DashboardLayoutContentProps) {
   const { user, logout } = useAuth();
   const [location, setLocation] = useLocation();
-  const { state, toggleSidebar } = useSidebar();
+  const { state, toggleSidebar, isMobile: sidebarIsMobile, setOpenMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -192,7 +192,10 @@ function DashboardLayoutContent({
                   <SidebarMenuItem key={navItem.path}>
                     <SidebarMenuButton
                       isActive={isActive}
-                      onClick={() => setLocation(navItem.path)}
+                      onClick={() => {
+                        setLocation(navItem.path);
+                        if (sidebarIsMobile) setOpenMobile(false);
+                      }}
                       tooltip={navItem.label}
                       className="h-10 transition-all font-normal"
                     >
