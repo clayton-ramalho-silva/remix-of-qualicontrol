@@ -47,13 +47,15 @@ export default function DesvioNovo() {
   const [contextCollapsed, setContextCollapsed] = useState(false);
   const [obraId, setObraId] = useState("");
   const [ambiente, setAmbiente] = useState("");
-  const [vertical, setVertical] = useState<"qualidade" | "checklist" | "qsms">("qualidade");
+  const [vertical, setVertical] = useState<"" | "qualidade" | "checklist" | "qsms">("");
   const coverColByVertical = {
     qualidade: "cobertura_qualidade",
     checklist: "cobertura_checklist",
     qsms: "cobertura_qsms",
   } as const;
-  const obras = obrasAll?.filter((o: any) => Number(o[coverColByVertical[vertical]] ?? 0) > 0);
+  const obras = vertical
+    ? obrasAll?.filter((o: any) => Number(o[coverColByVertical[vertical]] ?? 0) > 0)
+    : obrasAll;
   const [dataInspecao, setDataInspecao] = useState(new Date().toISOString().split("T")[0]);
   const [plantaId, setPlantaId] = useState<number | null>(null);
   const [pinX, setPinX] = useState<string | null>(null);
@@ -123,6 +125,7 @@ export default function DesvioNovo() {
   const salvarDesvio = async (continuar: boolean) => {
     if (!grupoId) { toast.error("Selecione o grupo"); return; }
     if (!descricao.trim()) { toast.error("Descreva o desvio"); return; }
+    if (!vertical) { toast.error("Selecione a vertical"); return; }
     const grupo = grupos?.find(g => g.id === parseInt(grupoId));
 
     setSubmitting(true);
@@ -233,7 +236,7 @@ export default function DesvioNovo() {
 
               <Field label="Vertical" hint={HINTS.vertical} required>
                 <Select value={vertical} onValueChange={v => setVertical(v as any)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Selecione a vertical..." /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="qualidade">Qualidade</SelectItem>
                     <SelectItem value="checklist">Checklist</SelectItem>
