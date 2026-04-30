@@ -239,7 +239,7 @@ function DashboardLayoutContent({
         />
       )}
 
-      <SidebarInset className="flex-1 min-w-0">
+      <SidebarInset className="flex-1 min-w-0 overflow-x-hidden">
         <OfflineIndicator />
         {/* Header bar with notification bell */}
         <div className={`flex border-b h-14 items-center justify-between bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40 ${isMobile ? '' : ''}`}>
@@ -271,7 +271,7 @@ function DashboardLayoutContent({
             )}
           </div>
         </div>
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 p-4 sm:p-6 overflow-x-hidden">{children}</main>
       </SidebarInset>
     </div>
   );

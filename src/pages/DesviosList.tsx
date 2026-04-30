@@ -240,7 +240,7 @@ export default function DesviosList() {
                         )}
                       </div>
                       <p className="text-sm font-medium truncate">{desvio.descricao}</p>
-                      <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-2 sm:gap-3 mt-2 text-xs text-muted-foreground flex-wrap">
                         <span>{desvio.disciplina}</span>
                         {desvio.fornecedorNome && (
                           <>

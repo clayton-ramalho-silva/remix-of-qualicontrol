@@ -167,12 +167,12 @@ export default function Administracao() {
                 <p className="text-slate-500">Carregando...</p>
               ) : (
                 checklist?.map(secao => (
-                  <div key={secao.id} className="flex items-center gap-4 p-4 rounded-lg border border-slate-200 bg-white">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-teal-100 text-teal-700 font-bold">
+                  <div key={secao.id} className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg border border-slate-200 bg-white">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-teal-100 text-teal-700 font-bold shrink-0">
                       {secao.numero}
                     </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium text-slate-900">{secao.titulo}</h4>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-slate-900 truncate">{secao.titulo}</h4>
                       <p className="text-xs text-slate-500">{secao.itens?.length || 0} itens</p>
                     </div>
                     {editingSecao === secao.id ? (
@@ -210,13 +210,13 @@ export default function Administracao() {
                         <Button size="sm" variant="ghost" onClick={() => setEditingSecao(null)}>Cancelar</Button>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-3 sm:gap-4 shrink-0">
                         <div className="text-center">
                           <p className="text-xs text-slate-400">Peso</p>
                           <p className="text-lg font-bold text-slate-900">{secao.peso}</p>
                         </div>
                         <div className="text-center">
-                          <p className="text-xs text-slate-400">Reincidência</p>
+                          <p className="text-xs text-slate-400">Reincid.</p>
                           <p className="text-lg font-bold text-slate-900">{secao.reincidencia}%</p>
                         </div>
                         <Button size="sm" variant="outline" onClick={() => startEditSecao(secao)}>
