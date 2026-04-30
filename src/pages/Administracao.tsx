@@ -103,7 +103,7 @@ export default function Administracao() {
       <div>
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
           <Settings className="h-7 w-7 text-teal-600" />
-          Administração
+          Parâmetros
         </h1>
         <p className="text-slate-500 mt-1">Configure pesos, itens do checklist e faixas de classificação</p>
       </div>
