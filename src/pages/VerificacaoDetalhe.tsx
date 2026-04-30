@@ -22,7 +22,9 @@ const respIcons: Record<string, any> = {
   "NA": { icon: MinusCircle, color: "text-slate-400", bg: "bg-slate-50", label: "N/A" },
 };
 
-export default function VerificacaoDetalhe() {
+type Props = { rotaBase?: string; titulo?: string };
+
+export default function VerificacaoDetalhe({ rotaBase = "/verificacoes", titulo }: Props = {}) {
   const [, navigate] = useLocation();
   const params = useParams<{ id: string }>();
   const { data: obras } = trpc.obras.list.useQuery();
@@ -42,18 +44,18 @@ export default function VerificacaoDetalhe() {
       {/* Header */}
       <div className="flex items-center justify-between print:hidden">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/verificacoes")}>
+          <Button variant="ghost" size="sm" onClick={() => navigate(rotaBase)}>
             <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
               <ClipboardCheck className="h-7 w-7 text-teal-600" />
-              Verificação #{data.id}
+              {titulo ? `${titulo} #${data.id}` : `Verificação #${data.id}`}
             </h1>
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate(`/verificacoes/${data.id}/editar`)}>
+          <Button variant="outline" onClick={() => navigate(`${rotaBase}/${data.id}/editar`)}>
             <Pencil className="h-4 w-4 mr-2" /> Editar
           </Button>
           <Button variant="outline" onClick={() => window.print()}>
