@@ -48,7 +48,7 @@ const ORIGENS = [
     bgActive: "bg-orange-100 ring-2 ring-orange-400 shadow-md",
     bgInactive: "bg-orange-50/60 hover:bg-orange-100/80",
     iconBg: "bg-orange-500",
-    description: "Assistência técnica",
+    description: "QSMS",
   },
 ] as const;
 
