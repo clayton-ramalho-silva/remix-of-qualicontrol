@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      alocacoes: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data: string
+          id: number
+          membro_id: number
+          obra_id: number
+          observacao: string | null
+          status: Database["public"]["Enums"]["alocacao_status"]
+          updated_at: string
+          vertical: Database["public"]["Enums"]["origem_desvio"]
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data: string
+          id?: number
+          membro_id: number
+          obra_id: number
+          observacao?: string | null
+          status?: Database["public"]["Enums"]["alocacao_status"]
+          updated_at?: string
+          vertical: Database["public"]["Enums"]["origem_desvio"]
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data?: string
+          id?: number
+          membro_id?: number
+          obra_id?: number
+          observacao?: string | null
+          status?: Database["public"]["Enums"]["alocacao_status"]
+          updated_at?: string
+          vertical?: Database["public"]["Enums"]["origem_desvio"]
+        }
+        Relationships: []
+      }
       checklist_itens: {
         Row: {
           ativo: number
@@ -781,6 +820,7 @@ export type Database = {
       }
     }
     Enums: {
+      alocacao_status: "pendente" | "cumprido" | "cancelado"
       app_role: "admin" | "user"
       cargo_membro:
         | "avaliador"
@@ -941,6 +981,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      alocacao_status: ["pendente", "cumprido", "cancelado"],
       app_role: ["admin", "user"],
       cargo_membro: [
         "avaliador",
