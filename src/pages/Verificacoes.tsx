@@ -41,12 +41,12 @@ export default function Verificacoes() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             <ClipboardList className="h-7 w-7 text-teal-600" />
-            Verificações de Qualidade
+             Vistorias de Entrega de Obra
           </h1>
-          <p className="text-slate-500 mt-1">Histórico de verificações e checklists preenchidos</p>
+           <p className="text-slate-500 mt-1">Histórico de vistorias e checklists preenchidos</p>
         </div>
         <Button onClick={() => navigate("/verificacoes/nova")} className="bg-teal-600 hover:bg-teal-700 text-white">
-          <Plus className="h-4 w-4 mr-2" /> Nova Verificação
+           <Plus className="h-4 w-4 mr-2" /> Nova Vistoria
         </Button>
       </div>
 
@@ -71,7 +71,7 @@ export default function Verificacoes() {
           <CardContent className="py-12 text-center">
             <ClipboardList className="h-12 w-12 text-slate-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-slate-600">Nenhuma verificação encontrada</h3>
-            <p className="text-slate-400 mt-1">Clique em "Nova Verificação" para iniciar o primeiro checklist</p>
+             <p className="text-slate-400 mt-1">Clique em "Nova Vistoria" para iniciar o primeiro checklist</p>
           </CardContent>
         </Card>
       ) : (

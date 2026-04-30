@@ -51,7 +51,7 @@ type MenuItem = { icon: typeof LayoutDashboard; label: string; path: string; sep
 
 const menuItems: MenuItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-  { icon: ClipboardCheck, label: "Qualidade", path: "/verificacoes" },
+   { icon: ClipboardCheck, label: "Vistoria", path: "/verificacoes" },
   { icon: PlusCircle, label: "Novo Desvio", path: "/desvios/novo" },
   { icon: ClipboardList, label: "Desvios", path: "/desvios" },
   { icon: BrainCircuit, label: "Assistente IA", path: "/assistente" },

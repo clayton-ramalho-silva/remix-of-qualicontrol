@@ -38,7 +38,7 @@ const ORIGENS = [
     bgActive: "bg-violet-100 ring-2 ring-violet-400 shadow-md",
     bgInactive: "bg-violet-50/60 hover:bg-violet-100/80",
     iconBg: "bg-violet-500",
-    description: "Pendências de entrega",
+     description: "Vistoria de Entrega de Obra",
   },
   {
     key: "qsms" as const,
