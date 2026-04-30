@@ -34,7 +34,7 @@ const STATUS_MAP: Record<string, { label: string; icon: React.ReactNode; classNa
 const ORIGEM_MAP: Record<string, { label: string; className: string }> = {
   qualidade: { label: "Qualidade", className: "bg-sky-100 text-sky-700" },
   checklist: { label: "Checklist", className: "bg-violet-100 text-violet-700" },
-  qsms: { label: "QSMS", className: "bg-orange-100 text-orange-700" },
+   qsms: { label: "Inspeção de Segurança", className: "bg-orange-100 text-orange-700" },
 };
 
 const TIMELINE_ICONS: Record<string, { icon: React.ReactNode; color: string }> = {
