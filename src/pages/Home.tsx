@@ -268,8 +268,8 @@ export default function Home() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
             { tag: "chamado_critico", label: "Chamado Crítico", icon: Siren, count: kpis?.porClassificacao?.chamado_critico ?? 0, colors: { bg: "bg-red-50/80 hover:bg-red-100", border: "border-red-100 hover:border-red-200", iconBg: "bg-red-500", title: "text-red-500", value: "text-red-700", arrow: "text-red-300" } },
-            { tag: "seguranca_trabalho", label: "Segurança do Trabalho", icon: HardHat, count: kpis?.porClassificacao?.seguranca_trabalho ?? 0, colors: { bg: "bg-amber-50/80 hover:bg-amber-100", border: "border-amber-100 hover:border-amber-200", iconBg: "bg-amber-500", title: "text-amber-600", value: "text-amber-700", arrow: "text-amber-300" } },
-            { tag: "solicitado_cliente", label: "Solicitado pelo Cliente", icon: UserRoundCheck, count: kpis?.porClassificacao?.solicitado_cliente ?? 0, colors: { bg: "bg-blue-50/80 hover:bg-blue-100", border: "border-blue-100 hover:border-blue-200", iconBg: "bg-blue-500", title: "text-blue-500", value: "text-blue-700", arrow: "text-blue-300" } },
+            { tag: "seguranca_trabalho", label: "Dep. Definição Projeto/Contratação", icon: HardHat, count: kpis?.porClassificacao?.seguranca_trabalho ?? 0, colors: { bg: "bg-amber-50/80 hover:bg-amber-100", border: "border-amber-100 hover:border-amber-200", iconBg: "bg-amber-500", title: "text-amber-600", value: "text-amber-700", arrow: "text-amber-300" } },
+            { tag: "solicitado_cliente", label: "Pendente Agendamento GO", icon: UserRoundCheck, count: kpis?.porClassificacao?.solicitado_cliente ?? 0, colors: { bg: "bg-blue-50/80 hover:bg-blue-100", border: "border-blue-100 hover:border-blue-200", iconBg: "bg-blue-500", title: "text-blue-500", value: "text-blue-700", arrow: "text-blue-300" } },
           ].map((item) => {
             const Icon = item.icon;
             return (
@@ -291,9 +291,6 @@ export default function Home() {
           })}
         </div>
       ) : null}
-
-      {/* Última Verificação de Qualidade */}
-      <LastVerificacaoCard obraId={obraIdNum} />
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
