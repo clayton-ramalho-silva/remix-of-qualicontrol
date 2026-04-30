@@ -32,7 +32,8 @@ const HINTS = {
 export default function DesvioNovo() {
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
-  const { data: obras } = trpc.obras.list.useQuery();
+  const { data: obrasAll } = trpc.obras.list.useQuery();
+  const obras = obrasAll?.filter((o: any) => Number(o.cobertura) === 1);
   const { data: fornecedoresDb } = trpc.fornecedores.list.useQuery();
   const { data: grupos } = trpc.grupos.list.useQuery();
 

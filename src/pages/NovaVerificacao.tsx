@@ -25,7 +25,8 @@ interface RespostaItem {
 
 export default function NovaVerificacao() {
   const [, navigate] = useLocation();
-  const { data: obras } = trpc.obras.list.useQuery();
+  const { data: obrasAll } = trpc.obras.list.useQuery();
+  const obras = obrasAll?.filter((o: any) => Number(o.cobertura) === 1);
   const { data: checklist, isLoading } = trpc.checklist.getCompleto.useQuery();
   const createVerificacao = trpc.verificacoes.create.useMutation();
 
