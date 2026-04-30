@@ -206,23 +206,74 @@ const queryResolvers: Record<string, Resolver> = {
 
   // --- KPIs ---
   "kpis.get": async (filters: any = {}) => {
-    let q = supabase.from("desvios").select("status, severidade, origem, tag_critico, tag_seguranca_trabalho, tag_solicitado_cliente, prazo_sugerido, data_fechamento, data_identificacao, obra_id");
+    let q = supabase.from("desvios").select("status, severidade, origem, tag_critico, tag_seguranca_trabalho, tag_solicitado_cliente, prazo_sugerido, data_fechamento, data_identificacao, obra_id, disciplina, grupo_id, fornecedor_nome");
     if (filters?.obraId) q = q.eq("obra_id", filters.obraId);
+    if (filters?.origem) q = q.eq("origem", filters.origem);
     const { data, error } = await q;
     if (error) throw error;
+    // Buscar grupos para mapear grupo_id -> nome
+    const { data: grupos } = await supabase.from("grupos").select("id, nome");
+    const grupoMap = new Map<number, string>((grupos || []).map((g: any) => [g.id, g.nome]));
+
     const desvios = data || [];
     const total = desvios.length;
-    const abertos = desvios.filter((d: any) => d.status !== "fechado").length;
+    const abertos = desvios.filter((d: any) => d.status === "aberto").length;
+    const emAndamento = desvios.filter((d: any) => d.status === "em_andamento").length;
+    const aguardandoAceite = desvios.filter((d: any) => d.status === "aguardando_aceite").length;
     const fechados = desvios.filter((d: any) => d.status === "fechado").length;
     const graves = desvios.filter((d: any) => d.severidade === "grave").length;
     const now = Date.now();
     const atrasados = desvios.filter((d: any) =>
       d.status !== "fechado" && d.status !== "aguardando_aceite" && d.prazo_sugerido && Number(d.prazo_sugerido) < now
     ).length;
-    const criticos = desvios.filter((d: any) => d.tag_critico === 1).length;
-    const segurancaTrabalho = desvios.filter((d: any) => d.tag_seguranca_trabalho === 1).length;
-    const solicitadoCliente = desvios.filter((d: any) => d.tag_solicitado_cliente === 1).length;
-    return { total, abertos, fechados, graves, atrasados, criticos, segurancaTrabalho, solicitadoCliente };
+    const taxaFechamento = total > 0 ? Math.round((fechados / total) * 100) : 0;
+
+    const porClassificacao = {
+      chamado_critico: desvios.filter((d: any) => d.tag_critico === 1).length,
+      seguranca_trabalho: desvios.filter((d: any) => d.tag_seguranca_trabalho === 1).length,
+      solicitado_cliente: desvios.filter((d: any) => d.tag_solicitado_cliente === 1).length,
+    };
+
+    const porSeveridade = {
+      leve: desvios.filter((d: any) => d.severidade === "leve").length,
+      moderado: desvios.filter((d: any) => d.severidade === "moderado").length,
+      grave: desvios.filter((d: any) => d.severidade === "grave").length,
+    };
+
+    const porOrigem: Record<string, number> = { qualidade: 0, punch_list: 0, pos_obra: 0 };
+    desvios.forEach((d: any) => {
+      if (d.origem && porOrigem[d.origem] !== undefined) porOrigem[d.origem]++;
+    });
+
+    const porGrupo: Record<string, { total: number; abertos: number; fechados: number; graves: number }> = {};
+    desvios.forEach((d: any) => {
+      const nome = (d.grupo_id && grupoMap.get(d.grupo_id)) || d.disciplina || "Sem grupo";
+      const cur = porGrupo[nome] || { total: 0, abertos: 0, fechados: 0, graves: 0 };
+      cur.total++;
+      if (d.status !== "fechado") cur.abertos++;
+      if (d.status === "fechado") cur.fechados++;
+      if (d.severidade === "grave") cur.graves++;
+      porGrupo[nome] = cur;
+    });
+
+    const porFornecedor: Record<string, { total: number; abertos: number; graves: number }> = {};
+    desvios.forEach((d: any) => {
+      const nome = d.fornecedor_nome || "Sem fornecedor";
+      const cur = porFornecedor[nome] || { total: 0, abertos: 0, graves: 0 };
+      cur.total++;
+      if (d.status !== "fechado") cur.abertos++;
+      if (d.severidade === "grave") cur.graves++;
+      porFornecedor[nome] = cur;
+    });
+
+    return {
+      total, abertos, emAndamento, aguardandoAceite, fechados, graves, atrasados, taxaFechamento,
+      porClassificacao, porSeveridade, porOrigem, porGrupo, porFornecedor,
+      // legacy aliases
+      criticos: porClassificacao.chamado_critico,
+      segurancaTrabalho: porClassificacao.seguranca_trabalho,
+      solicitadoCliente: porClassificacao.solicitado_cliente,
+    };
   },
   "kpis.fornecedorPerformance": async (filters: any = {}) => {
     let q = supabase.from("desvios").select("fornecedor_nome, status, severidade, data_identificacao, data_fechamento, obra_id");
