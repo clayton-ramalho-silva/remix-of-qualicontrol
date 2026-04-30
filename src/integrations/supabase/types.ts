@@ -460,6 +460,7 @@ export type Database = {
           created_at: string
           endereco: string | null
           id: number
+          marcacao: string | null
           nome: string
           status: Database["public"]["Enums"]["status_obra"]
           updated_at: string
@@ -471,6 +472,7 @@ export type Database = {
           created_at?: string
           endereco?: string | null
           id?: number
+          marcacao?: string | null
           nome: string
           status?: Database["public"]["Enums"]["status_obra"]
           updated_at?: string
@@ -482,6 +484,7 @@ export type Database = {
           created_at?: string
           endereco?: string | null
           id?: number
+          marcacao?: string | null
           nome?: string
           status?: Database["public"]["Enums"]["status_obra"]
           updated_at?: string

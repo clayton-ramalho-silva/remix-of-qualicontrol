@@ -1,0 +1,1 @@
+ALTER TABLE public.obras ADD COLUMN IF NOT EXISTS marcacao text CHECK (marcacao IN ('na_fila','descartada'));
