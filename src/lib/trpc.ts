@@ -359,6 +359,9 @@ const mutationResolvers: Record<string, Resolver> = {
     if ("endereco" in rest) patch.endereco = rest.endereco ?? null;
     if ("status" in rest) patch.status = rest.status;
     if ("cobertura" in rest) patch.cobertura = rest.cobertura;
+    if ("cobertura_qualidade" in rest) patch.cobertura_qualidade = rest.cobertura_qualidade;
+    if ("cobertura_checklist" in rest) patch.cobertura_checklist = rest.cobertura_checklist;
+    if ("cobertura_qsms" in rest) patch.cobertura_qsms = rest.cobertura_qsms;
     const { data, error } = await supabase.from("obras").update(patch).eq("id", id).select().single();
     if (error) throw error;
     return data;
