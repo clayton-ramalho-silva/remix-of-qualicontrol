@@ -6,7 +6,7 @@ import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import {
   AlertTriangle, CheckCircle2, Clock, FileWarning, TrendingUp,
-  ArrowRight, BarChart3, Activity, ClipboardCheck, UserCheck,
+  ArrowRight, BarChart3, Activity, UserCheck,
   Search, ClipboardList, Wrench, Siren, HardHat, UserRoundCheck,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -268,8 +268,8 @@ export default function Home() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
             { tag: "chamado_critico", label: "Chamado Crítico", icon: Siren, count: kpis?.porClassificacao?.chamado_critico ?? 0, colors: { bg: "bg-red-50/80 hover:bg-red-100", border: "border-red-100 hover:border-red-200", iconBg: "bg-red-500", title: "text-red-500", value: "text-red-700", arrow: "text-red-300" } },
-            { tag: "seguranca_trabalho", label: "Segurança do Trabalho", icon: HardHat, count: kpis?.porClassificacao?.seguranca_trabalho ?? 0, colors: { bg: "bg-amber-50/80 hover:bg-amber-100", border: "border-amber-100 hover:border-amber-200", iconBg: "bg-amber-500", title: "text-amber-600", value: "text-amber-700", arrow: "text-amber-300" } },
-            { tag: "solicitado_cliente", label: "Solicitado pelo Cliente", icon: UserRoundCheck, count: kpis?.porClassificacao?.solicitado_cliente ?? 0, colors: { bg: "bg-blue-50/80 hover:bg-blue-100", border: "border-blue-100 hover:border-blue-200", iconBg: "bg-blue-500", title: "text-blue-500", value: "text-blue-700", arrow: "text-blue-300" } },
+            { tag: "seguranca_trabalho", label: "Dep. Definição Projeto/Contratação", icon: HardHat, count: kpis?.porClassificacao?.seguranca_trabalho ?? 0, colors: { bg: "bg-amber-50/80 hover:bg-amber-100", border: "border-amber-100 hover:border-amber-200", iconBg: "bg-amber-500", title: "text-amber-600", value: "text-amber-700", arrow: "text-amber-300" } },
+            { tag: "solicitado_cliente", label: "Pendente Agendamento GO", icon: UserRoundCheck, count: kpis?.porClassificacao?.solicitado_cliente ?? 0, colors: { bg: "bg-blue-50/80 hover:bg-blue-100", border: "border-blue-100 hover:border-blue-200", iconBg: "bg-blue-500", title: "text-blue-500", value: "text-blue-700", arrow: "text-blue-300" } },
           ].map((item) => {
             const Icon = item.icon;
             return (
@@ -291,9 +291,6 @@ export default function Home() {
           })}
         </div>
       ) : null}
-
-      {/* Última Verificação de Qualidade */}
-      <LastVerificacaoCard obraId={obraIdNum} />
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -523,79 +520,6 @@ export default function Home() {
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-const statusColors: Record<string, string> = {
-  "ÓTIMA": "bg-emerald-100 text-emerald-700",
-  "REGULAR": "bg-amber-100 text-amber-700",
-  "RUIM": "bg-red-100 text-red-700",
-  "CRÍTICO": "bg-red-200 text-red-900",
-};
-
-function LastVerificacaoCard({ obraId }: { obraId?: number }) {
-  const [, setLocation] = useLocation();
-  const { data: verificacoes, isLoading } = trpc.verificacoes.list.useQuery(
-    obraId ? { obraId } : undefined
-  );
-  const { data: obras } = trpc.obras.list.useQuery();
-
-  const ultima = verificacoes?.[0];
-  const obraNome = ultima ? obras?.find(o => o.id === ultima.obraId)?.nome : undefined;
-
-  if (isLoading) return <Skeleton className="h-32 rounded-xl" />;
-  if (!ultima) return null;
-
-  const scores = [
-    { label: "Geral", score: ultima.scoreGeral, status: ultima.statusGeral },
-    { label: "Condição", score: ultima.scoreCondicao, status: ultima.statusCondicao },
-    { label: "Qualidade", score: ultima.scoreQualidade, status: ultima.statusQualidade },
-    { label: "Cronograma", score: ultima.scoreCronograma, status: ultima.statusCronograma },
-  ];
-
-  return (
-    <Card className="shadow-sm border-0 bg-card">
-      <CardContent className="p-5">
-        <div className="mb-4 space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <ClipboardCheck className="h-5 w-5 text-teal-600 shrink-0" />
-              <h3 className="font-semibold text-foreground">Última Verificação</h3>
-            </div>
-            <button
-              onClick={() => setLocation(`/verificacoes/${ultima.id}`)}
-              className="text-xs text-primary hover:underline flex items-center gap-1 shrink-0"
-            >
-              Ver detalhes <ArrowRight className="h-3 w-3" />
-            </button>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {obraNome && (
-              <Badge variant="outline" className="text-xs font-medium border-primary/30 text-primary">
-                {obraNome}
-              </Badge>
-            )}
-            <span className="text-xs text-muted-foreground">
-              {new Date(ultima.dataVistoria).toLocaleDateString("pt-BR")}
-            </span>
-            <Badge className={statusColors[ultima.statusGeral || ""] || "bg-slate-100 text-slate-600"}>
-              {ultima.statusGeral || "—"}
-            </Badge>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {scores.map((s) => (
-            <div key={s.label} className="text-center p-3 rounded-lg bg-muted/30">
-              <p className="text-xs text-muted-foreground uppercase mb-1">{s.label}</p>
-              <p className="text-2xl font-bold text-foreground">{s.score ?? "—"}%</p>
-              <Badge className={`mt-1 text-xs ${statusColors[s.status || ""] || "bg-slate-100 text-slate-600"}`}>
-                {s.status || "—"}
-              </Badge>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
   );
 }
 
