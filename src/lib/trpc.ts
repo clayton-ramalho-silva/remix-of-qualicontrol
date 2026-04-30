@@ -152,12 +152,18 @@ const queryResolvers: Record<string, Resolver> = {
     const { data, error } = await supabase.from("verificacoes").select("*").eq("id", id).maybeSingle();
     if (error) throw error;
     if (!data) return null;
-    const { data: respostas } = await supabase
-      .from("verificacao_respostas")
-      .select("*")
-      .eq("verificacao_id", id);
+    const [{ data: respostas }, { data: secoes }, { data: itens }] = await Promise.all([
+      supabase.from("verificacao_respostas").select("*").eq("verificacao_id", id),
+      supabase.from("checklist_secoes").select("*").eq("ativo", 1).order("ordem"),
+      supabase.from("checklist_itens").select("*").eq("ativo", 1).order("ordem"),
+    ]);
+    const checklist = (secoes || []).map((s: any) => ({
+      ...s,
+      itens: (itens || []).filter((i: any) => i.secao_id === s.id),
+    }));
     return {
       ...mapVerificacaoFromDb(data),
+      checklist,
       respostas: (respostas || []).map((r: any) => ({
         id: r.id,
         itemId: r.item_id,
@@ -549,53 +555,9 @@ const mutationResolvers: Record<string, Resolver> = {
 
   // --- VERIFICACOES ---
   "verificacoes.create": async (input: any) => {
-    // Calcular scores a partir das respostas + seções
-    const { data: secoes } = await supabase.from("checklist_secoes").select("*").eq("ativo", 1);
-    const { data: itens } = await supabase.from("checklist_itens").select("*").eq("ativo", 1);
-    const { data: faixas } = await supabase.from("config_faixas").select("*").order("ordem");
-
     const respostasArr = input.respostas || [];
-    const respMap = new Map<number, string>(respostasArr.map((r: any) => [r.itemId, r.resposta]));
-
-    const scoreSecao = (secaoId: number) => {
-      const its = (itens || []).filter((i: any) => i.secao_id === secaoId);
-      const validos = its.filter((i: any) => respMap.get(i.id) && respMap.get(i.id) !== "NA");
-      if (validos.length === 0) return null;
-      const pontos = validos.reduce((acc: number, i: any) => {
-        const r = respMap.get(i.id);
-        if (r === "AT") return acc + 1;
-        if (r === "NAT") return acc + 0.5;
-        return acc; // GR = 0
-      }, 0);
-      return Math.round((pontos / validos.length) * 100);
-    };
-
-    const ponderado = (titulosFiltro?: string[]) => {
-      const list = (secoes || []).filter((s: any) =>
-        !titulosFiltro || titulosFiltro.some(t => s.titulo?.toLowerCase().includes(t))
-      );
-      let totalPeso = 0;
-      let acc = 0;
-      list.forEach((s: any) => {
-        const sc = scoreSecao(s.id);
-        if (sc != null) {
-          acc += sc * (s.peso || 0);
-          totalPeso += (s.peso || 0);
-        }
-      });
-      return totalPeso > 0 ? Math.round(acc / totalPeso) : null;
-    };
-
-    const scoreGeral = ponderado();
-    const scoreQualidade = ponderado(["qualidade"]);
-    const scoreCronograma = ponderado(["cronograma", "prazo"]);
-    const scoreCondicao = ponderado(["condi", "limpeza", "organiza"]);
-
-    const statusFromScore = (sc: number | null) => {
-      if (sc == null) return null;
-      const f = (faixas || []).find((x: any) => sc >= x.minimo && sc <= x.maximo);
-      return f?.nome || null;
-    };
+    const { scoreGeral, scoreQualidade, scoreCronograma, scoreCondicao, statusFromScore } =
+      await computeVerificacaoScores(respostasArr);
 
     const insertObj: any = {
       obra_id: input.obraId,
@@ -639,6 +601,51 @@ const mutationResolvers: Record<string, Resolver> = {
         scoreCondicao,
         statusGeral: statusFromScore(scoreGeral),
       },
+    };
+  },
+
+  "verificacoes.update": async (input: any) => {
+    const { id } = input;
+    const respostasArr = input.respostas || [];
+    const { scoreGeral, scoreQualidade, scoreCronograma, scoreCondicao, statusFromScore } =
+      await computeVerificacaoScores(respostasArr);
+
+    const patch: any = {
+      score_geral: scoreGeral,
+      score_qualidade: scoreQualidade,
+      score_cronograma: scoreCronograma,
+      score_condicao: scoreCondicao,
+      status_geral: statusFromScore(scoreGeral),
+      status_qualidade: statusFromScore(scoreQualidade),
+      status_cronograma: statusFromScore(scoreCronograma),
+      status_condicao: statusFromScore(scoreCondicao),
+    };
+    ["obraId:obra_id", "avaliador:avaliador", "dataVistoria:data_vistoria",
+     "go:go", "gc:gc", "nucleo:nucleo", "diretoria:diretoria", "observacoes:observacoes"
+    ].forEach(map => {
+      const [k, col] = map.split(":");
+      if (k in input && input[k] !== undefined) patch[col] = input[k];
+    });
+
+    const { data: verif, error } = await supabase.from("verificacoes").update(patch).eq("id", id).select().single();
+    if (error) throw error;
+
+    // Substituir respostas
+    await supabase.from("verificacao_respostas").delete().eq("verificacao_id", id);
+    if (respostasArr.length > 0) {
+      const rows = respostasArr.map((r: any) => ({
+        verificacao_id: id,
+        item_id: r.itemId,
+        resposta: r.resposta,
+        observacao: r.observacao ?? null,
+      }));
+      const { error: rErr } = await supabase.from("verificacao_respostas").insert(rows);
+      if (rErr) throw rErr;
+    }
+
+    return {
+      ...mapVerificacaoFromDb(verif),
+      scores: { scoreGeral, scoreQualidade, scoreCronograma, scoreCondicao, statusGeral: statusFromScore(scoreGeral) },
     };
   },
 
@@ -746,6 +753,54 @@ function mapMembroFromDb(m: any) {
   return {
     ...m,
     obraIds: Array.isArray(m.obra_ids) ? m.obra_ids : (m.obra_ids ?? []),
+  };
+}
+
+async function computeVerificacaoScores(respostasArr: any[]) {
+  const [{ data: secoes }, { data: itens }, { data: faixas }] = await Promise.all([
+    supabase.from("checklist_secoes").select("*").eq("ativo", 1),
+    supabase.from("checklist_itens").select("*").eq("ativo", 1),
+    supabase.from("config_faixas").select("*").order("ordem"),
+  ]);
+  const respMap = new Map<number, string>(respostasArr.map((r: any) => [r.itemId, r.resposta]));
+  const scoreSecao = (secaoId: number) => {
+    const its = (itens || []).filter((i: any) => i.secao_id === secaoId);
+    const validos = its.filter((i: any) => respMap.get(i.id) && respMap.get(i.id) !== "NA");
+    if (validos.length === 0) return null;
+    const pontos = validos.reduce((acc: number, i: any) => {
+      const r = respMap.get(i.id);
+      if (r === "AT") return acc + 1;
+      if (r === "NAT") return acc + 0.5;
+      return acc;
+    }, 0);
+    return Math.round((pontos / validos.length) * 100);
+  };
+  const ponderado = (titulosFiltro?: string[]) => {
+    const list = (secoes || []).filter((s: any) =>
+      !titulosFiltro || titulosFiltro.some(t => s.titulo?.toLowerCase().includes(t))
+    );
+    let totalPeso = 0;
+    let acc = 0;
+    list.forEach((s: any) => {
+      const sc = scoreSecao(s.id);
+      if (sc != null) {
+        acc += sc * (s.peso || 0);
+        totalPeso += (s.peso || 0);
+      }
+    });
+    return totalPeso > 0 ? Math.round(acc / totalPeso) : null;
+  };
+  const statusFromScore = (sc: number | null) => {
+    if (sc == null) return null;
+    const f = (faixas || []).find((x: any) => sc >= x.minimo && sc <= x.maximo);
+    return f?.nome || null;
+  };
+  return {
+    scoreGeral: ponderado(),
+    scoreQualidade: ponderado(["qualidade"]),
+    scoreCronograma: ponderado(["cronograma", "prazo"]),
+    scoreCondicao: ponderado(["condi", "limpeza", "organiza"]),
+    statusFromScore,
   };
 }
 

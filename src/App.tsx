@@ -20,6 +20,7 @@ import Relatorio from "./pages/Relatorio";
 import Verificacoes from "./pages/Verificacoes";
 import NovaVerificacao from "./pages/NovaVerificacao";
 import VerificacaoDetalhe from "./pages/VerificacaoDetalhe";
+import EditarVerificacao from "./pages/EditarVerificacao";
 import Administracao from "./pages/Administracao";
 import Usuarios from "./pages/Usuarios";
 import Plantas from "./pages/Plantas";
@@ -54,6 +55,7 @@ function ProtectedShell() {
         <Route path="/relatorio" component={Relatorio} />
         <Route path="/verificacoes" component={Verificacoes} />
         <Route path="/verificacoes/nova" component={NovaVerificacao} />
+        <Route path="/verificacoes/:id/editar" component={EditarVerificacao} />
         <Route path="/verificacoes/:id" component={VerificacaoDetalhe} />
         <Route path="/plantas" component={Plantas} />
         <Route path="/plantas/:id" component={PlantaView} />
