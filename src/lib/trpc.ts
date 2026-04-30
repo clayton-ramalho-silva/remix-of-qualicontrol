@@ -616,6 +616,10 @@ const mutationResolvers: Record<string, Resolver> = {
       ordem: input.ordem ?? 0,
     }).select().single();
     if (error) throw error;
+    // Dispara extração de ambientes em background (sem bloquear)
+    supabase.functions.invoke("extrair-ambientes-planta", {
+      body: { plantaId: data.id },
+    }).catch((e) => console.warn("Falha ao iniciar extração de ambientes:", e));
     return { ...data, fileKey: data.file_key, obraId: data.obra_id };
   },
   "plantas.update": async (input: any) => {
@@ -634,6 +638,53 @@ const mutationResolvers: Record<string, Resolver> = {
     }
     const { error } = await supabase.from("plantas").delete().eq("id", input.id);
     if (error) throw error;
+    return { ok: true };
+  },
+
+  // --- PLANTA AMBIENTES ---
+  "plantaAmbientes.reextract": async ({ plantaId }: { plantaId: number }) => {
+    const { data, error } = await supabase.functions.invoke("extrair-ambientes-planta", {
+      body: { plantaId },
+    });
+    if (error) throw error;
+    return data;
+  },
+  "plantaAmbientes.create": async (input: any) => {
+    const { data, error } = await supabase.from("planta_ambientes").insert({
+      planta_id: input.plantaId,
+      nome: input.nome,
+      pavimento: input.pavimento || null,
+      numero: input.numero || null,
+      origem: input.origem || "manual",
+      revisado: 1,
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
+  "plantaAmbientes.update": async (input: any) => {
+    const { id, ...rest } = input;
+    const patch: any = {};
+    if ("nome" in rest) patch.nome = rest.nome;
+    if ("pavimento" in rest) patch.pavimento = rest.pavimento || null;
+    if ("numero" in rest) patch.numero = rest.numero || null;
+    if ("revisado" in rest) patch.revisado = rest.revisado ? 1 : 0;
+    if ("ativo" in rest) patch.ativo = rest.ativo ? 1 : 0;
+    const { data, error } = await supabase.from("planta_ambientes").update(patch).eq("id", id).select().single();
+    if (error) throw error;
+    return data;
+  },
+  "plantaAmbientes.delete": async ({ id }: { id: number }) => {
+    const { error } = await supabase.from("planta_ambientes").delete().eq("id", id);
+    if (error) throw error;
+    return { ok: true };
+  },
+  "plantaAmbientes.markAllReviewed": async ({ plantaId }: { plantaId: number }) => {
+    const { error } = await supabase
+      .from("planta_ambientes")
+      .update({ revisado: 1 })
+      .eq("planta_id", plantaId);
+    if (error) throw error;
+    await supabase.from("plantas").update({ extracao_status: "revisado" }).eq("id", plantaId);
     return { ok: true };
   },
 
