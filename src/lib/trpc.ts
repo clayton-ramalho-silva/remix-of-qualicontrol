@@ -738,6 +738,24 @@ const mutationResolvers: Record<string, Resolver> = {
       }));
       const { error: rErr } = await supabase.from("verificacao_respostas").insert(rows);
       if (rErr) throw rErr;
+
+      // Persistir fotos por item (vistoria de recebimento)
+      const fotoRows: any[] = [];
+      respostasArr.forEach((r: any) => {
+        (r.fotos || []).forEach((f: any) => {
+          if (!f?.url || !f?.fileKey) return;
+          fotoRows.push({
+            verificacao_id: verif.id,
+            item_id: r.itemId,
+            url: f.url,
+            file_key: f.fileKey,
+            descricao: f.descricao ?? null,
+          });
+        });
+      });
+      if (fotoRows.length > 0) {
+        await supabase.from("verificacao_resposta_fotos" as any).insert(fotoRows);
+      }
     }
 
     return {
@@ -783,6 +801,7 @@ const mutationResolvers: Record<string, Resolver> = {
 
     // Substituir respostas
     await supabase.from("verificacao_respostas").delete().eq("verificacao_id", id);
+    await supabase.from("verificacao_resposta_fotos" as any).delete().eq("verificacao_id", id);
     if (respostasArr.length > 0) {
       const rows = respostasArr.map((r: any) => ({
         verificacao_id: id,
@@ -792,6 +811,23 @@ const mutationResolvers: Record<string, Resolver> = {
       }));
       const { error: rErr } = await supabase.from("verificacao_respostas").insert(rows);
       if (rErr) throw rErr;
+
+      const fotoRows: any[] = [];
+      respostasArr.forEach((r: any) => {
+        (r.fotos || []).forEach((f: any) => {
+          if (!f?.url || !f?.fileKey) return;
+          fotoRows.push({
+            verificacao_id: id,
+            item_id: r.itemId,
+            url: f.url,
+            file_key: f.fileKey,
+            descricao: f.descricao ?? null,
+          });
+        });
+      });
+      if (fotoRows.length > 0) {
+        await supabase.from("verificacao_resposta_fotos" as any).insert(fotoRows);
+      }
     }
 
     return {
