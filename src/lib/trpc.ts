@@ -696,8 +696,9 @@ const mutationResolvers: Record<string, Resolver> = {
   // --- VERIFICACOES ---
   "verificacoes.create": async (input: any) => {
     const respostasArr = input.respostas || [];
+    const categoria = input.categoria || "qualidade";
     const { scoreGeral, scoreQualidade, scoreCronograma, scoreCondicao, statusFromScore } =
-      await computeVerificacaoScores(respostasArr);
+      await computeVerificacaoScores(respostasArr, categoria);
 
     const insertObj: any = {
       obra_id: input.obraId,
@@ -708,6 +709,7 @@ const mutationResolvers: Record<string, Resolver> = {
       nucleo: input.nucleo ?? null,
       diretoria: input.diretoria ?? null,
       observacoes: input.observacoes ?? null,
+      categoria,
       score_geral: scoreGeral,
       score_qualidade: scoreQualidade,
       score_cronograma: scoreCronograma,
