@@ -41,12 +41,12 @@ export default function Verificacoes() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             <ClipboardList className="h-7 w-7 text-teal-600" />
-             Vistorias de Entrega de Obra
+             Verificações de Qualidade
           </h1>
            <p className="text-slate-500 mt-1">Histórico de vistorias e checklists preenchidos</p>
         </div>
         <Button onClick={() => navigate("/verificacoes/nova")} className="bg-teal-600 hover:bg-teal-700 text-white">
-           <Plus className="h-4 w-4 mr-2" /> Nova Vistoria
+           <Plus className="h-4 w-4 mr-2" /> Nova Verificação
         </Button>
       </div>
 
