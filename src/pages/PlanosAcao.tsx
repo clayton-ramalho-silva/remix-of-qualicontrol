@@ -119,7 +119,7 @@ export default function PlanosAcao() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Buscar ação, responsável, desvio vinculado..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Select value={obraFilter} onValueChange={setObraFilter}>
               <SelectTrigger className="min-w-0"><SelectValue placeholder="Obra">{obraFilter === "all" ? "Obra: todas" : undefined}</SelectValue></SelectTrigger>
               <SelectContent>
@@ -146,6 +146,7 @@ export default function PlanosAcao() {
                 <SelectItem value="baixa">Baixa</SelectItem>
               </SelectContent>
             </Select>
+            <div className="flex-1" />
             <Button variant={meus ? "default" : "outline"} onClick={() => setMeus(v => !v)} className={meus ? "bg-teal-600 hover:bg-teal-700 text-white" : ""}>
               <User className="h-4 w-4 mr-2" /> Meus Planos
             </Button>
