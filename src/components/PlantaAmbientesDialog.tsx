@@ -134,28 +134,45 @@ export default function PlantaAmbientesDialog({ plantaId, plantaNome, plantaUrl,
             {/* Adicionar manual */}
             <div className="border-t pt-3 mt-3 space-y-2">
               <p className="text-xs font-medium text-muted-foreground">Adicionar manualmente</p>
-              <div className="grid grid-cols-[1fr_90px_90px_auto] gap-2">
-                <Input
-                  placeholder="Nome (ex: Sala 1)"
-                  value={novoNome}
-                  onChange={e => setNovoNome(e.target.value)}
-                  className="h-9 text-sm"
-                />
-                <Input
-                  placeholder="Pavto"
-                  value={novoPav}
-                  onChange={e => setNovoPav(e.target.value)}
-                  className="h-9 text-sm"
-                />
-                <Input
-                  placeholder="Nº"
-                  value={novoNum}
-                  onChange={e => setNovoNum(e.target.value)}
-                  className="h-9 text-sm"
-                />
-                <Button size="sm" onClick={handleAdd} disabled={!novoNome.trim() || createAmb.isPending}>
-                  <Plus className="h-3.5 w-3.5" />
-                </Button>
+              <div className="space-y-2">
+                <div>
+                  <label className="text-[11px] text-muted-foreground mb-1 block">Nome do ambiente</label>
+                  <Input
+                    placeholder="ex: Sala de Reunião, Copa, Apto 301"
+                    value={novoNome}
+                    onChange={e => setNovoNome(e.target.value)}
+                    className="h-9 text-sm"
+                  />
+                </div>
+                <div className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end">
+                  <div>
+                    <label className="text-[11px] text-muted-foreground mb-1 block">Pavimento</label>
+                    <Input
+                      placeholder="ex: Térreo"
+                      value={novoPav}
+                      onChange={e => setNovoPav(e.target.value)}
+                      className="h-9 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-muted-foreground mb-1 block">Número</label>
+                    <Input
+                      placeholder="ex: 301"
+                      value={novoNum}
+                      onChange={e => setNovoNum(e.target.value)}
+                      className="h-9 text-sm"
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={handleAdd}
+                    disabled={!novoNome.trim() || createAmb.isPending}
+                    className="h-9"
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1" />
+                    Adicionar
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
