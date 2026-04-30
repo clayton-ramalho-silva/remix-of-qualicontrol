@@ -7,7 +7,6 @@ import { Textarea } from "@/components/ui/textarea";
 import VoiceRecorderButton from "@/components/VoiceRecorderButton";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,7 +17,7 @@ import {
   ArrowLeft, AlertTriangle, CheckCircle2, Clock, FileWarning,
   PlusCircle, MessageSquare, Camera, ClipboardCheck, Edit3,
   Send, Loader2, Image as ImageIcon, Upload, X, Tag, UserCheck, ShieldAlert,
-  Zap, ArrowDown, Minus, HelpCircle, Save, MapPin,
+  HelpCircle, Save, MapPin,
 } from "lucide-react";
 import PlantaPinSelector from "@/components/PlantaPinSelector";
 
@@ -65,12 +64,6 @@ export default function DesvioDetalhe() {
   const addComment = trpc.historico.addComment.useMutation({
     onSuccess: () => { utils.desvios.getById.invalidate({ id: desvioId }); setComment(""); toast.success("Comentário adicionado!"); },
   });
-  const createPlano = trpc.planos.create.useMutation({
-    onSuccess: () => { utils.desvios.getById.invalidate({ id: desvioId }); setShowPlanoDialog(false); toast.success("Plano de ação criado!"); },
-  });
-  const updatePlano = trpc.planos.update.useMutation({
-    onSuccess: () => { utils.desvios.getById.invalidate({ id: desvioId }); toast.success("Plano atualizado!"); },
-  });
   const uploadFoto = trpc.fotos.upload.useMutation({
     onSuccess: () => {
       utils.desvios.getById.invalidate({ id: desvioId });
@@ -85,13 +78,6 @@ export default function DesvioDetalhe() {
   const { data: grupos } = trpc.grupos.list.useQuery();
 
   const [comment, setComment] = useState("");
-  const [showPlanoDialog, setShowPlanoDialog] = useState(false);
-  const [planoAcao, setPlanoAcao] = useState("");
-  const [planoRespTipo, setPlanoRespTipo] = useState<"membro" | "fornecedor">("membro");
-  const [planoRespId, setPlanoRespId] = useState<string>("");
-  const [planoPrioridade, setPlanoPrioridade] = useState<"urgente" | "normal" | "baixa">("normal");
-  const [planoPrazo, setPlanoPrazo] = useState("");
-  const [planoObs, setPlanoObs] = useState("");
   const [fechamentoFotos, setFechamentoFotos] = useState<{ file: File; preview: string }[]>([]);
   const [uploadingFechamento, setUploadingFechamento] = useState(false);
 
@@ -160,19 +146,6 @@ export default function DesvioDetalhe() {
       toast.error("Erro ao atualizar desvio.");
     } finally {
       setSavingEdit(false);
-    }
-  };
-
-  // Resolve responsible name and email from selection
-  const getResponsavelInfo = () => {
-    const id = parseInt(planoRespId);
-    if (isNaN(id)) return { nome: "", email: "", id: undefined };
-    if (planoRespTipo === "membro") {
-      const m = membros?.find(m => m.id === id);
-      return { nome: m?.nome || "", email: m?.email || "", id };
-    } else {
-      const f = fornecedoresData?.find(f => f.id === id);
-      return { nome: f?.nome || "", email: f?.email || "", id };
     }
   };
 
