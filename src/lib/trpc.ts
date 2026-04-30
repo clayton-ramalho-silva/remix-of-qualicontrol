@@ -898,11 +898,11 @@ function mapMembroFromDb(m: any) {
   };
 }
 
-async function computeVerificacaoScores(respostasArr: any[]) {
+async function computeVerificacaoScores(respostasArr: any[], rootCategoria: string = "qualidade") {
   const [{ data: secoes }, { data: itens }, { data: faixas }] = await Promise.all([
     supabase.from("checklist_secoes").select("*").eq("ativo", 1),
     supabase.from("checklist_itens").select("*").eq("ativo", 1),
-    supabase.from("config_faixas").select("*").order("ordem"),
+    supabase.from("config_faixas").select("*").eq("categoria", rootCategoria).order("ordem"),
   ]);
   const respMap = new Map<number, string>(respostasArr.map((r: any) => [r.itemId, r.resposta]));
   const scoreSecao = (secaoId: number) => {
