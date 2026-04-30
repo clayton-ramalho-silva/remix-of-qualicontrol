@@ -98,6 +98,45 @@ export default function Alocacao() {
     },
   });
 
+  // Atividade real para decidir "cumprido": verificações (Qualidade) ou desvios (Checklist/QSMS)
+  const startMs = new Date(rangeStart.getFullYear(), rangeStart.getMonth(), rangeStart.getDate()).getTime();
+  const endMs   = new Date(rangeEnd.getFullYear(),   rangeEnd.getMonth(),   rangeEnd.getDate(), 23, 59, 59).getTime();
+
+  const { data: atividade } = useQuery({
+    queryKey: ["alocacoes-atividade", vertical, startMs, endMs],
+    queryFn: async (): Promise<Set<string>> => {
+      // Set de chaves "obraId|YYYY-MM-DD" indicando que houve atividade compatível
+      const set = new Set<string>();
+      const toKey = (obraId: number, ts: number) => `${obraId}|${toIsoDate(new Date(ts))}`;
+      if (vertical === "qualidade") {
+        const { data, error } = await supabase
+          .from("verificacoes")
+          .select("obra_id, data_vistoria")
+          .gte("data_vistoria", startMs)
+          .lte("data_vistoria", endMs);
+        if (error) throw error;
+        (data || []).forEach((v: any) => set.add(toKey(v.obra_id, Number(v.data_vistoria))));
+      } else {
+        const { data, error } = await supabase
+          .from("desvios")
+          .select("obra_id, data_identificacao, origem")
+          .eq("origem", vertical)
+          .gte("data_identificacao", startMs)
+          .lte("data_identificacao", endMs);
+        if (error) throw error;
+        (data || []).forEach((d: any) => set.add(toKey(d.obra_id, Number(d.data_identificacao))));
+      }
+      return set;
+    },
+  });
+
+  // Calcula status efetivo: cancelado manual prevalece; senão, cumprido se houve atividade; senão, pendente.
+  const effectiveStatus = (a: Alocacao): Status => {
+    if (a.status === "cancelado") return "cancelado";
+    if (atividade?.has(`${a.obra_id}|${a.data}`)) return "cumprido";
+    return "pendente";
+  };
+
   const filtered = useMemo(() => {
     return (alocacoes || []).filter(a =>
       (filterMembro === "all" || String(a.membro_id) === filterMembro) &&
@@ -122,9 +161,9 @@ export default function Alocacao() {
   );
   const kpis = {
     total: monthOnly.length,
-    pendentes: monthOnly.filter(a => a.status === "pendente").length,
-    cumpridos: monthOnly.filter(a => a.status === "cumprido").length,
-    cancelados: monthOnly.filter(a => a.status === "cancelado").length,
+    pendentes: monthOnly.filter(a => effectiveStatus(a) === "pendente").length,
+    cumpridos: monthOnly.filter(a => effectiveStatus(a) === "cumprido").length,
+    cancelados: monthOnly.filter(a => effectiveStatus(a) === "cancelado").length,
   };
 
   const upsert = useMutation({
@@ -263,7 +302,7 @@ export default function Alocacao() {
                 </div>
                 <div className="space-y-0.5">
                   {events.slice(0, 4).map(ev => {
-                    const st = statusStyles[ev.status];
+                    const st = statusStyles[effectiveStatus(ev)];
                     const Icon = st.icon;
                     const membro = membroById.get(ev.membro_id);
                     const obra = obraById.get(ev.obra_id);
