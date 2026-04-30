@@ -604,9 +604,57 @@ export type Database = {
           },
         ]
       }
+      planta_ambientes: {
+        Row: {
+          ativo: number
+          created_at: string
+          id: number
+          nome: string
+          numero: string | null
+          origem: string
+          pavimento: string | null
+          pin_x: number | null
+          pin_y: number | null
+          planta_id: number
+          revisado: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: number
+          created_at?: string
+          id?: number
+          nome: string
+          numero?: string | null
+          origem?: string
+          pavimento?: string | null
+          pin_x?: number | null
+          pin_y?: number | null
+          planta_id: number
+          revisado?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: number
+          created_at?: string
+          id?: number
+          nome?: string
+          numero?: string | null
+          origem?: string
+          pavimento?: string | null
+          pin_x?: number | null
+          pin_y?: number | null
+          planta_id?: number
+          revisado?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       plantas: {
         Row: {
           created_at: string
+          extracao_at: string | null
+          extracao_erro: string | null
+          extracao_status: string
           file_key: string
           id: number
           nome: string
@@ -617,6 +665,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          extracao_at?: string | null
+          extracao_erro?: string | null
+          extracao_status?: string
           file_key: string
           id?: number
           nome: string
@@ -627,6 +678,9 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          extracao_at?: string | null
+          extracao_erro?: string | null
+          extracao_status?: string
           file_key?: string
           id?: number
           nome?: string

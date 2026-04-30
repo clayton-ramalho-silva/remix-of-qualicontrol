@@ -8,8 +8,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
-import { Map, Upload, Trash2, Pencil, Eye, Loader2, ImageIcon, Layers } from "lucide-react";
+import { Map, Upload, Trash2, Pencil, Eye, Loader2, ImageIcon, Layers, Sparkles } from "lucide-react";
 import { useLocation } from "wouter";
+import PlantaAmbientesDialog from "@/components/PlantaAmbientesDialog";
 
 export default function Plantas() {
   const utils = trpc.useUtils();
@@ -36,6 +37,9 @@ export default function Plantas() {
   // Preview state
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewNome, setPreviewNome] = useState("");
+
+  // Ambientes dialog
+  const [ambientesPlanta, setAmbientesPlanta] = useState<{ id: number; nome: string; url: string } | null>(null);
 
   const uploadPlanta = trpc.plantas.upload.useMutation({
     onSuccess: () => {
@@ -220,6 +224,11 @@ export default function Plantas() {
                           onClick={() => navigate(`/plantas/${planta.id}`)}>
                           <Eye className="h-3.5 w-3.5" />
                         </Button>
+                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-violet-600 hover:text-violet-700"
+                          title={`Ambientes (${(planta as any).extracao_status || "pendente"})`}
+                          onClick={() => setAmbientesPlanta({ id: planta.id, nome: planta.nome, url: planta.url })}>
+                          <Sparkles className="h-3.5 w-3.5" />
+                        </Button>
                         <Button size="sm" variant="ghost" className="h-7 w-7 p-0"
                           onClick={() => { setEditId(planta.id); setEditNome(planta.nome); }}>
                           <Pencil className="h-3.5 w-3.5" />
@@ -312,6 +321,14 @@ export default function Plantas() {
           )}
         </DialogContent>
       </Dialog>
+
+      <PlantaAmbientesDialog
+        plantaId={ambientesPlanta?.id ?? null}
+        plantaNome={ambientesPlanta?.nome}
+        plantaUrl={ambientesPlanta?.url}
+        open={!!ambientesPlanta}
+        onOpenChange={(o) => { if (!o) setAmbientesPlanta(null); }}
+      />
     </div>
   );
 }
