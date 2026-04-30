@@ -11,15 +11,47 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Calendar, ChevronLeft, ChevronRight, Filter, Plus, Check, X, Clock, ShieldCheck, ListChecks, HardHat, Trash2 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 
 type Vertical = "qualidade" | "checklist" | "qsms";
 type Status = "pendente" | "cumprido" | "cancelado";
 
-const verticais: { key: Vertical; label: string; icon: any; coverCol: "cobertura_qualidade" | "cobertura_checklist" | "cobertura_qsms" }[] = [
-  { key: "qualidade", label: "Qualidade", icon: ShieldCheck, coverCol: "cobertura_qualidade" },
-  { key: "checklist", label: "Checklist", icon: ListChecks, coverCol: "cobertura_checklist" },
-  { key: "qsms",      label: "QSMS",      icon: HardHat,    coverCol: "cobertura_qsms" },
+const verticais: {
+  key: Vertical;
+  label: string;
+  icon: any;
+  coverCol: "cobertura_qualidade" | "cobertura_checklist" | "cobertura_qsms";
+  // cores por status (pendente / cumprido / cancelado) específicas da vertical
+  styles: { pendente: string; cumprido: string; cancelado: string; dot: string };
+}[] = [
+  {
+    key: "qualidade", label: "Qualidade", icon: ShieldCheck, coverCol: "cobertura_qualidade",
+    styles: {
+      pendente:  "bg-sky-50 border-sky-300 text-sky-900",
+      cumprido:  "bg-sky-600 border-sky-700 text-white",
+      cancelado: "bg-sky-50 border-sky-200 text-sky-700 line-through opacity-60",
+      dot: "bg-sky-500",
+    },
+  },
+  {
+    key: "checklist", label: "Checklist", icon: ListChecks, coverCol: "cobertura_checklist",
+    styles: {
+      pendente:  "bg-amber-50 border-amber-300 text-amber-900",
+      cumprido:  "bg-amber-500 border-amber-600 text-white",
+      cancelado: "bg-amber-50 border-amber-200 text-amber-700 line-through opacity-60",
+      dot: "bg-amber-500",
+    },
+  },
+  {
+    key: "qsms", label: "QSMS", icon: HardHat, coverCol: "cobertura_qsms",
+    styles: {
+      pendente:  "bg-emerald-50 border-emerald-300 text-emerald-900",
+      cumprido:  "bg-emerald-600 border-emerald-700 text-white",
+      cancelado: "bg-emerald-50 border-emerald-200 text-emerald-700 line-through opacity-60",
+      dot: "bg-emerald-500",
+    },
+  },
 ];
 
 type Alocacao = {
@@ -52,10 +84,10 @@ function buildMonthGrid(refDate: Date): Date[] {
   });
 }
 
-const statusStyles: Record<Status, { wrap: string; icon: any; label: string }> = {
-  pendente:  { wrap: "bg-amber-50 border-amber-200 text-amber-900", icon: Clock,  label: "Pendente" },
-  cumprido:  { wrap: "bg-emerald-50 border-emerald-200 text-emerald-900", icon: Check, label: "Cumprido" },
-  cancelado: { wrap: "bg-red-50 border-red-200 text-red-900 line-through opacity-70", icon: X, label: "Cancelado" },
+const statusMeta: Record<Status, { icon: any; label: string }> = {
+  pendente:  { icon: Clock, label: "Pendente" },
+  cumprido:  { icon: Check, label: "Cumprido" },
+  cancelado: { icon: X,     label: "Cancelado" },
 };
 
 export default function Alocacao() {
@@ -207,6 +239,7 @@ export default function Alocacao() {
   const today = toIsoDate(new Date());
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -302,20 +335,41 @@ export default function Alocacao() {
                 </div>
                 <div className="space-y-0.5">
                   {events.slice(0, 4).map(ev => {
-                    const st = statusStyles[effectiveStatus(ev)];
-                    const Icon = st.icon;
+                    const eff = effectiveStatus(ev);
+                    const vSty = verticais.find(x => x.key === ev.vertical)!.styles;
+                    const wrap = vSty[eff];
+                    const meta = statusMeta[eff];
+                    const Icon = meta.icon;
                     const membro = membroById.get(ev.membro_id);
                     const obra = obraById.get(ev.obra_id);
+                    const obraLabel = obra ? `${obra.codigo} — ${obra.nome}` : "Obra ?";
+                    const membroLabel = membro?.nome ?? "Membro ?";
                     return (
-                      <button
-                        key={ev.id}
-                        data-event
-                        onClick={() => setEditing(ev)}
-                        className={`w-full text-left text-[10px] px-1.5 py-0.5 rounded border ${st.wrap} flex items-center gap-1 truncate hover:brightness-95`}
-                      >
-                        <Icon className="h-3 w-3 shrink-0" />
-                        <span className="truncate">{membro?.nome ?? "?"} → {obra?.codigo ?? "?"}</span>
-                      </button>
+                      <Tooltip key={ev.id}>
+                        <TooltipTrigger asChild>
+                          <button
+                            data-event
+                            onClick={() => setEditing(ev)}
+                            className={`w-full text-left text-[10px] px-1.5 py-0.5 rounded border ${wrap} flex items-center gap-1 truncate hover:brightness-95`}
+                          >
+                            <Icon className="h-3 w-3 shrink-0" />
+                            <span className="truncate">{membroLabel} → {obra?.codigo ?? "?"}</span>
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          <div className="space-y-1 text-xs">
+                            <div className="font-semibold flex items-center gap-1.5">
+                              <span className={`inline-block h-2 w-2 rounded-full ${verticais.find(x => x.key === ev.vertical)!.styles.dot}`} />
+                              {verticais.find(x => x.key === ev.vertical)!.label} · {meta.label}
+                            </div>
+                            <div><span className="text-muted-foreground">Membro:</span> {membroLabel}</div>
+                            <div><span className="text-muted-foreground">Obra:</span> {obraLabel}</div>
+                            {obra?.cliente && <div><span className="text-muted-foreground">Cliente:</span> {obra.cliente}</div>}
+                            <div><span className="text-muted-foreground">Data:</span> {new Date(ev.data + "T12:00:00").toLocaleDateString("pt-BR")}</div>
+                            {ev.observacao && <div className="pt-1 border-t border-border/40"><span className="text-muted-foreground">Obs:</span> {ev.observacao}</div>}
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
                     );
                   })}
                   {events.length > 4 && (<div className="text-[10px] text-muted-foreground pl-1">+{events.length - 4}</div>)}
@@ -406,5 +460,6 @@ export default function Alocacao() {
         </DialogContent>
       </Dialog>
     </div>
+    </TooltipProvider>
   );
 }
