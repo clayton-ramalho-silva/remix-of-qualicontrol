@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Search, Plus, Pencil, ArrowRight, ArrowLeft, Calendar, Loader2 } from "lucide-react";
+import { Building2, Search, Plus, Pencil, Calendar, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 type Obra = {
@@ -20,28 +20,86 @@ type Obra = {
   status: "ativa" | "pausada" | "concluida";
   cobertura: number;
   ultimoDesvio?: number | null;
+  ultimaVistoria?: number | null;
+  classificacao?: string | null;
+  scoreGeral?: number | null;
+};
+
+type ObraEditable = Pick<Obra, "codigo" | "nome" | "cliente" | "endereco" | "status" | "cobertura">;
+
+const classificacaoClasses: Record<string, string> = {
+  "ÓTIMA": "border-emerald-200 bg-emerald-50 text-emerald-700",
+  "EXCELENTE": "border-emerald-200 bg-emerald-50 text-emerald-700",
+  "BOM": "border-sky-200 bg-sky-50 text-sky-700",
+  "REGULAR": "border-amber-200 bg-amber-50 text-amber-700",
+  "RUIM": "border-red-200 bg-red-50 text-red-700",
+  "CRÍTICO": "border-red-300 bg-red-100 text-red-900",
+  "CRITICO": "border-red-300 bg-red-100 text-red-900",
+};
+
+const statusLabel: Record<Obra["status"], string> = {
+  ativa: "Ativa",
+  pausada: "Pausada",
+  concluida: "Concluída",
+};
+
+const getClassificacaoClassName = (classificacao?: string | null) => {
+  if (!classificacao) return "border-border bg-muted text-muted-foreground";
+  return classificacaoClasses[classificacao.trim().toUpperCase()] || "border-border bg-muted text-muted-foreground";
 };
 
 export default function Obras() {
   const qc = useQueryClient();
 
-  const { data: obrasWithDesvio, isLoading } = useQuery({
-    queryKey: ["obras", "with-ultimo-desvio"],
+  const { data: obrasResumo, isLoading } = useQuery({
+    queryKey: ["obras", "with-resumo"],
     queryFn: async (): Promise<Obra[]> => {
-      const { data: obras, error } = await supabase.from("obras").select("*").order("codigo");
-      if (error) throw error;
-      const { data: desvios } = await supabase.from("desvios").select("obra_id, data_identificacao");
+      const [obrasResult, desviosResult, verificacoesResult] = await Promise.all([
+        supabase.from("obras").select("*").order("codigo"),
+        supabase.from("desvios").select("obra_id, data_identificacao"),
+        supabase
+          .from("verificacoes")
+          .select("obra_id, data_vistoria, status_geral, score_geral")
+          .order("data_vistoria", { ascending: false }),
+      ]);
+
+      if (obrasResult.error) throw obrasResult.error;
+      if (desviosResult.error) throw desviosResult.error;
+      if (verificacoesResult.error) throw verificacoesResult.error;
+
       const lastByObra = new Map<number, number>();
-      (desvios || []).forEach((d: any) => {
+      (desviosResult.data || []).forEach((d: any) => {
         const cur = lastByObra.get(d.obra_id) ?? 0;
-        if (d.data_identificacao > cur) lastByObra.set(d.obra_id, d.data_identificacao);
+        const dataIdentificacao = Number(d.data_identificacao);
+        if (dataIdentificacao > cur) lastByObra.set(d.obra_id, dataIdentificacao);
       });
-      return (obras || []).map((o: any) => ({ ...o, ultimoDesvio: lastByObra.get(o.id) ?? null }));
+
+      const ultimaVerificacaoByObra = new Map<number, { data_vistoria: number | null; status_geral: string | null; score_geral: number | null }>();
+      (verificacoesResult.data || []).forEach((v: any) => {
+        if (!ultimaVerificacaoByObra.has(v.obra_id)) {
+          ultimaVerificacaoByObra.set(v.obra_id, {
+            data_vistoria: v.data_vistoria ? Number(v.data_vistoria) : null,
+            status_geral: v.status_geral,
+            score_geral: v.score_geral,
+          });
+        }
+      });
+
+      return (obrasResult.data || []).map((o: any) => {
+        const ultimaVerificacao = ultimaVerificacaoByObra.get(o.id);
+        return {
+          ...o,
+          ultimoDesvio: lastByObra.get(o.id) ?? null,
+          ultimaVistoria: ultimaVerificacao?.data_vistoria ?? null,
+          classificacao: ultimaVerificacao?.status_geral ?? null,
+          scoreGeral: ultimaVerificacao?.score_geral ?? null,
+        };
+      });
     },
   });
 
   const updateObra = useMutation({
-    mutationFn: async (input: { id: number } & Partial<Omit<Obra, "ultimoDesvio">>) => {
+    mutationFn: async (input: { id: number } & Partial<ObraEditable>) => {
       const { id, ...rest } = input;
       const { error } = await supabase.from("obras").update(rest).eq("id", id);
       if (error) throw error;
@@ -70,20 +128,17 @@ export default function Obras() {
   const [editObra, setEditObra] = useState<any>(null);
   const [newObra, setNewObra] = useState({ codigo: "", nome: "", cliente: "", endereco: "" });
 
-  const { gerais, cobertas } = useMemo(() => {
-    if (!obrasWithDesvio) return { gerais: [] as Obra[], cobertas: [] as Obra[] };
+  const obrasFiltradas = useMemo(() => {
+    if (!obrasResumo) return [] as Obra[];
     const term = searchTerm.toLowerCase();
-    const filtered = obrasWithDesvio.filter((o) =>
-      !term || o.nome.toLowerCase().includes(term) || o.codigo.toLowerCase().includes(term)
+    return obrasResumo.filter((o) =>
+      !term ||
+      o.nome.toLowerCase().includes(term) ||
+      o.codigo.toLowerCase().includes(term) ||
+      (o.cliente || "").toLowerCase().includes(term) ||
+      (o.classificacao || "sem classificação").toLowerCase().includes(term)
     );
-    return {
-      gerais: filtered.filter((o) => o.cobertura === 0),
-      cobertas: filtered.filter((o) => o.cobertura === 1),
-    };
-  }, [obrasWithDesvio, searchTerm]);
-
-  const handleMoveToCobertas = (id: number) => { updateObra.mutate({ id, cobertura: 1 }); toast.success("Obra movida para Cobertas"); };
-  const handleMoveToGerais = (id: number) => { updateObra.mutate({ id, cobertura: 0 }); toast.success("Obra movida para Gerais"); };
+  }, [obrasResumo, searchTerm]);
 
   const handleCreate = () => {
     if (!newObra.codigo || !newObra.nome) { toast.error("Preencha código e nome"); return; }
@@ -114,34 +169,38 @@ export default function Obras() {
     return new Date(timestamp).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" });
   };
 
-  const ObraCard = ({ obra, side }: { obra: Obra; side: "gerais" | "cobertas" }) => (
-    <div className="flex items-center gap-2 p-3 rounded-lg border bg-card hover:bg-accent/30 transition-colors group">
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
+  const ObraCard = ({ obra }: { obra: Obra }) => (
+    <div className="flex flex-col gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-accent/20 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0 flex-1 space-y-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-mono text-muted-foreground">{obra.codigo}</span>
           <Badge variant={obra.status === "ativa" ? "default" : obra.status === "pausada" ? "secondary" : "outline"} className="text-[10px] px-1.5 py-0">
-            {obra.status === "ativa" ? "Ativa" : obra.status === "pausada" ? "Pausada" : "Concluída"}
+            {statusLabel[obra.status]}
+          </Badge>
+          <Badge variant="outline" className={getClassificacaoClassName(obra.classificacao)}>
+            {obra.classificacao || "Sem classificação"}
           </Badge>
         </div>
-        <p className="font-medium text-sm truncate mt-0.5">{obra.nome}</p>
-        <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-          <Calendar className="h-3 w-3" />
+
+        <div className="min-w-0">
+          <p className="truncate font-medium text-sm sm:text-base">{obra.nome}</p>
+          {obra.cliente ? <p className="truncate text-xs text-muted-foreground sm:text-sm">{obra.cliente}</p> : null}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Calendar className="h-3 w-3" />
+            Última inspeção: {formatDate(obra.ultimaVistoria)}
+          </span>
           <span>Último desvio: {formatDate(obra.ultimoDesvio)}</span>
+          <span>Score geral: {obra.scoreGeral != null ? `${obra.scoreGeral}%` : "—"}</span>
         </div>
       </div>
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditObra({ ...obra }); setShowEdit(true); }}>
-          <Pencil className="h-3.5 w-3.5" />
+
+      <div className="flex justify-end">
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditObra({ ...obra }); setShowEdit(true); }}>
+          <Pencil className="h-4 w-4" />
         </Button>
-        {side === "gerais" ? (
-          <Button variant="ghost" size="icon" className="h-7 w-7 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" onClick={() => handleMoveToCobertas(obra.id)} title="Mover para Cobertas">
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-        ) : (
-          <Button variant="ghost" size="icon" className="h-7 w-7 text-orange-600 hover:text-orange-700 hover:bg-orange-50" onClick={() => handleMoveToGerais(obra.id)} title="Mover para Gerais">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        )}
       </div>
     </div>
   );
@@ -165,7 +224,7 @@ export default function Obras() {
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Building2 className="h-6 w-6 text-primary" /> Obras
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">Gerencie a cobertura das obras — mova entre Gerais e Cobertas</p>
+          <p className="text-muted-foreground text-sm mt-1">Visualize as obras com a classificação da última inspeção</p>
         </div>
         <Button onClick={() => setShowCreate(true)} size="sm">
           <Plus className="h-4 w-4 mr-1" /> Nova Obra
@@ -177,43 +236,20 @@ export default function Obras() {
         <Input placeholder="Buscar obras..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-9" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border-orange-200 dark:border-orange-900">
-          <div className="p-4 border-b bg-orange-50 dark:bg-orange-950/30 rounded-t-lg">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Building2 className="h-5 w-5 text-orange-600" />
-                <h2 className="font-semibold text-lg">Obras Gerais</h2>
-              </div>
-              <Badge variant="secondary" className="text-sm">{gerais.length}</Badge>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Obras disponíveis no portfólio</p>
+      <Card>
+        <div className="flex items-center justify-between border-b p-4">
+          <div>
+            <h2 className="font-semibold text-lg">Lista de Obras</h2>
+            <p className="text-xs text-muted-foreground mt-1">Cada obra exibe a classificação mais recente registrada</p>
           </div>
-          <CardContent className="p-3 space-y-2 max-h-[calc(100vh-320px)] overflow-y-auto">
-            {gerais.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8 text-sm">{searchTerm ? "Nenhuma obra encontrada" : "Todas as obras estão cobertas"}</p>
-            ) : gerais.map((o) => <ObraCard key={o.id} obra={o} side="gerais" />)}
-          </CardContent>
-        </Card>
-
-        <Card className="border-emerald-200 dark:border-emerald-900">
-          <div className="p-4 border-b bg-emerald-50 dark:bg-emerald-950/30 rounded-t-lg">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Building2 className="h-5 w-5 text-emerald-600" />
-                <h2 className="font-semibold text-lg">Obras Cobertas</h2>
-              </div>
-              <Badge variant="secondary" className="text-sm">{cobertas.length}</Badge>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Obras que estamos atendendo</p>
-          </div>
-          <CardContent className="p-3 space-y-2 max-h-[calc(100vh-320px)] overflow-y-auto">
-            {cobertas.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8 text-sm">{searchTerm ? "Nenhuma obra encontrada" : "Nenhuma obra coberta ainda. Mova obras da coluna Gerais."}</p>
-            ) : cobertas.map((o) => <ObraCard key={o.id} obra={o} side="cobertas" />)}
-          </CardContent>
-        </Card>
-      </div>
+          <Badge variant="secondary" className="text-sm">{obrasFiltradas.length}</Badge>
+        </div>
+        <CardContent className="p-3 space-y-2 max-h-[calc(100vh-280px)] overflow-y-auto">
+          {obrasFiltradas.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">Nenhuma obra encontrada</p>
+          ) : obrasFiltradas.map((o) => <ObraCard key={o.id} obra={o} />)}
+        </CardContent>
+      </Card>
 
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
         <DialogContent>
