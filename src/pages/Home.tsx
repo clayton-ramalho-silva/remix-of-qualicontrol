@@ -263,8 +263,8 @@ export default function Home() {
         </div>
       )}
 
-      {/* Classificações Ativas */}
-      {!isLoading && (kpis?.porClassificacao?.chamado_critico || kpis?.porClassificacao?.seguranca_trabalho || kpis?.porClassificacao?.solicitado_cliente) ? (
+      {/* Classificações */}
+      {!isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
             { tag: "chamado_critico", label: "Chamado Crítico", icon: Siren, count: kpis?.porClassificacao?.chamado_critico ?? 0, colors: { bg: "bg-red-50/80 hover:bg-red-100", border: "border-red-100 hover:border-red-200", iconBg: "bg-red-500", title: "text-red-500", value: "text-red-700", arrow: "text-red-300" } },
