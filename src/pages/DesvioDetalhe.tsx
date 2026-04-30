@@ -7,7 +7,6 @@ import { Textarea } from "@/components/ui/textarea";
 import VoiceRecorderButton from "@/components/VoiceRecorderButton";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,7 +17,7 @@ import {
   ArrowLeft, AlertTriangle, CheckCircle2, Clock, FileWarning,
   PlusCircle, MessageSquare, Camera, ClipboardCheck, Edit3,
   Send, Loader2, Image as ImageIcon, Upload, X, Tag, UserCheck, ShieldAlert,
-  Zap, ArrowDown, Minus, HelpCircle, Save, MapPin,
+  HelpCircle, Save, MapPin,
 } from "lucide-react";
 import PlantaPinSelector from "@/components/PlantaPinSelector";
 
