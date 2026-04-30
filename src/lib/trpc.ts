@@ -191,8 +191,10 @@ const queryResolvers: Record<string, Resolver> = {
   },
 
   // --- CONFIG FAIXAS ---
-  "configFaixas.list": async () => {
-    const { data, error } = await supabase.from("config_faixas").select("*").order("ordem");
+  "configFaixas.list": async (input: any = {}) => {
+    let q = supabase.from("config_faixas").select("*").order("ordem");
+    if (input?.categoria) q = q.eq("categoria", input.categoria);
+    const { data, error } = await q;
     if (error) throw error;
     return data || [];
   },
