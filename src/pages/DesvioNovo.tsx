@@ -500,3 +500,100 @@ function Field({ label, hint, required, children }: {
     </div>
   );
 }
+
+function AmbienteCombo({
+  value, onChange, ambientes, open, setOpen, search, setSearch,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  ambientes: any[];
+  open: boolean;
+  setOpen: (o: boolean) => void;
+  search: string;
+  setSearch: (s: string) => void;
+}) {
+  const formatLabel = (a: any) => {
+    const parts = [a.nome];
+    if (a.numero) parts.push(`#${a.numero}`);
+    const sub = [a.pavimento, a.plantaNome].filter(Boolean).join(" · ");
+    return { main: parts.join(" "), sub };
+  };
+
+  const term = search.toLowerCase().trim();
+  const filtered = (ambientes || []).filter((a: any) => {
+    if (!term) return true;
+    return (
+      a.nome?.toLowerCase().includes(term) ||
+      a.numero?.toLowerCase?.().includes(term) ||
+      a.pavimento?.toLowerCase?.().includes(term)
+    );
+  });
+
+  const hasAmbientes = (ambientes || []).length > 0;
+
+  if (!hasAmbientes) {
+    return (
+      <Input
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder="Ex: Banheiro Suíte - Apto 301"
+      />
+    );
+  }
+
+  return (
+    <div className="relative">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <div className="relative">
+            <Input
+              value={value}
+              onChange={e => { onChange(e.target.value); setSearch(e.target.value); if (!open) setOpen(true); }}
+              onFocus={() => setOpen(true)}
+              placeholder="Selecione ou digite o ambiente…"
+              className="pr-9"
+            />
+            <Sparkles className="h-3.5 w-3.5 text-violet-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+        </PopoverTrigger>
+        <PopoverContent
+          className="w-[var(--radix-popover-trigger-width)] p-0 max-h-72 overflow-y-auto"
+          align="start"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
+          <div className="p-1">
+            <div className="px-2 py-1.5 text-[10px] uppercase tracking-wide text-muted-foreground flex items-center gap-1">
+              <Sparkles className="h-3 w-3 text-violet-500" />
+              Ambientes detectados ({filtered.length})
+            </div>
+            {filtered.length === 0 ? (
+              <div className="px-2 py-3 text-xs text-muted-foreground">
+                Nenhum ambiente correspondente. Você pode digitar livremente.
+              </div>
+            ) : (
+              filtered.map((a: any) => {
+                const { main, sub } = formatLabel(a);
+                const label = `${main}${sub ? " — " + sub : ""}`;
+                const selected = value === main || value === label;
+                return (
+                  <button
+                    key={a.id}
+                    type="button"
+                    className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-accent flex items-center gap-2"
+                    onClick={() => { onChange(main); setOpen(false); }}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="truncate">{main}</div>
+                      {sub && <div className="text-[10px] text-muted-foreground truncate">{sub}</div>}
+                    </div>
+                    {selected && <Check className="h-3.5 w-3.5 text-emerald-600" />}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
