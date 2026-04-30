@@ -153,15 +153,20 @@ const queryResolvers: Record<string, Resolver> = {
     const { data, error } = await supabase.from("verificacoes").select("*").eq("id", id).maybeSingle();
     if (error) throw error;
     if (!data) return null;
-    const [{ data: respostas }, { data: secoes }, { data: itens }] = await Promise.all([
+    const [{ data: respostas }, { data: secoes }, { data: itens }, { data: fotos }] = await Promise.all([
       supabase.from("verificacao_respostas").select("*").eq("verificacao_id", id),
       supabase.from("checklist_secoes").select("*").eq("ativo", 1).order("ordem"),
       supabase.from("checklist_itens").select("*").eq("ativo", 1).order("ordem"),
+      supabase.from("verificacao_resposta_fotos" as any).select("*").eq("verificacao_id", id),
     ]);
     const checklist = (secoes || []).map((s: any) => ({
       ...s,
       itens: (itens || []).filter((i: any) => i.secao_id === s.id),
     }));
+    const fotosByItem: Record<number, any[]> = {};
+    (fotos || []).forEach((f: any) => {
+      (fotosByItem[f.item_id] ||= []).push({ id: f.id, url: f.url, fileKey: f.file_key, descricao: f.descricao });
+    });
     return {
       ...mapVerificacaoFromDb(data),
       checklist,
@@ -170,6 +175,7 @@ const queryResolvers: Record<string, Resolver> = {
         itemId: r.item_id,
         resposta: r.resposta,
         observacao: r.observacao,
+        fotos: fotosByItem[r.item_id] || [],
       })),
     };
   },
