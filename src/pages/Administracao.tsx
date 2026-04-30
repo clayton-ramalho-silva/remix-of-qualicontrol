@@ -33,6 +33,9 @@ export default function Administracao() {
   const updateFaixa = trpc.configFaixas.update.useMutation({
     onSuccess: () => { utils.configFaixas.list.invalidate(); toast.success("Faixa atualizada!"); },
   });
+  const createSecao = trpc.checklist.createSecao.useMutation({
+    onSuccess: () => { utils.checklist.getCompleto.invalidate(); toast.success("Seção criada!"); setNewSecaoTitulo(""); },
+  });
 
   // State for editing
   const [editingSecao, setEditingSecao] = useState<number | null>(null);
@@ -44,6 +47,7 @@ export default function Administracao() {
   const [newItemDialog, setNewItemDialog] = useState(false);
   const [newItemSecaoId, setNewItemSecaoId] = useState<number | null>(null);
   const [newItemForm, setNewItemForm] = useState({ codigo: "", descricao: "" });
+  const [newSecaoTitulo, setNewSecaoTitulo] = useState("");
 
   const startEditSecao = (secao: any) => {
     setEditingSecao(secao.id);
