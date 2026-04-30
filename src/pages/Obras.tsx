@@ -29,15 +29,24 @@ type ObraEditable = Pick<Obra, "codigo" | "nome" | "cliente" | "endereco" | "sta
 
 const classificacaoClasses: Record<string, string> = {
   "ÓTIMA": "border-emerald-200 bg-emerald-50 text-emerald-700",
+  "EXCELENTE": "border-emerald-200 bg-emerald-50 text-emerald-700",
+  "BOM": "border-sky-200 bg-sky-50 text-sky-700",
   "REGULAR": "border-amber-200 bg-amber-50 text-amber-700",
+  "RUIM": "border-orange-200 bg-orange-50 text-orange-700",
   "RUIM": "border-red-200 bg-red-50 text-red-700",
   "CRÍTICO": "border-red-300 bg-red-100 text-red-900",
+  "CRITICO": "border-red-300 bg-red-100 text-red-900",
 };
 
 const statusLabel: Record<Obra["status"], string> = {
   ativa: "Ativa",
   pausada: "Pausada",
   concluida: "Concluída",
+};
+
+const getClassificacaoClassName = (classificacao?: string | null) => {
+  if (!classificacao) return "border-border bg-muted text-muted-foreground";
+  return classificacaoClasses[classificacao.trim().toUpperCase()] || "border-border bg-muted text-muted-foreground";
 };
 
 export default function Obras() {
@@ -169,7 +178,7 @@ export default function Obras() {
           <Badge variant={obra.status === "ativa" ? "default" : obra.status === "pausada" ? "secondary" : "outline"} className="text-[10px] px-1.5 py-0">
             {statusLabel[obra.status]}
           </Badge>
-          <Badge variant="outline" className={classificacaoClasses[obra.classificacao || ""] || "border-border bg-muted text-muted-foreground"}>
+          <Badge variant="outline" className={getClassificacaoClassName(obra.classificacao)}>
             {obra.classificacao || "Sem classificação"}
           </Badge>
         </div>
