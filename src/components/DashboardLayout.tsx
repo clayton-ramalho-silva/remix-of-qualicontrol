@@ -118,6 +118,13 @@ function DashboardLayoutContent({
     (item) => item.path === "/" ? location === "/" : location.startsWith(item.path)
   );
   const isMobile = useIsMobile();
+  const { data: meusPlanos } = trpc.planos.list.useQuery(
+    { responsavelEmail: user?.email },
+    { enabled: !!user?.email, refetchInterval: 60000 }
+  );
+  const badgeCounts: Record<string, number> = {
+    planosPendentes: (meusPlanos || []).filter((p: any) => p.status !== "concluido").length,
+  };
 
   useEffect(() => {
     if (isCollapsed) setIsResizing(false);
@@ -179,6 +186,7 @@ function DashboardLayoutContent({
                 const isActive = navItem.path === "/"
                   ? location === "/"
                   : location.startsWith(navItem.path);
+                const badgeCount = navItem.badgeKey ? badgeCounts[navItem.badgeKey] : 0;
                 return (
                   <SidebarMenuItem key={navItem.path}>
                     <SidebarMenuButton
@@ -188,7 +196,12 @@ function DashboardLayoutContent({
                       className="h-10 transition-all font-normal"
                     >
                       <navItem.icon className={`h-4 w-4 ${isActive ? "text-sidebar-primary" : ""}`} />
-                      <span>{navItem.label}</span>
+                      <span className="flex-1 truncate">{navItem.label}</span>
+                      {badgeCount > 0 && !isCollapsed && (
+                        <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold">
+                          {badgeCount}
+                        </span>
+                      )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
