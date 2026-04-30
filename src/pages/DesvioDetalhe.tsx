@@ -32,8 +32,8 @@ const STATUS_MAP: Record<string, { label: string; icon: React.ReactNode; classNa
 
 const ORIGEM_MAP: Record<string, { label: string; className: string }> = {
   qualidade: { label: "Qualidade", className: "bg-sky-100 text-sky-700" },
-  punch_list: { label: "Check List", className: "bg-violet-100 text-violet-700" },
-  pos_obra: { label: "Assistência Técnica", className: "bg-orange-100 text-orange-700" },
+  checklist: { label: "Checklist", className: "bg-violet-100 text-violet-700" },
+  qsms: { label: "QSMS", className: "bg-orange-100 text-orange-700" },
 };
 
 const TIMELINE_ICONS: Record<string, { icon: React.ReactNode; color: string }> = {
@@ -248,7 +248,7 @@ export default function DesvioDetalhe() {
   const st = STATUS_MAP[data.status] || STATUS_MAP.aberto;
   const isOverdue = data.status !== "fechado" && data.status !== "aguardando_aceite" && data.prazoSugerido && data.prazoSugerido < Date.now();
   const origemInfo = ORIGEM_MAP[(data as any).origem] || ORIGEM_MAP.qualidade;
-  const isPunchList = (data as any).origem === "punch_list";
+  const isPunchList = (data as any).origem === "checklist";
 
   // Separate fotos by type
   const fotosAbertura = data.fotos?.filter((f: any) => !f.tipo || f.tipo === "abertura") || [];
@@ -395,8 +395,8 @@ export default function DesvioDetalhe() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="qualidade">Qualidade</SelectItem>
-                        <SelectItem value="punch_list">Check List</SelectItem>
-                        <SelectItem value="pos_obra">Assistência Técnica</SelectItem>
+                        <SelectItem value="checklist">Checklist</SelectItem>
+                        <SelectItem value="qsms">QSMS</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
