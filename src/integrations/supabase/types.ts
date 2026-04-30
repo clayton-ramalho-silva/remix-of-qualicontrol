@@ -747,6 +747,36 @@ export type Database = {
         }
         Relationships: []
       }
+      verificacao_resposta_fotos: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          file_key: string
+          id: number
+          item_id: number
+          url: string
+          verificacao_id: number
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          file_key: string
+          id?: number
+          item_id: number
+          url: string
+          verificacao_id: number
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          file_key?: string
+          id?: number
+          item_id?: number
+          url?: string
+          verificacao_id?: number
+        }
+        Relationships: []
+      }
       verificacao_respostas: {
         Row: {
           created_at: string
