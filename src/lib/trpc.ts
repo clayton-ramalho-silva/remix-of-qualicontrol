@@ -144,6 +144,7 @@ const queryResolvers: Record<string, Resolver> = {
   "verificacoes.list": async (filters: any = {}) => {
     let q = supabase.from("verificacoes").select("*").order("data_vistoria", { ascending: false });
     if (filters?.obraId) q = q.eq("obra_id", filters.obraId);
+    if (filters?.categoria) q = q.eq("categoria", filters.categoria);
     const { data, error } = await q;
     if (error) throw error;
     return (data || []).map(mapVerificacaoFromDb);
@@ -174,9 +175,11 @@ const queryResolvers: Record<string, Resolver> = {
   },
 
   // --- CHECKLIST ---
-  "checklist.getCompleto": async () => {
+  "checklist.getCompleto": async (input: any = {}) => {
+    let secoesQuery = supabase.from("checklist_secoes").select("*").eq("ativo", 1).order("ordem");
+    if (input?.categoria) secoesQuery = secoesQuery.eq("categoria", input.categoria);
     const [{ data: secoes, error: e1 }, { data: itens, error: e2 }] = await Promise.all([
-      supabase.from("checklist_secoes").select("*").eq("ativo", 1).order("ordem"),
+      secoesQuery,
       supabase.from("checklist_itens").select("*").eq("ativo", 1).order("ordem"),
     ]);
     if (e1) throw e1;
