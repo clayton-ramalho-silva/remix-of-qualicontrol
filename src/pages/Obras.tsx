@@ -8,8 +8,16 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Search, Plus, Pencil, Calendar, Loader2, ArrowLeftRight, Bookmark, BookmarkCheck, BookmarkX } from "lucide-react";
+import { Building2, Search, Plus, Pencil, Calendar, Loader2, ArrowLeftRight, Bookmark, BookmarkCheck, BookmarkX, ShieldCheck, ListChecks, HardHat } from "lucide-react";
 import { toast } from "sonner";
+
+type Vertical = "qualidade" | "checklist" | "qsms";
+
+const verticais: { key: Vertical; label: string; icon: any; coverCol: "cobertura_qualidade" | "cobertura_checklist" | "cobertura_qsms"; color: string }[] = [
+  { key: "qualidade", label: "Qualidade", icon: ShieldCheck, coverCol: "cobertura_qualidade", color: "text-sky-600" },
+  { key: "checklist", label: "Checklist", icon: ListChecks, coverCol: "cobertura_checklist", color: "text-amber-600" },
+  { key: "qsms",      label: "QSMS",      icon: HardHat,    coverCol: "cobertura_qsms",      color: "text-emerald-600" },
+];
 
 type Obra = {
   id: number;
@@ -19,6 +27,9 @@ type Obra = {
   endereco: string | null;
   status: "ativa" | "pausada" | "concluida";
   cobertura: number;
+  cobertura_qualidade: number;
+  cobertura_checklist: number;
+  cobertura_qsms: number;
   marcacao: "na_fila" | "descartada" | null;
   ultimoDesvio?: number | null;
   ultimaVistoria?: number | null;
@@ -130,6 +141,9 @@ export default function Obras() {
   const [editObra, setEditObra] = useState<any>(null);
   const [newObra, setNewObra] = useState({ codigo: "", nome: "", cliente: "", endereco: "" });
   const [filtroGerais, setFiltroGerais] = useState<"todas" | "na_fila" | "sem" | "descartada">("todas");
+  const [vertical, setVertical] = useState<Vertical>("qualidade");
+  const verticalAtiva = verticais.find((v) => v.key === vertical)!;
+  const coverFor = (o: Obra) => Number((o as any)[verticalAtiva.coverCol] ?? 0);
 
   const obrasFiltradasBase = useMemo(() => {
     if (!obrasResumo) return [] as Obra[];
@@ -143,8 +157,8 @@ export default function Obras() {
     );
   }, [obrasResumo, searchTerm]);
 
-  const gerais = useMemo(() => obrasFiltradasBase.filter((o) => !o.cobertura), [obrasFiltradasBase]);
-  const cobertas = useMemo(() => obrasFiltradasBase.filter((o) => !!o.cobertura), [obrasFiltradasBase]);
+  const gerais = useMemo(() => obrasFiltradasBase.filter((o) => !coverFor(o)), [obrasFiltradasBase, vertical]);
+  const cobertas = useMemo(() => obrasFiltradasBase.filter((o) => !!coverFor(o)), [obrasFiltradasBase, vertical]);
 
   const counts = useMemo(() => ({
     todas: gerais.length,
@@ -160,10 +174,12 @@ export default function Obras() {
   }, [gerais, filtroGerais]);
 
   const toggleCobertura = (obra: Obra) => {
+    const atual = coverFor(obra);
+    const next = atual ? 0 : 1;
     updateObra.mutate(
-      { id: obra.id, cobertura: obra.cobertura ? 0 : 1 },
+      { id: obra.id, [verticalAtiva.coverCol]: next } as any,
       {
-        onSuccess: () => toast.success(obra.cobertura ? "Movida para Gerais" : "Movida para Cobertas"),
+        onSuccess: () => toast.success(`${atual ? "Removida de" : "Adicionada às"} Cobertas — ${verticalAtiva.label}`),
       }
     );
   };
@@ -248,7 +264,7 @@ export default function Obras() {
             </div>
           </div>
           <div className="flex flex-col gap-1">
-            <Button variant="ghost" size="icon" className="h-7 w-7" title={side === "gerais" ? "Mover para Cobertas" : "Mover para Gerais"} onClick={() => toggleCobertura(obra)}>
+            <Button variant="ghost" size="icon" className="h-7 w-7" title={side === "gerais" ? `Cobrir em ${verticalAtiva.label}` : `Remover de ${verticalAtiva.label}`} onClick={() => toggleCobertura(obra)}>
               <ArrowLeftRight className="h-3.5 w-3.5" />
             </Button>
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditObra({ ...obra }); setShowEdit(true); }}>
@@ -288,11 +304,29 @@ export default function Obras() {
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Building2 className="h-6 w-6 text-primary" /> Obras
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">Gerencie a cobertura das obras — mova entre Gerais e Cobertas</p>
+          <p className="text-muted-foreground text-sm mt-1">Cobertura por vertical — cada equipe escolhe quais obras cobre</p>
         </div>
         <Button onClick={() => setShowCreate(true)} size="sm">
           <Plus className="h-4 w-4 mr-1" /> Nova Obra
         </Button>
+      </div>
+
+      <div className="inline-flex rounded-lg border bg-card p-1 gap-1">
+        {verticais.map((v) => {
+          const Icon = v.icon;
+          const active = vertical === v.key;
+          return (
+            <button
+              key={v.key}
+              type="button"
+              onClick={() => setVertical(v.key)}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
+            >
+              <Icon className={`h-4 w-4 ${active ? "" : v.color}`} />
+              {v.label}
+            </button>
+          );
+        })}
       </div>
 
       <div className="relative max-w-md">
@@ -306,11 +340,11 @@ export default function Obras() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Building2 className="h-5 w-5 text-amber-600" />
-                <h2 className="font-semibold text-lg">Obras Gerais</h2>
+                <h2 className="font-semibold text-lg">Obras Gerais — {verticalAtiva.label}</h2>
               </div>
               <Badge variant="secondary" className="text-sm">{gerais.length}</Badge>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Obras disponíveis no portfólio</p>
+            <p className="text-xs text-muted-foreground mt-1">Obras ainda não cobertas pela equipe de {verticalAtiva.label}</p>
             <div className="mt-3 flex flex-wrap gap-1.5">
               {([
                 { k: "todas", label: "Todas", count: counts.todas },
@@ -342,11 +376,11 @@ export default function Obras() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Building2 className="h-5 w-5 text-emerald-600" />
-                <h2 className="font-semibold text-lg">Obras Cobertas</h2>
+                <h2 className="font-semibold text-lg">Obras Cobertas — {verticalAtiva.label}</h2>
               </div>
               <Badge variant="secondary" className="text-sm">{cobertas.length}</Badge>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Obras que estamos atendendo</p>
+            <p className="text-xs text-muted-foreground mt-1">Obras que a equipe de {verticalAtiva.label} está atendendo</p>
           </div>
           <CardContent className="p-3 space-y-2 max-h-[calc(100vh-340px)] overflow-y-auto">
             {cobertas.length === 0 ? (
