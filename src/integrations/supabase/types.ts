@@ -456,6 +456,9 @@ export type Database = {
         Row: {
           cliente: string | null
           cobertura: number
+          cobertura_checklist: number
+          cobertura_qsms: number
+          cobertura_qualidade: number
           codigo: string
           created_at: string
           endereco: string | null
@@ -468,6 +471,9 @@ export type Database = {
         Insert: {
           cliente?: string | null
           cobertura?: number
+          cobertura_checklist?: number
+          cobertura_qsms?: number
+          cobertura_qualidade?: number
           codigo: string
           created_at?: string
           endereco?: string | null
@@ -480,6 +486,9 @@ export type Database = {
         Update: {
           cliente?: string | null
           cobertura?: number
+          cobertura_checklist?: number
+          cobertura_qsms?: number
+          cobertura_qualidade?: number
           codigo?: string
           created_at?: string
           endereco?: string | null
