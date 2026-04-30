@@ -80,18 +80,18 @@ export default function PlantaAmbientesDialog({ plantaId, plantaNome, plantaUrl,
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] gap-4 flex-1 overflow-hidden">
+        <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-4 flex-1 overflow-hidden">
           {/* Preview da planta */}
           {plantaUrl && (
-            <div className="hidden md:block bg-slate-50 rounded-lg overflow-hidden border">
-              <img src={plantaUrl} alt={plantaNome} className="w-full h-full object-contain" />
+            <div className="hidden md:flex bg-slate-50 rounded-lg overflow-hidden border items-center justify-center p-2">
+              <img src={plantaUrl} alt={plantaNome} className="max-w-full max-h-full object-contain" />
             </div>
           )}
 
           {/* Lista */}
-          <div className="flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-medium">
+          <div className="flex flex-col overflow-hidden min-w-0">
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <span className="text-sm font-medium whitespace-nowrap">
                 {list.length} ambiente{list.length === 1 ? "" : "s"}
               </span>
               <Button
@@ -99,6 +99,7 @@ export default function PlantaAmbientesDialog({ plantaId, plantaNome, plantaUrl,
                 variant="outline"
                 onClick={handleReextract}
                 disabled={reextract.isPending}
+                className="whitespace-nowrap"
               >
                 {reextract.isPending ? (
                   <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
