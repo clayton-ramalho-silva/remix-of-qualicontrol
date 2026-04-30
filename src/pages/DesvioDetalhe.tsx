@@ -585,11 +585,13 @@ export default function DesvioDetalhe() {
                         </button>
                       </div>
                     ))}
-                    <label className="w-20 h-20 rounded-lg border-2 border-dashed border-emerald-300/40 flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 transition-colors">
-                      <Upload className="h-4 w-4 text-emerald-400" />
-                      <span className="text-[9px] text-emerald-500">Adicionar</span>
-                      <input type="file" accept="image/*" multiple onChange={handleFechamentoFileChange} className="hidden" />
-                    </label>
+                    <PhotoPickerButton
+                      onFiles={handleFechamentoFileChange}
+                      className="w-20 h-20 rounded-lg border-2 border-dashed border-emerald-300/40 flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 transition-colors"
+                      iconClassName="h-4 w-4 text-emerald-400"
+                      labelClassName="text-[9px] text-emerald-500"
+                      label="Adicionar"
+                    />
                   </div>
                   {fechamentoFotos.length > 0 && (
                     <Button
