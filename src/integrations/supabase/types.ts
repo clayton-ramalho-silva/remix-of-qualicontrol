@@ -781,7 +781,7 @@ export type Database = {
         | "diretoria"
         | "coordenador"
         | "tecnico"
-      origem_desvio: "qualidade" | "punch_list" | "pos_obra"
+      origem_desvio: "qualidade" | "checklist" | "qsms"
       prioridade_plano: "urgente" | "normal" | "baixa"
       referencia_tipo: "desvio" | "plano" | "verificacao"
       responsavel_tipo: "membro" | "fornecedor"
@@ -942,7 +942,7 @@ export const Constants = {
         "coordenador",
         "tecnico",
       ],
-      origem_desvio: ["qualidade", "punch_list", "pos_obra"],
+      origem_desvio: ["qualidade", "checklist", "qsms"],
       prioridade_plano: ["urgente", "normal", "baixa"],
       referencia_tipo: ["desvio", "plano", "verificacao"],
       responsavel_tipo: ["membro", "fornecedor"],
