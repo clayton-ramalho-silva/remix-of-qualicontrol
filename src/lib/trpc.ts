@@ -385,6 +385,56 @@ const queryResolvers: Record<string, Resolver> = {
     const plantaMap = new Map((plantas || []).map((p: any) => [p.id, p.nome]));
     return (data || []).map((a: any) => ({ ...a, plantaNome: plantaMap.get(a.planta_id) || "" }));
   },
+
+  // --- PLANOS (queries) ---
+  "planos.list": async (filters: any = {}) => {
+    let q = supabase.from("planos_acao").select("*").order("prazo", { ascending: true, nullsFirst: false });
+    if (filters?.status) q = q.eq("status", filters.status);
+    if (filters?.prioridade) q = q.eq("prioridade", filters.prioridade);
+    if (filters?.responsavelEmail) q = q.eq("responsavel_email", filters.responsavelEmail);
+    const { data: planos, error } = await q;
+    if (error) throw error;
+    const planoIds = (planos || []).map((p: any) => p.id);
+    let vinculos: any[] = [];
+    let desviosMap = new Map<number, any>();
+    if (planoIds.length > 0) {
+      const { data: vincData } = await supabase.from("plano_desvios" as any).select("plano_id, desvio_id").in("plano_id", planoIds);
+      vinculos = vincData || [];
+      const desvioIds = Array.from(new Set(vinculos.map((v: any) => v.desvio_id)));
+      if (desvioIds.length > 0) {
+        const { data: desviosData } = await supabase.from("desvios").select("id, descricao, obra_id, origem, severidade, status").in("id", desvioIds);
+        (desviosData || []).forEach((d: any) => desviosMap.set(d.id, d));
+      }
+    }
+    const vincByPlano = new Map<number, any[]>();
+    vinculos.forEach((v: any) => {
+      const arr = vincByPlano.get(v.plano_id) || [];
+      const d = desviosMap.get(v.desvio_id);
+      if (d) arr.push({ id: d.id, descricao: d.descricao, obraId: d.obra_id, origem: d.origem, severidade: d.severidade, status: d.status });
+      vincByPlano.set(v.plano_id, arr);
+    });
+    let result = (planos || []).map((p: any) => ({
+      ...mapPlanoFromDb(p),
+      desvios: vincByPlano.get(p.id) || [],
+    }));
+    if (filters?.obraId) result = result.filter(p => p.desvios.some((d: any) => d.obraId === filters.obraId));
+    if (filters?.vertical) result = result.filter(p => p.desvios.some((d: any) => d.origem === filters.vertical));
+    if (filters?.atrasados) result = result.filter(p => p.status !== "concluido" && p.prazo && p.prazo < Date.now());
+    return result;
+  },
+  "planos.getById": async ({ id }: { id: number }) => {
+    const { data: plano, error } = await supabase.from("planos_acao").select("*").eq("id", id).maybeSingle();
+    if (error) throw error;
+    if (!plano) return null;
+    const { data: vinculos } = await supabase.from("plano_desvios" as any).select("desvio_id").eq("plano_id", id);
+    const desvioIds = (vinculos || []).map((v: any) => v.desvio_id);
+    let desvios: any[] = [];
+    if (desvioIds.length > 0) {
+      const { data: dData } = await supabase.from("desvios").select("*").in("id", desvioIds);
+      desvios = (dData || []).map(mapDesvioFromDb);
+    }
+    return { ...mapPlanoFromDb(plano), desvios };
+  },
 };
 
 const mutationResolvers: Record<string, Resolver> = {
@@ -509,54 +559,6 @@ const mutationResolvers: Record<string, Resolver> = {
   },
 
   // --- PLANOS ---
-  "planos.list": async (filters: any = {}) => {
-    let q = supabase.from("planos_acao").select("*").order("prazo", { ascending: true, nullsFirst: false });
-    if (filters?.status) q = q.eq("status", filters.status);
-    if (filters?.prioridade) q = q.eq("prioridade", filters.prioridade);
-    if (filters?.responsavelEmail) q = q.eq("responsavel_email", filters.responsavelEmail);
-    const { data: planos, error } = await q;
-    if (error) throw error;
-    const planoIds = (planos || []).map((p: any) => p.id);
-    let vinculos: any[] = [];
-    let desviosMap = new Map<number, any>();
-    if (planoIds.length > 0) {
-      const { data: vincData } = await supabase.from("plano_desvios" as any).select("plano_id, desvio_id").in("plano_id", planoIds);
-      vinculos = vincData || [];
-      const desvioIds = Array.from(new Set(vinculos.map((v: any) => v.desvio_id)));
-      if (desvioIds.length > 0) {
-        const { data: desviosData } = await supabase.from("desvios").select("id, descricao, obra_id, origem, severidade, status").in("id", desvioIds);
-        (desviosData || []).forEach((d: any) => desviosMap.set(d.id, d));
-      }
-    }
-    const vincByPlano = new Map<number, any[]>();
-    vinculos.forEach((v: any) => {
-      const arr = vincByPlano.get(v.plano_id) || [];
-      const d = desviosMap.get(v.desvio_id);
-      if (d) arr.push({ id: d.id, descricao: d.descricao, obraId: d.obra_id, origem: d.origem, severidade: d.severidade, status: d.status });
-      vincByPlano.set(v.plano_id, arr);
-    });
-    let result = (planos || []).map((p: any) => ({
-      ...mapPlanoFromDb(p),
-      desvios: vincByPlano.get(p.id) || [],
-    }));
-    if (filters?.obraId) result = result.filter(p => p.desvios.some((d: any) => d.obraId === filters.obraId));
-    if (filters?.vertical) result = result.filter(p => p.desvios.some((d: any) => d.origem === filters.vertical));
-    if (filters?.atrasados) result = result.filter(p => p.status !== "concluido" && p.prazo && p.prazo < Date.now());
-    return result;
-  },
-  "planos.getById": async ({ id }: { id: number }) => {
-    const { data: plano, error } = await supabase.from("planos_acao").select("*").eq("id", id).maybeSingle();
-    if (error) throw error;
-    if (!plano) return null;
-    const { data: vinculos } = await supabase.from("plano_desvios" as any).select("desvio_id").eq("plano_id", id);
-    const desvioIds = (vinculos || []).map((v: any) => v.desvio_id);
-    let desvios: any[] = [];
-    if (desvioIds.length > 0) {
-      const { data: dData } = await supabase.from("desvios").select("*").in("id", desvioIds);
-      desvios = (dData || []).map(mapDesvioFromDb);
-    }
-    return { ...mapPlanoFromDb(plano), desvios };
-  },
   "planos.create": async (input: any) => {
     const desvioIds: number[] = Array.isArray(input.desvioIds) && input.desvioIds.length > 0
       ? input.desvioIds
