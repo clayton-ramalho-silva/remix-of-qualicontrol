@@ -135,6 +135,7 @@ export type Database = {
       }
       config_faixas: {
         Row: {
+          categoria: string
           cor: string
           id: number
           maximo: number
@@ -144,6 +145,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          categoria?: string
           cor: string
           id?: number
           maximo: number
@@ -153,6 +155,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          categoria?: string
           cor?: string
           id?: number
           maximo?: number
@@ -789,6 +792,7 @@ export type Database = {
       verificacoes: {
         Row: {
           avaliador: string
+          categoria: string
           created_at: string
           data_vistoria: number
           diretoria: string | null
@@ -810,6 +814,7 @@ export type Database = {
         }
         Insert: {
           avaliador: string
+          categoria?: string
           created_at?: string
           data_vistoria: number
           diretoria?: string | null
@@ -831,6 +836,7 @@ export type Database = {
         }
         Update: {
           avaliador?: string
+          categoria?: string
           created_at?: string
           data_vistoria?: number
           diretoria?: string | null
