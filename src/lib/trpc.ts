@@ -508,9 +508,62 @@ const mutationResolvers: Record<string, Resolver> = {
   },
 
   // --- PLANOS ---
+  "planos.list": async (filters: any = {}) => {
+    let q = supabase.from("planos_acao").select("*").order("prazo", { ascending: true, nullsFirst: false });
+    if (filters?.status) q = q.eq("status", filters.status);
+    if (filters?.prioridade) q = q.eq("prioridade", filters.prioridade);
+    if (filters?.responsavelEmail) q = q.eq("responsavel_email", filters.responsavelEmail);
+    const { data: planos, error } = await q;
+    if (error) throw error;
+    const planoIds = (planos || []).map((p: any) => p.id);
+    let vinculos: any[] = [];
+    let desviosMap = new Map<number, any>();
+    if (planoIds.length > 0) {
+      const { data: vincData } = await supabase.from("plano_desvios" as any).select("plano_id, desvio_id").in("plano_id", planoIds);
+      vinculos = vincData || [];
+      const desvioIds = Array.from(new Set(vinculos.map((v: any) => v.desvio_id)));
+      if (desvioIds.length > 0) {
+        const { data: desviosData } = await supabase.from("desvios").select("id, descricao, obra_id, origem, severidade, status").in("id", desvioIds);
+        (desviosData || []).forEach((d: any) => desviosMap.set(d.id, d));
+      }
+    }
+    const vincByPlano = new Map<number, any[]>();
+    vinculos.forEach((v: any) => {
+      const arr = vincByPlano.get(v.plano_id) || [];
+      const d = desviosMap.get(v.desvio_id);
+      if (d) arr.push({ id: d.id, descricao: d.descricao, obraId: d.obra_id, origem: d.origem, severidade: d.severidade, status: d.status });
+      vincByPlano.set(v.plano_id, arr);
+    });
+    let result = (planos || []).map((p: any) => ({
+      ...mapPlanoFromDb(p),
+      desvios: vincByPlano.get(p.id) || [],
+    }));
+    if (filters?.obraId) result = result.filter(p => p.desvios.some((d: any) => d.obraId === filters.obraId));
+    if (filters?.vertical) result = result.filter(p => p.desvios.some((d: any) => d.origem === filters.vertical));
+    if (filters?.atrasados) result = result.filter(p => p.status !== "concluido" && p.prazo && p.prazo < Date.now());
+    return result;
+  },
+  "planos.getById": async ({ id }: { id: number }) => {
+    const { data: plano, error } = await supabase.from("planos_acao").select("*").eq("id", id).maybeSingle();
+    if (error) throw error;
+    if (!plano) return null;
+    const { data: vinculos } = await supabase.from("plano_desvios" as any).select("desvio_id").eq("plano_id", id);
+    const desvioIds = (vinculos || []).map((v: any) => v.desvio_id);
+    let desvios: any[] = [];
+    if (desvioIds.length > 0) {
+      const { data: dData } = await supabase.from("desvios").select("*").in("id", desvioIds);
+      desvios = (dData || []).map(mapDesvioFromDb);
+    }
+    return { ...mapPlanoFromDb(plano), desvios };
+  },
   "planos.create": async (input: any) => {
+    const desvioIds: number[] = Array.isArray(input.desvioIds) && input.desvioIds.length > 0
+      ? input.desvioIds
+      : (input.desvioId ? [input.desvioId] : []);
+    if (desvioIds.length === 0) throw new Error("Vincule ao menos um desvio");
+    const principalDesvioId = desvioIds[0];
     const { data, error } = await supabase.from("planos_acao").insert({
-      desvio_id: input.desvioId,
+      desvio_id: principalDesvioId,
       acao: input.acao,
       responsavel: input.responsavel,
       responsavel_tipo: input.responsavelTipo ?? "membro",
@@ -521,12 +574,17 @@ const mutationResolvers: Record<string, Resolver> = {
       observacoes: input.observacoes ?? null,
     }).select().single();
     if (error) throw error;
+    // Cria vínculos N:N
+    const vincPayload = desvioIds.map(did => ({ plano_id: data.id, desvio_id: did }));
+    await supabase.from("plano_desvios" as any).insert(vincPayload);
     const { data: { user } } = await supabase.auth.getUser();
-    await supabase.from("historico").insert({
-      desvio_id: input.desvioId, tipo: "plano_acao",
+    // Histórico em todos os desvios vinculados
+    const histPayload = desvioIds.map(did => ({
+      desvio_id: did, tipo: "plano_acao" as const,
       descricao: `Plano de ação criado: ${input.acao}`,
       user_id: user?.id ?? null, user_name: user?.email ?? null,
-    });
+    }));
+    await supabase.from("historico").insert(histPayload);
     return mapPlanoFromDb(data);
   },
   "planos.update": async (input: any) => {
@@ -537,6 +595,18 @@ const mutationResolvers: Record<string, Resolver> = {
     });
     if ("prazo" in rest) patch.prazo = rest.prazo;
     const { data, error } = await supabase.from("planos_acao").update(patch).eq("id", id).select().single();
+    if (error) throw error;
+    // Atualiza vínculos se vieram
+    if (Array.isArray(rest.desvioIds)) {
+      await supabase.from("plano_desvios" as any).delete().eq("plano_id", id);
+      if (rest.desvioIds.length > 0) {
+        await supabase.from("plano_desvios" as any).insert(rest.desvioIds.map((did: number) => ({ plano_id: id, desvio_id: did })));
+      }
+    }
+    return mapPlanoFromDb(data);
+  },
+  "planos.updateStatus": async (input: { id: number; status: string }) => {
+    const { data, error } = await supabase.from("planos_acao").update({ status: input.status as any }).eq("id", input.id).select().single();
     if (error) throw error;
     return mapPlanoFromDb(data);
   },
