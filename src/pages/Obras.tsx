@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Search, Plus, Pencil, Calendar, Loader2 } from "lucide-react";
+import { Building2, Search, Plus, Pencil, Calendar, Loader2, ArrowLeftRight, Bookmark, BookmarkCheck, BookmarkX } from "lucide-react";
 import { toast } from "sonner";
 
 type Obra = {
@@ -19,13 +19,14 @@ type Obra = {
   endereco: string | null;
   status: "ativa" | "pausada" | "concluida";
   cobertura: number;
+  marcacao: "na_fila" | "descartada" | null;
   ultimoDesvio?: number | null;
   ultimaVistoria?: number | null;
   classificacao?: string | null;
   scoreGeral?: number | null;
 };
 
-type ObraEditable = Pick<Obra, "codigo" | "nome" | "cliente" | "endereco" | "status" | "cobertura">;
+type ObraEditable = Pick<Obra, "codigo" | "nome" | "cliente" | "endereco" | "status" | "cobertura" | "marcacao">;
 
 const classificacaoClasses: Record<string, string> = {
   "ÓTIMA": "border-emerald-200 bg-emerald-50 text-emerald-700",
@@ -89,6 +90,7 @@ export default function Obras() {
         const ultimaVerificacao = ultimaVerificacaoByObra.get(o.id);
         return {
           ...o,
+          marcacao: o.marcacao ?? null,
           ultimoDesvio: lastByObra.get(o.id) ?? null,
           ultimaVistoria: ultimaVerificacao?.data_vistoria ?? null,
           classificacao: ultimaVerificacao?.status_geral ?? null,
@@ -127,8 +129,9 @@ export default function Obras() {
   const [showEdit, setShowEdit] = useState(false);
   const [editObra, setEditObra] = useState<any>(null);
   const [newObra, setNewObra] = useState({ codigo: "", nome: "", cliente: "", endereco: "" });
+  const [filtroGerais, setFiltroGerais] = useState<"todas" | "na_fila" | "sem" | "descartada">("todas");
 
-  const obrasFiltradas = useMemo(() => {
+  const obrasFiltradasBase = useMemo(() => {
     if (!obrasResumo) return [] as Obra[];
     const term = searchTerm.toLowerCase();
     return obrasResumo.filter((o) =>
@@ -139,6 +142,36 @@ export default function Obras() {
       (o.classificacao || "sem classificação").toLowerCase().includes(term)
     );
   }, [obrasResumo, searchTerm]);
+
+  const gerais = useMemo(() => obrasFiltradasBase.filter((o) => !o.cobertura), [obrasFiltradasBase]);
+  const cobertas = useMemo(() => obrasFiltradasBase.filter((o) => !!o.cobertura), [obrasFiltradasBase]);
+
+  const counts = useMemo(() => ({
+    todas: gerais.length,
+    na_fila: gerais.filter((o) => o.marcacao === "na_fila").length,
+    sem: gerais.filter((o) => !o.marcacao).length,
+    descartada: gerais.filter((o) => o.marcacao === "descartada").length,
+  }), [gerais]);
+
+  const geraisFiltradas = useMemo(() => {
+    if (filtroGerais === "todas") return gerais;
+    if (filtroGerais === "sem") return gerais.filter((o) => !o.marcacao);
+    return gerais.filter((o) => o.marcacao === filtroGerais);
+  }, [gerais, filtroGerais]);
+
+  const toggleCobertura = (obra: Obra) => {
+    updateObra.mutate(
+      { id: obra.id, cobertura: obra.cobertura ? 0 : 1 },
+      {
+        onSuccess: () => toast.success(obra.cobertura ? "Movida para Gerais" : "Movida para Cobertas"),
+      }
+    );
+  };
+
+  const setMarcacao = (obra: Obra, marcacao: Obra["marcacao"]) => {
+    const next = obra.marcacao === marcacao ? null : marcacao;
+    updateObra.mutate({ id: obra.id, marcacao: next });
+  };
 
   const handleCreate = () => {
     if (!newObra.codigo || !newObra.nome) { toast.error("Preencha código e nome"); return; }
@@ -169,41 +202,72 @@ export default function Obras() {
     return new Date(timestamp).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" });
   };
 
-  const ObraCard = ({ obra }: { obra: Obra }) => (
-    <div className="flex flex-col gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-accent/20 sm:flex-row sm:items-center sm:justify-between">
-      <div className="min-w-0 flex-1 space-y-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-mono text-muted-foreground">{obra.codigo}</span>
-          <Badge variant={obra.status === "ativa" ? "default" : obra.status === "pausada" ? "secondary" : "outline"} className="text-[10px] px-1.5 py-0">
-            {statusLabel[obra.status]}
-          </Badge>
-          <Badge variant="outline" className={getClassificacaoClassName(obra.classificacao)}>
-            {obra.classificacao || "Sem classificação"}
-          </Badge>
-        </div>
+  const markStyles = {
+    na_fila: { wrap: "border-amber-300 bg-amber-50/60", icon: "text-amber-600" },
+    descartada: { wrap: "border-red-200 bg-red-50/40 opacity-70", icon: "text-red-600" },
+    none: { wrap: "border-border bg-card", icon: "text-muted-foreground" },
+  } as const;
 
-        <div className="min-w-0">
-          <p className="truncate font-medium text-sm sm:text-base">{obra.nome}</p>
-          {obra.cliente ? <p className="truncate text-xs text-muted-foreground sm:text-sm">{obra.cliente}</p> : null}
+  const ObraCard = ({ obra, side }: { obra: Obra; side: "gerais" | "cobertas" }) => {
+    const mk = obra.marcacao === "na_fila" ? markStyles.na_fila : obra.marcacao === "descartada" ? markStyles.descartada : markStyles.none;
+    return (
+      <div className={`group relative flex flex-col gap-2 rounded-lg border p-3 transition-colors hover:bg-accent/20 ${mk.wrap}`}>
+        <div className="flex items-start gap-2">
+          {side === "gerais" && (
+            <button
+              type="button"
+              onClick={() => setMarcacao(obra, obra.marcacao === "descartada" ? "descartada" : "na_fila")}
+              className={`mt-0.5 ${mk.icon}`}
+              title="Alternar marcação"
+            >
+              {obra.marcacao === "na_fila" ? <BookmarkCheck className="h-4 w-4" /> : obra.marcacao === "descartada" ? <BookmarkX className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
+            </button>
+          )}
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-mono text-muted-foreground">{obra.codigo}</span>
+              <Badge variant={obra.status === "ativa" ? "default" : obra.status === "pausada" ? "secondary" : "outline"} className="text-[10px] px-1.5 py-0">
+                {statusLabel[obra.status]}
+              </Badge>
+              <Badge variant="outline" className={getClassificacaoClassName(obra.classificacao)}>
+                {obra.classificacao || "Sem classificação"}
+              </Badge>
+              {side === "gerais" && obra.marcacao === "na_fila" && (
+                <Badge variant="outline" className="border-amber-300 bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0">Na fila</Badge>
+              )}
+              {side === "gerais" && obra.marcacao === "descartada" && (
+                <Badge variant="outline" className="border-red-300 bg-red-100 text-red-800 text-[10px] px-1.5 py-0">Descartada</Badge>
+              )}
+            </div>
+            <p className={`mt-1 truncate font-medium text-sm ${obra.marcacao === "descartada" ? "line-through" : ""}`}>{obra.nome}</p>
+            {obra.cliente ? <p className="truncate text-xs text-muted-foreground">{obra.cliente}</p> : null}
+            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
+              <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> Última inspeção: {formatDate(obra.ultimaVistoria)}</span>
+              <span>Último desvio: {formatDate(obra.ultimoDesvio)}</span>
+              <span>Score: {obra.scoreGeral != null ? `${obra.scoreGeral}%` : "—"}</span>
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <Button variant="ghost" size="icon" className="h-7 w-7" title={side === "gerais" ? "Mover para Cobertas" : "Mover para Gerais"} onClick={() => toggleCobertura(obra)}>
+              <ArrowLeftRight className="h-3.5 w-3.5" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditObra({ ...obra }); setShowEdit(true); }}>
+              <Pencil className="h-3.5 w-3.5" />
+            </Button>
+          </div>
         </div>
-
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <Calendar className="h-3 w-3" />
-            Última inspeção: {formatDate(obra.ultimaVistoria)}
-          </span>
-          <span>Último desvio: {formatDate(obra.ultimoDesvio)}</span>
-          <span>Score geral: {obra.scoreGeral != null ? `${obra.scoreGeral}%` : "—"}</span>
-        </div>
+        {side === "gerais" && (
+          <div className="flex items-center gap-1 pl-6">
+            <Button size="sm" variant={obra.marcacao === "na_fila" ? "default" : "ghost"} className="h-6 px-2 text-[10px]" onClick={() => setMarcacao(obra, "na_fila")}>Na fila</Button>
+            <Button size="sm" variant={obra.marcacao === "descartada" ? "destructive" : "ghost"} className="h-6 px-2 text-[10px]" onClick={() => setMarcacao(obra, "descartada")}>Descartar</Button>
+            {obra.marcacao && (
+              <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-muted-foreground" onClick={() => setMarcacao(obra, obra.marcacao)}>Limpar</Button>
+            )}
+          </div>
+        )}
       </div>
-
-      <div className="flex justify-end">
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditObra({ ...obra }); setShowEdit(true); }}>
-          <Pencil className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
-  );
+    );
+  };
 
   if (isLoading) {
     return (
@@ -224,7 +288,7 @@ export default function Obras() {
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Building2 className="h-6 w-6 text-primary" /> Obras
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">Visualize as obras com a classificação da última inspeção</p>
+          <p className="text-muted-foreground text-sm mt-1">Gerencie a cobertura das obras — mova entre Gerais e Cobertas</p>
         </div>
         <Button onClick={() => setShowCreate(true)} size="sm">
           <Plus className="h-4 w-4 mr-1" /> Nova Obra
@@ -236,20 +300,68 @@ export default function Obras() {
         <Input placeholder="Buscar obras..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-9" />
       </div>
 
-      <Card>
-        <div className="flex items-center justify-between border-b p-4">
-          <div>
-            <h2 className="font-semibold text-lg">Lista de Obras</h2>
-            <p className="text-xs text-muted-foreground mt-1">Cada obra exibe a classificação mais recente registrada</p>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card className="border-amber-200/60">
+          <div className="border-b border-amber-200/60 bg-amber-50/60 p-4 rounded-t-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Building2 className="h-5 w-5 text-amber-600" />
+                <h2 className="font-semibold text-lg">Obras Gerais</h2>
+              </div>
+              <Badge variant="secondary" className="text-sm">{gerais.length}</Badge>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Obras disponíveis no portfólio</p>
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {([
+                { k: "todas", label: "Todas", count: counts.todas },
+                { k: "na_fila", label: "Na fila", count: counts.na_fila },
+                { k: "sem", label: "Sem marcação", count: counts.sem },
+                { k: "descartada", label: "Descartadas", count: counts.descartada },
+              ] as const).map((t) => (
+                <Button
+                  key={t.k}
+                  size="sm"
+                  variant={filtroGerais === t.k ? "default" : "outline"}
+                  className="h-7 px-2.5 text-xs rounded-full"
+                  onClick={() => setFiltroGerais(t.k)}
+                >
+                  {t.label} <span className="ml-1 opacity-70">({t.count})</span>
+                </Button>
+              ))}
+            </div>
           </div>
-          <Badge variant="secondary" className="text-sm">{obrasFiltradas.length}</Badge>
-        </div>
-        <CardContent className="p-3 space-y-2 max-h-[calc(100vh-280px)] overflow-y-auto">
-          {obrasFiltradas.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Nenhuma obra encontrada</p>
-          ) : obrasFiltradas.map((o) => <ObraCard key={o.id} obra={o} />)}
-        </CardContent>
-      </Card>
+          <CardContent className="p-3 space-y-2 max-h-[calc(100vh-340px)] overflow-y-auto">
+            {geraisFiltradas.length === 0 ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">Nenhuma obra encontrada</p>
+            ) : geraisFiltradas.map((o) => <ObraCard key={o.id} obra={o} side="gerais" />)}
+          </CardContent>
+        </Card>
+
+        <Card className="border-emerald-200/60">
+          <div className="border-b border-emerald-200/60 bg-emerald-50/60 p-4 rounded-t-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Building2 className="h-5 w-5 text-emerald-600" />
+                <h2 className="font-semibold text-lg">Obras Cobertas</h2>
+              </div>
+              <Badge variant="secondary" className="text-sm">{cobertas.length}</Badge>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Obras que estamos atendendo</p>
+          </div>
+          <CardContent className="p-3 space-y-2 max-h-[calc(100vh-340px)] overflow-y-auto">
+            {cobertas.length === 0 ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">Nenhuma obra coberta</p>
+            ) : cobertas.map((o) => <ObraCard key={o.id} obra={o} side="cobertas" />)}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+        <span className="font-medium">Legenda:</span>
+        <span className="flex items-center gap-1"><Bookmark className="h-3.5 w-3.5" /> Sem marcação</span>
+        <span className="flex items-center gap-1"><BookmarkCheck className="h-3.5 w-3.5 text-amber-600" /> Na fila</span>
+        <span className="flex items-center gap-1"><BookmarkX className="h-3.5 w-3.5 text-red-600" /> Descartada</span>
+      </div>
 
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
         <DialogContent>
