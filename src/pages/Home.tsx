@@ -169,7 +169,7 @@ export default function Home() {
               </button>
             )}
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {ORIGENS.map((o) => {
               const Icon = o.icon;
               const isActive = selectedOrigem === o.key;
