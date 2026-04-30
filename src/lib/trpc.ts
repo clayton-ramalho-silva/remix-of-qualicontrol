@@ -98,15 +98,21 @@ const queryResolvers: Record<string, Resolver> = {
     const { data: desvio, error } = await supabase.from("desvios").select("*").eq("id", id).maybeSingle();
     if (error) throw error;
     if (!desvio) return null;
-    const [{ data: fotos }, { data: planos }, { data: historico }] = await Promise.all([
+    const [{ data: fotos }, { data: vinculos }, { data: historico }] = await Promise.all([
       supabase.from("fotos_evidencia").select("*").eq("desvio_id", id).order("created_at"),
-      supabase.from("planos_acao").select("*").eq("desvio_id", id).order("created_at"),
+      supabase.from("plano_desvios" as any).select("plano_id").eq("desvio_id", id),
       supabase.from("historico").select("*").eq("desvio_id", id).order("created_at", { ascending: false }),
     ]);
+    const planoIds = Array.from(new Set((vinculos || []).map((v: any) => v.plano_id)));
+    let planos: any[] = [];
+    if (planoIds.length > 0) {
+      const { data: planosData } = await supabase.from("planos_acao").select("*").in("id", planoIds).order("created_at");
+      planos = planosData || [];
+    }
     return {
       ...mapDesvioFromDb(desvio),
       fotos: (fotos || []).map((f: any) => ({ ...f, fileKey: f.file_key })),
-      planosAcao: (planos || []).map(mapPlanoFromDb),
+      planosAcao: planos.map(mapPlanoFromDb),
       historico: (historico || []).map((h: any) => ({
         ...h,
         userId: h.user_id,
