@@ -825,6 +825,26 @@ const mutationResolvers: Record<string, Resolver> = {
     if (error) throw error;
     return data;
   },
+  "checklist.createSecao": async (input: any) => {
+    const categoria = input.categoria || "qualidade";
+    // próximo numero/ordem dentro da categoria
+    const { data: existing } = await supabase
+      .from("checklist_secoes")
+      .select("numero, ordem")
+      .eq("categoria", categoria);
+    const maxNumero = (existing || []).reduce((m: number, s: any) => Math.max(m, s.numero || 0), 0);
+    const maxOrdem = (existing || []).reduce((m: number, s: any) => Math.max(m, s.ordem || 0), 0);
+    const { data, error } = await supabase.from("checklist_secoes").insert({
+      titulo: input.titulo,
+      peso: input.peso ?? 10,
+      reincidencia: input.reincidencia ?? 0,
+      numero: input.numero ?? maxNumero + 1,
+      ordem: input.ordem ?? maxOrdem + 1,
+      categoria,
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
 
   // --- CONFIG FAIXAS ---
   "configFaixas.update": async (input: any) => {
