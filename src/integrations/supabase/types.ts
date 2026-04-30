@@ -58,6 +58,7 @@ export type Database = {
       checklist_secoes: {
         Row: {
           ativo: number
+          categoria: string
           created_at: string
           id: number
           numero: number
@@ -69,6 +70,7 @@ export type Database = {
         }
         Insert: {
           ativo?: number
+          categoria?: string
           created_at?: string
           id?: number
           numero: number
@@ -80,6 +82,7 @@ export type Database = {
         }
         Update: {
           ativo?: number
+          categoria?: string
           created_at?: string
           id?: number
           numero?: number
