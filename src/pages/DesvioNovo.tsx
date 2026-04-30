@@ -16,6 +16,7 @@ import {
   Camera, CheckCircle2, Save, ChevronDown, ChevronUp, Sparkles, Check,
 } from "lucide-react";
 import PlantaPinSelector from "@/components/PlantaPinSelector";
+import VoiceRecorderButton from "@/components/VoiceRecorderButton";
 
 type Foto = { file: File; preview: string };
 
@@ -371,13 +372,22 @@ export default function DesvioNovo() {
               </div>
 
               <Field label="Descrição" hint={HINTS.descricao} required>
-                <Textarea
-                  value={descricao}
-                  onChange={e => setDescricao(e.target.value)}
-                  placeholder="Descreva o que foi observado..."
-                  rows={4}
-                  className="resize-none"
-                />
+                <div className="relative">
+                  <Textarea
+                    value={descricao}
+                    onChange={e => setDescricao(e.target.value)}
+                    placeholder="Descreva o que foi observado... ou clique no microfone para ditar."
+                    rows={4}
+                    className="resize-none pr-12"
+                  />
+                  <div className="absolute top-2 right-2">
+                    <VoiceRecorderButton
+                      value={descricao}
+                      onAppend={setDescricao}
+                      contexto="descrição de desvio em obra civil"
+                    />
+                  </div>
+                </div>
               </Field>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
