@@ -32,7 +32,7 @@ const ORIGENS = [
   },
   {
     key: "checklist" as const,
-    label: "Check List",
+    label: "Checklist",
     icon: ClipboardList,
     color: "text-violet-600",
     bgActive: "bg-violet-100 ring-2 ring-violet-400 shadow-md",
@@ -42,7 +42,7 @@ const ORIGENS = [
   },
   {
     key: "qsms" as const,
-    label: "Assistência Técnica",
+    label: "QSMS",
     icon: Wrench,
     color: "text-orange-600",
     bgActive: "bg-orange-100 ring-2 ring-orange-400 shadow-md",

@@ -21,7 +21,7 @@ type Foto = { file: File; preview: string };
 const HINTS = {
   obra: "Selecione a obra onde a inspeção está sendo realizada.",
   ambiente: "Local específico que está sendo inspecionado. Ex: Banheiro Suíte - Apto 301.",
-  vertical: "Tipo de inspeção: Qualidade, Check List ou Assistência Técnica.",
+  vertical: "Tipo de inspeção: Qualidade, Checklist ou QSMS.",
   data: "Data em que a inspeção está sendo realizada.",
   grupo: "Grupo técnico responsável pelo serviço onde o desvio foi identificado.",
   fornecedor: "Fornecedor responsável pela execução do serviço.",
@@ -216,8 +216,8 @@ export default function DesvioNovo() {
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="qualidade">Qualidade</SelectItem>
-                    <SelectItem value="checklist">Check List</SelectItem>
-                    <SelectItem value="qsms">Assistência Técnica</SelectItem>
+                    <SelectItem value="checklist">Checklist</SelectItem>
+                    <SelectItem value="qsms">QSMS</SelectItem>
                   </SelectContent>
                 </Select>
               </Field>

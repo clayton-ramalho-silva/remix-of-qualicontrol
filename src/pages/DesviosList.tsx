@@ -26,8 +26,8 @@ const STATUS_BADGE: Record<string, { label: string; icon: React.ReactNode; class
 
 const ORIGEM_BADGE: Record<string, { label: string; className: string }> = {
   qualidade: { label: "Qualidade", className: "bg-sky-50 text-sky-700 border-sky-200" },
-  checklist: { label: "Check List", className: "bg-violet-50 text-violet-700 border-violet-200" },
-  qsms: { label: "Assistência Técnica", className: "bg-orange-50 text-orange-700 border-orange-200" },
+  checklist: { label: "Checklist", className: "bg-violet-50 text-violet-700 border-violet-200" },
+  qsms: { label: "QSMS", className: "bg-orange-50 text-orange-700 border-orange-200" },
 };
 
 export default function DesviosList() {
@@ -157,8 +157,8 @@ export default function DesviosList() {
               <SelectContent>
                 <SelectItem value="all">Origem</SelectItem>
                 <SelectItem value="qualidade">Qualidade</SelectItem>
-                <SelectItem value="checklist">Check List</SelectItem>
-                <SelectItem value="qsms">Assistência Técnica</SelectItem>
+                <SelectItem value="checklist">Checklist</SelectItem>
+                <SelectItem value="qsms">QSMS</SelectItem>
               </SelectContent>
             </Select>
             <Select value={tagFilter} onValueChange={setTagFilter}>

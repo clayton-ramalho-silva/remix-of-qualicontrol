@@ -20,7 +20,7 @@ const statusLabels: Record<string, string> = {
   fechado: "Fechado", aguardando_aceite: "Ag. Aceite",
 };
 const origemLabels: Record<string, string> = {
-  qualidade: "Qualidade", checklist: "Check List", qsms: "Assistência Técnica",
+  qualidade: "Qualidade", checklist: "Checklist", qsms: "QSMS",
 };
 const sevColors: Record<string, string> = {
   grave: "bg-red-100 text-red-700",
@@ -131,7 +131,7 @@ export default function Relatorio() {
       return `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:600;${m[s] || ''}">${labels[s] || s}</span>`;
     };
     const fmtDate = (ts: number | null) => ts ? new Date(ts).toLocaleDateString("pt-BR") : "—";
-    const oLabels: Record<string, string> = { qualidade: "Qualidade", checklist: "Check List", qsms: "Assistência Técnica" };
+    const oLabels: Record<string, string> = { qualidade: "Qualidade", checklist: "Checklist", qsms: "QSMS" };
 
     // Build KPI cards HTML
     const kpiItems = kpis ? [
@@ -397,12 +397,12 @@ export default function Relatorio() {
               <label className="flex items-center gap-2 cursor-pointer">
                 <Checkbox checked={origemPunchList} onCheckedChange={(v) => setOrigemPunchList(!!v)} />
                 <ClipboardCheck className="h-4 w-4 text-blue-600" />
-                <span className="text-sm">Check List</span>
+                <span className="text-sm">Checklist</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <Checkbox checked={origemPosObra} onCheckedChange={(v) => setOrigemPosObra(!!v)} />
                 <Wrench className="h-4 w-4 text-violet-600" />
-                <span className="text-sm">Assistência Técnica</span>
+                <span className="text-sm">QSMS</span>
               </label>
             </div>
           </div>

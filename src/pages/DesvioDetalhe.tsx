@@ -32,8 +32,8 @@ const STATUS_MAP: Record<string, { label: string; icon: React.ReactNode; classNa
 
 const ORIGEM_MAP: Record<string, { label: string; className: string }> = {
   qualidade: { label: "Qualidade", className: "bg-sky-100 text-sky-700" },
-  checklist: { label: "Check List", className: "bg-violet-100 text-violet-700" },
-  qsms: { label: "Assistência Técnica", className: "bg-orange-100 text-orange-700" },
+  checklist: { label: "Checklist", className: "bg-violet-100 text-violet-700" },
+  qsms: { label: "QSMS", className: "bg-orange-100 text-orange-700" },
 };
 
 const TIMELINE_ICONS: Record<string, { icon: React.ReactNode; color: string }> = {
@@ -395,8 +395,8 @@ export default function DesvioDetalhe() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="qualidade">Qualidade</SelectItem>
-                        <SelectItem value="checklist">Check List</SelectItem>
-                        <SelectItem value="qsms">Assistência Técnica</SelectItem>
+                        <SelectItem value="checklist">Checklist</SelectItem>
+                        <SelectItem value="qsms">QSMS</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
