@@ -48,23 +48,23 @@ export default function Verificacoes({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <ClipboardList className="h-7 w-7 text-teal-600" />
-             {titulo}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
+            <ClipboardList className="h-6 w-6 sm:h-7 sm:w-7 text-teal-600 shrink-0" />
+            <span className="truncate">{titulo}</span>
           </h1>
-           <p className="text-slate-500 mt-1">Histórico de vistorias e checklists preenchidos</p>
+          <p className="text-slate-500 mt-1 text-sm">Histórico de vistorias e checklists preenchidos</p>
         </div>
-        <Button onClick={() => navigate(`${rotaBase}/nova`)} className="bg-teal-600 hover:bg-teal-700 text-white">
-           <Plus className="h-4 w-4 mr-2" /> Nova Verificação
+        <Button onClick={() => navigate(`${rotaBase}/nova`)} className="bg-teal-600 hover:bg-teal-700 text-white w-full sm:w-auto shrink-0">
+          <Plus className="h-4 w-4 mr-2" /> Nova Verificação
         </Button>
       </div>
 
       {/* Filtro */}
       <div className="flex gap-4">
         <Select value={obraFilter} onValueChange={setObraFilter}>
-          <SelectTrigger className="w-[300px]"><SelectValue placeholder="Filtrar por obra..." /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-[300px]"><SelectValue placeholder="Filtrar por obra..." /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas as obras</SelectItem>
             {obras?.map(o => (
