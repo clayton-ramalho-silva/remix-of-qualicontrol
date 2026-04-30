@@ -210,13 +210,13 @@ export default function Administracao() {
                         <Button size="sm" variant="ghost" onClick={() => setEditingSecao(null)}>Cancelar</Button>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-3 sm:gap-4 shrink-0">
                         <div className="text-center">
                           <p className="text-xs text-slate-400">Peso</p>
                           <p className="text-lg font-bold text-slate-900">{secao.peso}</p>
                         </div>
                         <div className="text-center">
-                          <p className="text-xs text-slate-400">Reincidência</p>
+                          <p className="text-xs text-slate-400">Reincid.</p>
                           <p className="text-lg font-bold text-slate-900">{secao.reincidencia}%</p>
                         </div>
                         <Button size="sm" variant="outline" onClick={() => startEditSecao(secao)}>
