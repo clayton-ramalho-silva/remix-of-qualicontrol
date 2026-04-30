@@ -125,6 +125,7 @@ export default function DesvioNovo() {
   const salvarDesvio = async (continuar: boolean) => {
     if (!grupoId) { toast.error("Selecione o grupo"); return; }
     if (!descricao.trim()) { toast.error("Descreva o desvio"); return; }
+    if (!vertical) { toast.error("Selecione a vertical"); return; }
     const grupo = grupos?.find(g => g.id === parseInt(grupoId));
 
     setSubmitting(true);
