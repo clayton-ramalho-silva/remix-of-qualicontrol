@@ -1115,6 +1115,60 @@ const mutationResolvers: Record<string, Resolver> = {
     if (error) throw error;
     return { ok: true };
   },
+
+  // --- EDIFICIOS ---
+  "edificios.create": async (input: { obraId: number; nome: string; codigo?: string; ordem?: number }) => {
+    const { data, error } = await (supabase.from("edificios" as any) as any).insert({
+      obra_id: input.obraId,
+      nome: input.nome,
+      codigo: input.codigo ?? null,
+      ordem: input.ordem ?? 0,
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
+  "edificios.update": async (input: { id: number; nome?: string; codigo?: string | null; ordem?: number; ativo?: number }) => {
+    const patch: any = {};
+    if (input.nome !== undefined) patch.nome = input.nome;
+    if (input.codigo !== undefined) patch.codigo = input.codigo;
+    if (input.ordem !== undefined) patch.ordem = input.ordem;
+    if (input.ativo !== undefined) patch.ativo = input.ativo;
+    const { data, error } = await (supabase.from("edificios" as any) as any).update(patch).eq("id", input.id).select().single();
+    if (error) throw error;
+    return data;
+  },
+  "edificios.delete": async (input: { id: number }) => {
+    const { error } = await (supabase.from("edificios" as any) as any).delete().eq("id", input.id);
+    if (error) throw error;
+    return { ok: true };
+  },
+
+  // --- ANDARES ---
+  "andares.create": async (input: { edificioId: number; nome: string; numero?: number; ordem?: number }) => {
+    const { data, error } = await (supabase.from("andares" as any) as any).insert({
+      edificio_id: input.edificioId,
+      nome: input.nome,
+      numero: input.numero ?? 0,
+      ordem: input.ordem ?? 0,
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
+  "andares.update": async (input: { id: number; nome?: string; numero?: number; ordem?: number; ativo?: number }) => {
+    const patch: any = {};
+    if (input.nome !== undefined) patch.nome = input.nome;
+    if (input.numero !== undefined) patch.numero = input.numero;
+    if (input.ordem !== undefined) patch.ordem = input.ordem;
+    if (input.ativo !== undefined) patch.ativo = input.ativo;
+    const { data, error } = await (supabase.from("andares" as any) as any).update(patch).eq("id", input.id).select().single();
+    if (error) throw error;
+    return data;
+  },
+  "andares.delete": async (input: { id: number }) => {
+    const { error } = await (supabase.from("andares" as any) as any).delete().eq("id", input.id);
+    if (error) throw error;
+    return { ok: true };
+  },
 };
 
 // ---------- Helpers ----------
