@@ -8,7 +8,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
 import {
   ArrowLeft, Target, Calendar, User, AlertTriangle, CheckCircle2,
-  Clock, Link2, Mail, FileText, ExternalLink,
+  Clock, Link2, Mail, FileText, ExternalLink, ShieldCheck, Wrench, Building2, Tag,
 } from "lucide-react";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -60,10 +60,36 @@ export default function PlanoAcaoDetalhe() {
         <div className="flex-1">
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Target className="h-6 w-6 text-teal-600" /> Plano de Ação #{plano.id}
+            {plano.tipo === "preventivo" ? (
+              <Badge className="bg-blue-100 text-blue-700 border-blue-200 gap-1"><ShieldCheck className="h-3 w-3" /> Preventivo</Badge>
+            ) : (
+              <Badge variant="secondary" className="gap-1"><Wrench className="h-3 w-3" /> Corretivo</Badge>
+            )}
           </h1>
         </div>
         <Badge className={STATUS_COLORS[plano.status] || ""}>{STATUS_LABELS[plano.status] || plano.status}</Badge>
       </div>
+
+      {plano.tipo === "preventivo" && (
+        <Card>
+          <CardContent className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div>
+                <p className="text-xs text-slate-400 uppercase mb-1 flex items-center gap-1"><Building2 className="h-3 w-3" /> Obra</p>
+                <p>{plano.obra ? `${plano.obra.codigo} - ${plano.obra.nome}` : "—"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400 uppercase mb-1">Vertical</p>
+                <p>{VERTICAL_LABELS[plano.vertical] || plano.vertical || "—"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400 uppercase mb-1 flex items-center gap-1"><Tag className="h-3 w-3" /> Categoria</p>
+                <p>{plano.categoria?.nome || "—"}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
@@ -122,6 +148,7 @@ export default function PlanoAcaoDetalhe() {
         </CardContent>
       </Card>
 
+      {plano.tipo !== "preventivo" && (
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
@@ -158,6 +185,7 @@ export default function PlanoAcaoDetalhe() {
           )}
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }
