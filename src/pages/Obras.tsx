@@ -8,8 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Search, Plus, Pencil, Calendar, Loader2, ArrowLeftRight, Bookmark, BookmarkCheck, BookmarkX, ShieldCheck, ListChecks, HardHat } from "lucide-react";
+import { Building2, Search, Plus, Pencil, Calendar, Loader2, ArrowLeftRight, Bookmark, BookmarkCheck, BookmarkX, ShieldCheck, ListChecks, HardHat, Layers } from "lucide-react";
 import { toast } from "sonner";
+import { useLocation } from "wouter";
 
 type Vertical = "qualidade" | "checklist" | "qsms";
 
@@ -62,6 +63,7 @@ const getClassificacaoClassName = (classificacao?: string | null) => {
 
 export default function Obras() {
   const qc = useQueryClient();
+  const [, navigate] = useLocation();
 
   const { data: obrasResumo, isLoading } = useQuery({
     queryKey: ["obras", "with-resumo"],
@@ -264,6 +266,10 @@ export default function Obras() {
             </div>
           </div>
           <div className="flex flex-col gap-1">
+            <Button variant="ghost" size="icon" className="h-7 w-7" title="Edifícios e plantas"
+              onClick={() => navigate(`/obras/${obra.id}`)}>
+              <Layers className="h-3.5 w-3.5" />
+            </Button>
             <Button variant="ghost" size="icon" className="h-7 w-7" title={side === "gerais" ? `Cobrir em ${verticalAtiva.label}` : `Remover de ${verticalAtiva.label}`} onClick={() => toggleCobertura(obra)}>
               <ArrowLeftRight className="h-3.5 w-3.5" />
             </Button>
