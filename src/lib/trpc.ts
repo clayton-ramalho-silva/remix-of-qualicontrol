@@ -434,7 +434,23 @@ const queryResolvers: Record<string, Resolver> = {
       const { data: dData } = await supabase.from("desvios").select("*").in("id", desvioIds);
       desvios = (dData || []).map(mapDesvioFromDb);
     }
-    return { ...mapPlanoFromDb(plano), desvios };
+    let categoria: any = null;
+    if ((plano as any).categoria_id) {
+      const { data: c } = await supabase.from("plano_categorias" as any).select("id, nome").eq("id", (plano as any).categoria_id).maybeSingle();
+      categoria = c || null;
+    }
+    let obra: any = null;
+    if ((plano as any).obra_id) {
+      const { data: o } = await supabase.from("obras").select("id, codigo, nome").eq("id", (plano as any).obra_id).maybeSingle();
+      obra = o || null;
+    }
+    return { ...mapPlanoFromDb(plano), desvios, categoria, obra };
+  },
+  // --- PLANO CATEGORIAS ---
+  "planoCategorias.list": async () => {
+    const { data, error } = await supabase.from("plano_categorias" as any).select("*").order("ordem").order("nome");
+    if (error) throw error;
+    return data || [];
   },
 };
 
