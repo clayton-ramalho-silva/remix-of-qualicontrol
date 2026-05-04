@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "sonner";
 import {
   Settings, Scale, Layers, Palette, Info, Save, Plus, Edit2,
-  CheckCircle2, XCircle, AlertTriangle, MinusCircle
+  CheckCircle2, XCircle, AlertTriangle, MinusCircle, Tag, Trash2
 } from "lucide-react";
 
 export default function Administracao() {
@@ -102,6 +102,24 @@ export default function Administracao() {
 
   const totalPeso = checklist?.reduce((sum, s) => sum + s.peso, 0) || 0;
 
+  // --- Categorias de Plano ---
+  const { data: planoCategorias } = trpc.planoCategorias.list.useQuery();
+  const createCategoria = trpc.planoCategorias.create.useMutation({
+    onSuccess: () => { utils.planoCategorias.list.invalidate(); toast.success("Categoria criada!"); setNovaCategoria(""); },
+    onError: (e: any) => toast.error(e?.message || "Erro ao criar"),
+  });
+  const updateCategoria = trpc.planoCategorias.update.useMutation({
+    onSuccess: () => { utils.planoCategorias.list.invalidate(); toast.success("Categoria atualizada!"); setEditCatId(null); },
+    onError: (e: any) => toast.error(e?.message || "Erro ao atualizar"),
+  });
+  const deleteCategoria = trpc.planoCategorias.delete.useMutation({
+    onSuccess: () => { utils.planoCategorias.list.invalidate(); toast.success("Categoria removida!"); },
+    onError: (e: any) => toast.error(e?.message || "Erro ao remover"),
+  });
+  const [novaCategoria, setNovaCategoria] = useState("");
+  const [editCatId, setEditCatId] = useState<number | null>(null);
+  const [editCatNome, setEditCatNome] = useState("");
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -137,7 +155,7 @@ export default function Administracao() {
       </div>
 
       <Tabs defaultValue="pesos">
-        <TabsList className="grid w-full grid-cols-3 max-w-lg">
+        <TabsList className="grid w-full grid-cols-4 max-w-2xl">
           <TabsTrigger value="pesos" className="flex items-center gap-1.5">
             <Scale className="h-4 w-4" /> Pesos
           </TabsTrigger>
@@ -146,6 +164,9 @@ export default function Administracao() {
           </TabsTrigger>
           <TabsTrigger value="faixas" className="flex items-center gap-1.5">
             <Palette className="h-4 w-4" /> Faixas
+          </TabsTrigger>
+          <TabsTrigger value="categorias" className="flex items-center gap-1.5">
+            <Tag className="h-4 w-4" /> Categorias
           </TabsTrigger>
         </TabsList>
 
