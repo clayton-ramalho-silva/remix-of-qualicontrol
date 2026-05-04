@@ -171,16 +171,18 @@ const queryResolvers: Record<string, Resolver> = {
     }));
   },
   "edificios.getById": async ({ id }: { id: number }) => {
-    const { data, error } = await supabase.from("edificios" as any).select("*").eq("id", id).maybeSingle();
+    const { data, error } = await (supabase.from("edificios" as any) as any).select("*").eq("id", id).maybeSingle();
     if (error) throw error;
     if (!data) return null;
-    return { ...data, obraId: (data as any).obra_id };
+    const d: any = data;
+    return { ...d, obraId: d.obra_id };
   },
   "andares.getById": async ({ id }: { id: number }) => {
-    const { data, error } = await supabase.from("andares" as any).select("*").eq("id", id).maybeSingle();
+    const { data, error } = await (supabase.from("andares" as any) as any).select("*").eq("id", id).maybeSingle();
     if (error) throw error;
     if (!data) return null;
-    return { ...data, edificioId: (data as any).edificio_id };
+    const d: any = data;
+    return { ...d, edificioId: d.edificio_id };
   },
 
   "plantas.getById": async ({ id }: { id: number }) => {
