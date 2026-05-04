@@ -1028,6 +1028,30 @@ const mutationResolvers: Record<string, Resolver> = {
     if (data?.error) throw new Error(data.error);
     return data;
   },
+
+  // --- PLANO CATEGORIAS (admin) ---
+  "planoCategorias.create": async (input: { nome: string; ordem?: number }) => {
+    const { data, error } = await supabase.from("plano_categorias" as any).insert({
+      nome: input.nome,
+      ordem: input.ordem ?? 0,
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
+  "planoCategorias.update": async (input: { id: number; nome?: string; ordem?: number; ativo?: number }) => {
+    const patch: any = {};
+    if (input.nome !== undefined) patch.nome = input.nome;
+    if (input.ordem !== undefined) patch.ordem = input.ordem;
+    if (input.ativo !== undefined) patch.ativo = input.ativo;
+    const { data, error } = await supabase.from("plano_categorias" as any).update(patch).eq("id", input.id).select().single();
+    if (error) throw error;
+    return data;
+  },
+  "planoCategorias.delete": async (input: { id: number }) => {
+    const { error } = await supabase.from("plano_categorias" as any).delete().eq("id", input.id);
+    if (error) throw error;
+    return { ok: true };
+  },
 };
 
 // ---------- Helpers ----------
