@@ -783,28 +783,36 @@ const mutationResolvers: Record<string, Resolver> = {
     });
     if (upErr) throw upErr;
     const { data: pub } = supabase.storage.from("plantas").getPublicUrl(key);
-    const { data, error } = await supabase.from("plantas").insert({
+    const insertObj: any = {
       obra_id: input.obraId,
       nome: input.nome,
       file_key: key,
       url: pub.publicUrl,
       ordem: input.ordem ?? 0,
-    }).select().single();
+    };
+    if (input.andarId) insertObj.andar_id = input.andarId;
+    const { data, error } = await (supabase.from("plantas") as any).insert(insertObj).select().single();
     if (error) throw error;
     // Dispara extração de ambientes em background (sem bloquear)
     supabase.functions.invoke("extrair-ambientes-planta", {
       body: { plantaId: data.id },
     }).catch((e) => console.warn("Falha ao iniciar extração de ambientes:", e));
-    return { ...data, fileKey: data.file_key, obraId: data.obra_id };
+    return { ...data, fileKey: data.file_key, obraId: data.obra_id, andarId: data.andar_id ?? null };
   },
   "plantas.update": async (input: any) => {
     const { id, ...rest } = input;
     const patch: any = {};
     if ("nome" in rest) patch.nome = rest.nome;
     if ("ordem" in rest) patch.ordem = rest.ordem;
-    const { data, error } = await supabase.from("plantas").update(patch).eq("id", id).select().single();
+    if ("andarId" in rest) patch.andar_id = rest.andarId ?? null;
+    const { data, error } = await (supabase.from("plantas") as any).update(patch).eq("id", id).select().single();
     if (error) throw error;
-    return { ...data, fileKey: data.file_key, obraId: data.obra_id };
+    return { ...data, fileKey: data.file_key, obraId: data.obra_id, andarId: data.andar_id ?? null };
+  },
+  "plantas.mover": async (input: { id: number; andarId: number | null }) => {
+    const { error } = await (supabase.from("plantas") as any).update({ andar_id: input.andarId }).eq("id", input.id);
+    if (error) throw error;
+    return { ok: true };
   },
   "plantas.delete": async (input: any) => {
     const { data: planta } = await supabase.from("plantas").select("file_key").eq("id", input.id).maybeSingle();
