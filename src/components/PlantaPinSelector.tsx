@@ -2,8 +2,8 @@ import { trpc } from "@/lib/trpc";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { useState, useRef, useCallback } from "react";
-import { MapPin, X, Info } from "lucide-react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import { MapPin, X, Info, Building2, Layers } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PlantaPinSelectorProps {
@@ -20,11 +20,46 @@ export default function PlantaPinSelector({ obraId, plantaId, pinX, pinY, onChan
     { obraId: obraId! },
     { enabled: !!obraId }
   );
+  const { data: edificios } = trpc.edificios.listByObra.useQuery(
+    { obraId: obraId! },
+    { enabled: !!obraId }
+  );
 
   const [showPlanta, setShowPlanta] = useState(!!plantaId);
   const imgRef = useRef<HTMLImageElement>(null);
 
   const selectedPlanta = plantas?.find(p => p.id === plantaId);
+
+  // Estado da cascata
+  const [edificioId, setEdificioId] = useState<number | null>(null);
+  const [andarId, setAndarId] = useState<number | null>(null);
+
+  // Sincronizar a cascata com a planta atualmente selecionada
+  useEffect(() => {
+    if (!selectedPlanta || !edificios) return;
+    const aId = (selectedPlanta as any).andarId ?? null;
+    if (aId) {
+      const ed = edificios.find((e: any) => e.andares?.some((a: any) => a.id === aId));
+      if (ed) {
+        setEdificioId(ed.id);
+        setAndarId(aId);
+      }
+    }
+  }, [selectedPlanta, edificios]);
+
+  const andaresDoEdificio = useMemo(() => {
+    if (!edificioId || !edificios) return [];
+    const ed = edificios.find((e: any) => e.id === edificioId);
+    return ed?.andares || [];
+  }, [edificioId, edificios]);
+
+  const plantasDoAndar = useMemo(() => {
+    if (!plantas) return [];
+    if (andarId) return plantas.filter((p: any) => p.andarId === andarId);
+    // Sem hierarquia: mostra plantas legadas (sem andar) quando nenhum edifício/andar foi selecionado
+    if (!edificioId) return plantas.filter((p: any) => !p.andarId);
+    return [];
+  }, [plantas, andarId, edificioId]);
 
   const handleImageClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (readOnly) return;
@@ -39,7 +74,9 @@ export default function PlantaPinSelector({ obraId, plantaId, pinX, pinY, onChan
   }, [plantaId, onChange, readOnly]);
 
   if (!obraId) return null;
-  if (!plantas || plantas.length === 0) return null;
+  const semEdificios = !edificios || edificios.length === 0;
+  const semPlantas = !plantas || plantas.length === 0;
+  if (semEdificios && semPlantas) return null;
 
   return (
     <div className="space-y-3">
@@ -87,25 +124,73 @@ export default function PlantaPinSelector({ obraId, plantaId, pinX, pinY, onChan
 
       {(showPlanta || readOnly) && (
         <div className="space-y-2">
-          {/* Seletor de planta */}
+          {/* Seletor em cascata: Edifício → Andar → Planta */}
           {!readOnly && (
-            <Select
-              value={plantaId ? String(plantaId) : ""}
-              onValueChange={(v) => {
-                onChange({ plantaId: Number(v), pinX: null, pinY: null });
-              }}
-            >
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Selecione a planta..." />
-              </SelectTrigger>
-              <SelectContent>
-                {plantas.map((planta) => (
-                  <SelectItem key={planta.id} value={String(planta.id)}>
-                    {planta.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <Select
+                value={edificioId ? String(edificioId) : ""}
+                onValueChange={(v) => {
+                  setEdificioId(Number(v));
+                  setAndarId(null);
+                  onChange({ plantaId: null, pinX: null, pinY: null });
+                }}
+                disabled={semEdificios}
+              >
+                <SelectTrigger className="h-9">
+                  <Building2 className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
+                  <SelectValue placeholder="Edifício..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {(edificios || []).map((e: any) => (
+                    <SelectItem key={e.id} value={String(e.id)}>{e.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={andarId ? String(andarId) : ""}
+                onValueChange={(v) => {
+                  setAndarId(Number(v));
+                  onChange({ plantaId: null, pinX: null, pinY: null });
+                }}
+                disabled={!edificioId || andaresDoEdificio.length === 0}
+              >
+                <SelectTrigger className="h-9">
+                  <Layers className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
+                  <SelectValue placeholder="Andar..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {andaresDoEdificio.map((a: any) => (
+                    <SelectItem key={a.id} value={String(a.id)}>{a.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={plantaId ? String(plantaId) : ""}
+                onValueChange={(v) => {
+                  onChange({ plantaId: Number(v), pinX: null, pinY: null });
+                }}
+                disabled={plantasDoAndar.length === 0}
+              >
+                <SelectTrigger className="h-9">
+                  <MapPin className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
+                  <SelectValue placeholder="Planta..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {plantasDoAndar.map((p: any) => (
+                    <SelectItem key={p.id} value={String(p.id)}>{p.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {!readOnly && edificioId && andaresDoEdificio.length === 0 && (
+            <p className="text-[11px] text-muted-foreground">Este edifício ainda não tem andares cadastrados.</p>
+          )}
+          {!readOnly && andarId && plantasDoAndar.length === 0 && (
+            <p className="text-[11px] text-muted-foreground">Nenhuma planta neste andar.</p>
           )}
 
           {/* Imagem da planta com PIN */}

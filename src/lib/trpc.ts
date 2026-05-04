@@ -127,7 +127,7 @@ const queryResolvers: Record<string, Resolver> = {
   "plantas.listByObra": async ({ obraId }: { obraId: number }) => {
     const { data, error } = await supabase.from("plantas").select("*").eq("obra_id", obraId).order("ordem");
     if (error) throw error;
-    return (data || []).map((p: any) => ({ ...p, fileKey: p.file_key, obraId: p.obra_id }));
+    return (data || []).map((p: any) => ({ ...p, fileKey: p.file_key, obraId: p.obra_id, andarId: p.andar_id ?? null }));
   },
 
   "plantas.listByAndar": async ({ andarId }: { andarId: number }) => {
