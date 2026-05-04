@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "sonner";
 import {
   Settings, Scale, Layers, Palette, Info, Save, Plus, Edit2,
-  CheckCircle2, XCircle, AlertTriangle, MinusCircle
+  CheckCircle2, XCircle, AlertTriangle, MinusCircle, Tag, Trash2
 } from "lucide-react";
 
 export default function Administracao() {
@@ -102,6 +102,24 @@ export default function Administracao() {
 
   const totalPeso = checklist?.reduce((sum, s) => sum + s.peso, 0) || 0;
 
+  // --- Categorias de Plano ---
+  const { data: planoCategorias } = trpc.planoCategorias.list.useQuery();
+  const createCategoria = trpc.planoCategorias.create.useMutation({
+    onSuccess: () => { utils.planoCategorias.list.invalidate(); toast.success("Categoria criada!"); setNovaCategoria(""); },
+    onError: (e: any) => toast.error(e?.message || "Erro ao criar"),
+  });
+  const updateCategoria = trpc.planoCategorias.update.useMutation({
+    onSuccess: () => { utils.planoCategorias.list.invalidate(); toast.success("Categoria atualizada!"); setEditCatId(null); },
+    onError: (e: any) => toast.error(e?.message || "Erro ao atualizar"),
+  });
+  const deleteCategoria = trpc.planoCategorias.delete.useMutation({
+    onSuccess: () => { utils.planoCategorias.list.invalidate(); toast.success("Categoria removida!"); },
+    onError: (e: any) => toast.error(e?.message || "Erro ao remover"),
+  });
+  const [novaCategoria, setNovaCategoria] = useState("");
+  const [editCatId, setEditCatId] = useState<number | null>(null);
+  const [editCatNome, setEditCatNome] = useState("");
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -137,7 +155,7 @@ export default function Administracao() {
       </div>
 
       <Tabs defaultValue="pesos">
-        <TabsList className="grid w-full grid-cols-3 max-w-lg">
+        <TabsList className="grid w-full grid-cols-4 max-w-2xl">
           <TabsTrigger value="pesos" className="flex items-center gap-1.5">
             <Scale className="h-4 w-4" /> Pesos
           </TabsTrigger>
@@ -146,6 +164,9 @@ export default function Administracao() {
           </TabsTrigger>
           <TabsTrigger value="faixas" className="flex items-center gap-1.5">
             <Palette className="h-4 w-4" /> Faixas
+          </TabsTrigger>
+          <TabsTrigger value="categorias" className="flex items-center gap-1.5">
+            <Tag className="h-4 w-4" /> Categorias
           </TabsTrigger>
         </TabsList>
 
@@ -423,6 +444,87 @@ export default function Administracao() {
                   </div>
                 ))
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Tab: Categorias de Plano de Ação */}
+        <TabsContent value="categorias" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Tag className="h-5 w-5 text-teal-600" />
+                Categorias de Plano de Ação (Preventivos)
+              </CardTitle>
+              <CardDescription>
+                Categorias usadas em planos preventivos / avulsos. Adicione, renomeie ou desative conforme necessário.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Nome da nova categoria"
+                  value={novaCategoria}
+                  onChange={e => setNovaCategoria(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter" && novaCategoria.trim()) createCategoria.mutate({ nome: novaCategoria.trim() }); }}
+                />
+                <Button
+                  onClick={() => novaCategoria.trim() && createCategoria.mutate({ nome: novaCategoria.trim() })}
+                  className="bg-teal-600 hover:bg-teal-700 text-white shrink-0"
+                  disabled={createCategoria.isPending || !novaCategoria.trim()}
+                >
+                  <Plus className="h-4 w-4 mr-1" /> Adicionar
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                {(planoCategorias || []).length === 0 && (
+                  <p className="text-sm text-slate-400 text-center py-6">Nenhuma categoria cadastrada</p>
+                )}
+                {(planoCategorias || []).map((c: any) => (
+                  <div key={c.id} className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 bg-white">
+                    {editCatId === c.id ? (
+                      <>
+                        <Input
+                          autoFocus
+                          value={editCatNome}
+                          onChange={e => setEditCatNome(e.target.value)}
+                          className="flex-1 h-8"
+                        />
+                        <Button size="sm" className="bg-teal-600 hover:bg-teal-700 text-white" onClick={() => updateCategoria.mutate({ id: c.id, nome: editCatNome.trim() })}>
+                          <Save className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => setEditCatId(null)}>Cancelar</Button>
+                      </>
+                    ) : (
+                      <>
+                        <Badge variant="outline" className="font-mono text-xs">#{c.id}</Badge>
+                        <span className={`flex-1 text-sm ${c.ativo === 0 ? "text-slate-400 line-through" : "text-slate-900"}`}>{c.nome}</span>
+                        {c.ativo === 0 && <Badge variant="secondary" className="text-[10px]">Inativo</Badge>}
+                        <Button size="sm" variant="outline" onClick={() => { setEditCatId(c.id); setEditCatNome(c.nome); }}>
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => updateCategoria.mutate({ id: c.id, ativo: c.ativo === 1 ? 0 : 1 })}
+                          title={c.ativo === 1 ? "Desativar" : "Ativar"}
+                        >
+                          {c.ativo === 1 ? <XCircle className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-red-600 hover:text-red-700"
+                          onClick={() => { if (confirm(`Excluir categoria "${c.nome}"?`)) deleteCategoria.mutate({ id: c.id }); }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

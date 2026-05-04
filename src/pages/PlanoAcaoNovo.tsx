@@ -10,18 +10,21 @@ import { Badge } from "@/components/ui/badge";
 import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
-import { ArrowLeft, Target, Search, X, Link2, Loader2 } from "lucide-react";
+import { ArrowLeft, Target, Search, X, Link2, Loader2, Wrench, ShieldCheck } from "lucide-react";
 
 const VERTICAL_LABELS: Record<string, string> = {
   qualidade: "Qualidade", checklist: "Checklist", qsms: "QSMS", vistoria: "Vistoria",
 };
+const VERTICAIS = ["vistoria", "qualidade", "qsms", "checklist"] as const;
 
 export default function PlanoAcaoNovo() {
   const [, navigate] = useLocation();
   const utils = trpc.useUtils();
   const { data: desvios } = trpc.desvios.list.useQuery();
   const { data: obras } = trpc.obras.list.useQuery();
+  const { data: categorias } = trpc.planoCategorias.list.useQuery();
 
+  const [tipo, setTipo] = useState<"corretivo" | "preventivo">("corretivo");
   const [acao, setAcao] = useState("");
   const [responsavel, setResponsavel] = useState("");
   const [responsavelEmail, setResponsavelEmail] = useState("");
@@ -33,6 +36,10 @@ export default function PlanoAcaoNovo() {
   const [verticalFiltro, setVerticalFiltro] = useState("all");
   const [search, setSearch] = useState("");
   const [picker, setPicker] = useState(false);
+  // Preventivo
+  const [obraId, setObraId] = useState<string>("");
+  const [vertical, setVertical] = useState<string>("");
+  const [categoriaId, setCategoriaId] = useState<string>("");
 
   const create = trpc.planos.create.useMutation();
 
@@ -59,10 +66,19 @@ export default function PlanoAcaoNovo() {
     if (!acao.trim()) { toast.error("Descreva a ação"); return; }
     if (!responsavel.trim()) { toast.error("Informe o responsável"); return; }
     if (!prazo) { toast.error("Defina o prazo"); return; }
-    if (selecionados.length === 0) { toast.error("Vincule ao menos um desvio"); return; }
+    if (tipo === "corretivo" && selecionados.length === 0) { toast.error("Vincule ao menos um desvio"); return; }
+    if (tipo === "preventivo") {
+      if (!obraId) { toast.error("Selecione a obra"); return; }
+      if (!vertical) { toast.error("Selecione a vertical"); return; }
+      if (!categoriaId) { toast.error("Selecione a categoria"); return; }
+    }
     try {
       await create.mutateAsync({
-        desvioIds: selecionados,
+        tipo,
+        desvioIds: tipo === "corretivo" ? selecionados : [],
+        obraId: tipo === "preventivo" ? Number(obraId) : undefined,
+        vertical: tipo === "preventivo" ? vertical : undefined,
+        categoriaId: tipo === "preventivo" ? Number(categoriaId) : undefined,
         acao: acao.trim(),
         responsavel: responsavel.trim(),
         responsavelEmail: responsavelEmail.trim() || undefined,
@@ -91,6 +107,75 @@ export default function PlanoAcaoNovo() {
           <p className="text-muted-foreground text-sm mt-0.5">Vincule desvios e atribua responsável e prazo</p>
         </div>
       </div>
+
+      <Card>
+        <CardContent className="p-3">
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setTipo("corretivo")}
+              className={`flex items-start gap-3 rounded-lg border-2 p-3 text-left transition-all ${tipo === "corretivo" ? "border-teal-500 bg-teal-50" : "border-slate-200 hover:border-slate-300 bg-white"}`}
+            >
+              <Wrench className={`h-5 w-5 mt-0.5 shrink-0 ${tipo === "corretivo" ? "text-teal-600" : "text-slate-400"}`} />
+              <div className="min-w-0">
+                <p className="font-semibold text-sm text-slate-900">Corretivo</p>
+                <p className="text-xs text-slate-500 mt-0.5">Vinculado a desvios existentes</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTipo("preventivo")}
+              className={`flex items-start gap-3 rounded-lg border-2 p-3 text-left transition-all ${tipo === "preventivo" ? "border-blue-500 bg-blue-50" : "border-slate-200 hover:border-slate-300 bg-white"}`}
+            >
+              <ShieldCheck className={`h-5 w-5 mt-0.5 shrink-0 ${tipo === "preventivo" ? "text-blue-600" : "text-slate-400"}`} />
+              <div className="min-w-0">
+                <p className="font-semibold text-sm text-slate-900">Preventivo / Avulso</p>
+                <p className="text-xs text-slate-500 mt-0.5">Sem desvio vinculado (treinamento, melhoria...)</p>
+              </div>
+            </button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {tipo === "preventivo" && (
+        <Card>
+          <CardHeader><CardTitle className="text-base">Contexto do Plano Preventivo</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label className="text-sm">Obra *</Label>
+                <Select value={obraId} onValueChange={setObraId}>
+                  <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    {obras?.map(o => <SelectItem key={o.id} value={String(o.id)}>{o.codigo} - {o.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-sm">Vertical *</Label>
+                <Select value={vertical} onValueChange={setVertical}>
+                  <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    {VERTICAIS.map(v => <SelectItem key={v} value={v}>{VERTICAL_LABELS[v]}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-sm">Categoria *</Label>
+                <Select value={categoriaId} onValueChange={setCategoriaId}>
+                  <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    {(categorias || []).filter((c: any) => c.ativo === 1).map((c: any) => (
+                      <SelectItem key={c.id} value={String(c.id)}>{c.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-slate-400 mt-1">Categorias podem ser editadas em Parâmetros (admin)</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader><CardTitle className="text-base">Ação</CardTitle></CardHeader>
@@ -131,6 +216,7 @@ export default function PlanoAcaoNovo() {
         </CardContent>
       </Card>
 
+      {tipo === "corretivo" && (
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
@@ -180,9 +266,10 @@ export default function PlanoAcaoNovo() {
                     <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Vertical" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todas verticais</SelectItem>
+                      <SelectItem value="vistoria">Vistoria</SelectItem>
                       <SelectItem value="qualidade">Qualidade</SelectItem>
-                      <SelectItem value="checklist">Checklist</SelectItem>
                       <SelectItem value="qsms">QSMS</SelectItem>
+                      <SelectItem value="checklist">Checklist</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -223,6 +310,7 @@ export default function PlanoAcaoNovo() {
           </Dialog>
         </CardContent>
       </Card>
+      )}
 
       <div className="flex justify-end gap-2">
         <Button variant="outline" onClick={() => navigate("/planos-acao")}>Cancelar</Button>

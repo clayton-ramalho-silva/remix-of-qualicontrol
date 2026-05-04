@@ -10,7 +10,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import {
   Target, Plus, Search, Calendar, AlertTriangle, CheckCircle2,
-  Clock, User, Filter, Link2, Flame,
+  Clock, User, Filter, Link2, Flame, ShieldCheck,
 } from "lucide-react";
 
 const STATUS_COLS: { key: string; label: string; color: string; icon: any }[] = [
@@ -42,6 +42,7 @@ export default function PlanosAcao() {
   const [obraFilter, setObraFilter] = useState("all");
   const [verticalFilter, setVerticalFilter] = useState("all");
   const [prioFilter, setPrioFilter] = useState("all");
+  const [tipoFilter, setTipoFilter] = useState("all");
   const [meus, setMeus] = useState(false);
   const [atrasados, setAtrasados] = useState(false);
 
@@ -58,13 +59,14 @@ export default function PlanosAcao() {
         p.desvios?.some((d: any) => d.descricao?.toLowerCase().includes(t))
       );
     }
-    if (obraFilter !== "all") r = r.filter((p: any) => p.desvios?.some((d: any) => String(d.obraId) === obraFilter));
-    if (verticalFilter !== "all") r = r.filter((p: any) => p.desvios?.some((d: any) => d.origem === verticalFilter));
+    if (obraFilter !== "all") r = r.filter((p: any) => String(p.obraId) === obraFilter || p.desvios?.some((d: any) => String(d.obraId) === obraFilter));
+    if (verticalFilter !== "all") r = r.filter((p: any) => p.vertical === verticalFilter || p.desvios?.some((d: any) => d.origem === verticalFilter));
     if (prioFilter !== "all") r = r.filter((p: any) => p.prioridade === prioFilter);
+    if (tipoFilter !== "all") r = r.filter((p: any) => (p.tipo || "corretivo") === tipoFilter);
     if (meus && user?.email) r = r.filter((p: any) => p.responsavelEmail === user.email);
     if (atrasados) r = r.filter((p: any) => p.status !== "concluido" && p.prazo && p.prazo < Date.now());
     return r;
-  }, [planos, search, obraFilter, verticalFilter, prioFilter, meus, atrasados, user?.email]);
+  }, [planos, search, obraFilter, verticalFilter, prioFilter, tipoFilter, meus, atrasados, user?.email]);
 
   const kpis = useMemo(() => {
     const all = planos || [];
@@ -131,10 +133,10 @@ export default function PlanosAcao() {
               <SelectTrigger className="w-full sm:w-[180px] sm:shrink-0"><SelectValue placeholder="Vertical">{verticalFilter === "all" ? "Vertical: todas" : undefined}</SelectValue></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas as verticais</SelectItem>
-                <SelectItem value="qualidade">Qualidade</SelectItem>
-                <SelectItem value="checklist">Checklist</SelectItem>
-                <SelectItem value="qsms">QSMS</SelectItem>
                 <SelectItem value="vistoria">Vistoria</SelectItem>
+                <SelectItem value="qualidade">Qualidade</SelectItem>
+                <SelectItem value="qsms">QSMS</SelectItem>
+                <SelectItem value="checklist">Checklist</SelectItem>
               </SelectContent>
             </Select>
             <Select value={prioFilter} onValueChange={setPrioFilter}>
@@ -144,6 +146,14 @@ export default function PlanosAcao() {
                 <SelectItem value="urgente">Urgente</SelectItem>
                 <SelectItem value="normal">Normal</SelectItem>
                 <SelectItem value="baixa">Baixa</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={tipoFilter} onValueChange={setTipoFilter}>
+              <SelectTrigger className="w-full sm:w-[160px] sm:shrink-0"><SelectValue placeholder="Tipo">{tipoFilter === "all" ? "Tipo: todos" : undefined}</SelectValue></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os tipos</SelectItem>
+                <SelectItem value="corretivo">Corretivo</SelectItem>
+                <SelectItem value="preventivo">Preventivo</SelectItem>
               </SelectContent>
             </Select>
             <div className="flex-1" />
@@ -207,7 +217,12 @@ function KpiCard({ label, value, color, icon: Icon, clickable, onClick, active }
 
 function PlanoCard({ plano, onClick }: { plano: any; onClick: () => void }) {
   const overdue = plano.status !== "concluido" && plano.prazo && plano.prazo < Date.now();
-  const verticais = Array.from(new Set((plano.desvios || []).map((d: any) => d.origem))).filter(Boolean) as string[];
+  const isPreventivo = plano.tipo === "preventivo";
+  const verticaisFromDesvios = (plano.desvios || []).map((d: any) => d.origem);
+  const verticais = Array.from(new Set([
+    ...(plano.vertical ? [plano.vertical] : []),
+    ...verticaisFromDesvios,
+  ])).filter(Boolean) as string[];
   return (
     <button onClick={onClick} className="w-full text-left bg-white rounded-lg border border-slate-200 p-3 hover:shadow-md hover:border-teal-300 transition-all">
       <div className="flex items-start justify-between gap-2 mb-2">
@@ -217,10 +232,15 @@ function PlanoCard({ plano, onClick }: { plano: any; onClick: () => void }) {
         )}
       </div>
       <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+        {isPreventivo && (
+          <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border bg-blue-50 border-blue-200 text-blue-700">
+            <ShieldCheck className="h-2.5 w-2.5" /> Preventivo
+          </span>
+        )}
         {verticais.map((v: string) => (
           <span key={v} className={`text-[10px] px-1.5 py-0.5 rounded border ${VERTICAL_COLORS[v] || ""}`}>{VERTICAL_LABELS[v] || v}</span>
         ))}
-        {plano.desvios && plano.desvios.length > 0 && (
+        {!isPreventivo && plano.desvios && plano.desvios.length > 0 && (
           <span className="inline-flex items-center gap-1 text-[10px] text-slate-500">
             <Link2 className="h-2.5 w-2.5" /> {plano.desvios.length} desvio{plano.desvios.length !== 1 ? "s" : ""}
           </span>

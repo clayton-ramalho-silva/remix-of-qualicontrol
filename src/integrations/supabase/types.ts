@@ -542,6 +542,33 @@ export type Database = {
         }
         Relationships: []
       }
+      plano_categorias: {
+        Row: {
+          ativo: number
+          created_at: string
+          id: number
+          nome: string
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: number
+          created_at?: string
+          id?: number
+          nome: string
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: number
+          created_at?: string
+          id?: number
+          nome?: string
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       plano_desvios: {
         Row: {
           created_at: string
@@ -567,11 +594,13 @@ export type Database = {
         Row: {
           acao: string
           alerta_atraso_enviado: number
+          categoria_id: number | null
           created_at: string
-          desvio_id: number
+          desvio_id: number | null
           id: number
           lembrete_enviado: number
           notificado_em: number | null
+          obra_id: number | null
           observacoes: string | null
           prazo: number
           prioridade: Database["public"]["Enums"]["prioridade_plano"]
@@ -580,16 +609,20 @@ export type Database = {
           responsavel_id: number | null
           responsavel_tipo: Database["public"]["Enums"]["responsavel_tipo"]
           status: Database["public"]["Enums"]["status_plano"]
+          tipo: Database["public"]["Enums"]["tipo_plano"]
           updated_at: string
+          vertical: Database["public"]["Enums"]["origem_desvio"] | null
         }
         Insert: {
           acao: string
           alerta_atraso_enviado?: number
+          categoria_id?: number | null
           created_at?: string
-          desvio_id: number
+          desvio_id?: number | null
           id?: number
           lembrete_enviado?: number
           notificado_em?: number | null
+          obra_id?: number | null
           observacoes?: string | null
           prazo: number
           prioridade?: Database["public"]["Enums"]["prioridade_plano"]
@@ -598,16 +631,20 @@ export type Database = {
           responsavel_id?: number | null
           responsavel_tipo?: Database["public"]["Enums"]["responsavel_tipo"]
           status?: Database["public"]["Enums"]["status_plano"]
+          tipo?: Database["public"]["Enums"]["tipo_plano"]
           updated_at?: string
+          vertical?: Database["public"]["Enums"]["origem_desvio"] | null
         }
         Update: {
           acao?: string
           alerta_atraso_enviado?: number
+          categoria_id?: number | null
           created_at?: string
-          desvio_id?: number
+          desvio_id?: number | null
           id?: number
           lembrete_enviado?: number
           notificado_em?: number | null
+          obra_id?: number | null
           observacoes?: string | null
           prazo?: number
           prioridade?: Database["public"]["Enums"]["prioridade_plano"]
@@ -616,7 +653,9 @@ export type Database = {
           responsavel_id?: number | null
           responsavel_tipo?: Database["public"]["Enums"]["responsavel_tipo"]
           status?: Database["public"]["Enums"]["status_plano"]
+          tipo?: Database["public"]["Enums"]["tipo_plano"]
           updated_at?: string
+          vertical?: Database["public"]["Enums"]["origem_desvio"] | null
         }
         Relationships: [
           {
@@ -965,6 +1004,7 @@ export type Database = {
         | "status_alterado"
         | "verificacao"
         | "geral"
+      tipo_plano: "corretivo" | "preventivo"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1129,6 +1169,7 @@ export const Constants = {
         "verificacao",
         "geral",
       ],
+      tipo_plano: ["corretivo", "preventivo"],
     },
   },
 } as const
