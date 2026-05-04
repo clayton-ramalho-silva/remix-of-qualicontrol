@@ -131,13 +131,13 @@ const queryResolvers: Record<string, Resolver> = {
   },
 
   "plantas.listByAndar": async ({ andarId }: { andarId: number }) => {
-    const { data, error } = await supabase.from("plantas").select("*").eq("andar_id" as any, andarId).order("ordem");
+    const { data, error } = await (supabase.from("plantas") as any).select("*").eq("andar_id", andarId).order("ordem");
     if (error) throw error;
     return (data || []).map((p: any) => ({ ...p, fileKey: p.file_key, obraId: p.obra_id, andarId: p.andar_id }));
   },
 
   "plantas.semHierarquia": async ({ obraId }: { obraId: number }) => {
-    const { data, error } = await supabase.from("plantas").select("*").eq("obra_id", obraId).is("andar_id" as any, null).order("ordem");
+    const { data, error } = await (supabase.from("plantas") as any).select("*").eq("obra_id", obraId).is("andar_id", null).order("ordem");
     if (error) throw error;
     return (data || []).map((p: any) => ({ ...p, fileKey: p.file_key, obraId: p.obra_id, andarId: p.andar_id ?? null }));
   },
@@ -154,7 +154,7 @@ const queryResolvers: Record<string, Resolver> = {
       andares = ans || [];
       const andarIds = andares.map(a => a.id);
       if (andarIds.length > 0) {
-        const { data: ps } = await supabase.from("plantas").select("andar_id" as any).in("andar_id" as any, andarIds);
+        const { data: ps } = await (supabase.from("plantas") as any).select("andar_id").in("andar_id", andarIds);
         (ps || []).forEach((p: any) => {
           plantasCount.set(p.andar_id, (plantasCount.get(p.andar_id) || 0) + 1);
         });
