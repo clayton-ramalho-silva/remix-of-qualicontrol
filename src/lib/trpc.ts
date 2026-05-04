@@ -130,6 +130,59 @@ const queryResolvers: Record<string, Resolver> = {
     return (data || []).map((p: any) => ({ ...p, fileKey: p.file_key, obraId: p.obra_id }));
   },
 
+  "plantas.listByAndar": async ({ andarId }: { andarId: number }) => {
+    const { data, error } = await supabase.from("plantas").select("*").eq("andar_id" as any, andarId).order("ordem");
+    if (error) throw error;
+    return (data || []).map((p: any) => ({ ...p, fileKey: p.file_key, obraId: p.obra_id, andarId: p.andar_id }));
+  },
+
+  "plantas.semHierarquia": async ({ obraId }: { obraId: number }) => {
+    const { data, error } = await supabase.from("plantas").select("*").eq("obra_id", obraId).is("andar_id" as any, null).order("ordem");
+    if (error) throw error;
+    return (data || []).map((p: any) => ({ ...p, fileKey: p.file_key, obraId: p.obra_id, andarId: p.andar_id ?? null }));
+  },
+
+  // --- EDIFICIOS / ANDARES ---
+  "edificios.listByObra": async ({ obraId }: { obraId: number }) => {
+    const { data: eds, error } = await supabase.from("edificios" as any).select("*").eq("obra_id", obraId).eq("ativo", 1).order("ordem").order("nome");
+    if (error) throw error;
+    const ids = (eds || []).map((e: any) => e.id);
+    let andares: any[] = [];
+    let plantasCount = new Map<number, number>();
+    if (ids.length > 0) {
+      const { data: ans } = await supabase.from("andares" as any).select("*").in("edificio_id", ids).eq("ativo", 1).order("numero").order("ordem");
+      andares = ans || [];
+      const andarIds = andares.map(a => a.id);
+      if (andarIds.length > 0) {
+        const { data: ps } = await supabase.from("plantas").select("andar_id" as any).in("andar_id" as any, andarIds);
+        (ps || []).forEach((p: any) => {
+          plantasCount.set(p.andar_id, (plantasCount.get(p.andar_id) || 0) + 1);
+        });
+      }
+    }
+    return (eds || []).map((e: any) => ({
+      ...e,
+      obraId: e.obra_id,
+      andares: andares.filter(a => a.edificio_id === e.id).map(a => ({
+        ...a,
+        edificioId: a.edificio_id,
+        plantasCount: plantasCount.get(a.id) || 0,
+      })),
+    }));
+  },
+  "edificios.getById": async ({ id }: { id: number }) => {
+    const { data, error } = await supabase.from("edificios" as any).select("*").eq("id", id).maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+    return { ...data, obraId: (data as any).obra_id };
+  },
+  "andares.getById": async ({ id }: { id: number }) => {
+    const { data, error } = await supabase.from("andares" as any).select("*").eq("id", id).maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+    return { ...data, edificioId: (data as any).edificio_id };
+  },
+
   "plantas.getById": async ({ id }: { id: number }) => {
     const { data, error } = await supabase.from("plantas").select("*").eq("id", id).maybeSingle();
     if (error) throw error;
