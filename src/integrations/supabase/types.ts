@@ -53,6 +53,47 @@ export type Database = {
         }
         Relationships: []
       }
+      andares: {
+        Row: {
+          ativo: number
+          created_at: string
+          edificio_id: number
+          id: number
+          nome: string
+          numero: number
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: number
+          created_at?: string
+          edificio_id: number
+          id?: number
+          nome: string
+          numero?: number
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: number
+          created_at?: string
+          edificio_id?: number
+          id?: number
+          nome?: string
+          numero?: number
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "andares_edificio_id_fkey"
+            columns: ["edificio_id"]
+            isOneToOne: false
+            referencedRelation: "edificios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checklist_itens: {
         Row: {
           ativo: number
@@ -275,6 +316,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      edificios: {
+        Row: {
+          ativo: number
+          codigo: string | null
+          created_at: string
+          id: number
+          nome: string
+          obra_id: number
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: number
+          codigo?: string | null
+          created_at?: string
+          id?: number
+          nome: string
+          obra_id: number
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: number
+          codigo?: string | null
+          created_at?: string
+          id?: number
+          nome?: string
+          obra_id?: number
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       fornecedores: {
         Row: {
@@ -714,6 +788,7 @@ export type Database = {
       }
       plantas: {
         Row: {
+          andar_id: number | null
           created_at: string
           extracao_at: string | null
           extracao_erro: string | null
@@ -727,6 +802,7 @@ export type Database = {
           url: string
         }
         Insert: {
+          andar_id?: number | null
           created_at?: string
           extracao_at?: string | null
           extracao_erro?: string | null
@@ -740,6 +816,7 @@ export type Database = {
           url: string
         }
         Update: {
+          andar_id?: number | null
           created_at?: string
           extracao_at?: string | null
           extracao_erro?: string | null
@@ -753,6 +830,13 @@ export type Database = {
           url?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "plantas_andar_id_fkey"
+            columns: ["andar_id"]
+            isOneToOne: false
+            referencedRelation: "andares"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "plantas_obra_id_fkey"
             columns: ["obra_id"]
