@@ -1044,6 +1044,10 @@ function mapPlanoFromDb(p: any) {
     responsavelTipo: p.responsavel_tipo,
     responsavelId: p.responsavel_id,
     responsavelEmail: p.responsavel_email,
+    obraId: p.obra_id,
+    categoriaId: p.categoria_id,
+    tipo: p.tipo ?? "corretivo",
+    vertical: p.vertical ?? null,
     prazo: p.prazo ? Number(p.prazo) : null,
     notificadoEm: p.notificado_em ? Number(p.notificado_em) : null,
   };
