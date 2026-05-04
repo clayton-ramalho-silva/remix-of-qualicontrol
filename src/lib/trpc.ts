@@ -417,8 +417,9 @@ const queryResolvers: Record<string, Resolver> = {
       ...mapPlanoFromDb(p),
       desvios: vincByPlano.get(p.id) || [],
     }));
-    if (filters?.obraId) result = result.filter(p => p.desvios.some((d: any) => d.obraId === filters.obraId));
-    if (filters?.vertical) result = result.filter(p => p.desvios.some((d: any) => d.origem === filters.vertical));
+    if (filters?.obraId) result = result.filter(p => p.obraId === filters.obraId || p.desvios.some((d: any) => d.obraId === filters.obraId));
+    if (filters?.vertical) result = result.filter(p => p.vertical === filters.vertical || p.desvios.some((d: any) => d.origem === filters.vertical));
+    if (filters?.tipo) result = result.filter(p => p.tipo === filters.tipo);
     if (filters?.atrasados) result = result.filter(p => p.status !== "concluido" && p.prazo && p.prazo < Date.now());
     return result;
   },
@@ -560,13 +561,24 @@ const mutationResolvers: Record<string, Resolver> = {
 
   // --- PLANOS ---
   "planos.create": async (input: any) => {
+    const tipo = input.tipo === "preventivo" ? "preventivo" : "corretivo";
     const desvioIds: number[] = Array.isArray(input.desvioIds) && input.desvioIds.length > 0
       ? input.desvioIds
       : (input.desvioId ? [input.desvioId] : []);
-    if (desvioIds.length === 0) throw new Error("Vincule ao menos um desvio");
-    const principalDesvioId = desvioIds[0];
-    const { data, error } = await supabase.from("planos_acao").insert({
-      desvio_id: principalDesvioId,
+    if (tipo === "corretivo" && desvioIds.length === 0) {
+      throw new Error("Vincule ao menos um desvio");
+    }
+    if (tipo === "preventivo") {
+      if (!input.vertical) throw new Error("Selecione a vertical");
+      if (!input.obraId) throw new Error("Selecione a obra");
+      if (!input.categoriaId) throw new Error("Selecione a categoria");
+    }
+    const insertObj: any = {
+      desvio_id: tipo === "corretivo" ? desvioIds[0] : null,
+      tipo,
+      vertical: input.vertical ?? null,
+      obra_id: input.obraId ?? null,
+      categoria_id: input.categoriaId ?? null,
       acao: input.acao,
       responsavel: input.responsavel,
       responsavel_tipo: input.responsavelTipo ?? "membro",
@@ -575,19 +587,20 @@ const mutationResolvers: Record<string, Resolver> = {
       prioridade: input.prioridade ?? "normal",
       prazo: input.prazo,
       observacoes: input.observacoes ?? null,
-    }).select().single();
+    };
+    const { data, error } = await supabase.from("planos_acao").insert(insertObj).select().single();
     if (error) throw error;
-    // Cria vínculos N:N
-    const vincPayload = desvioIds.map(did => ({ plano_id: data.id, desvio_id: did }));
-    await supabase.from("plano_desvios" as any).insert(vincPayload);
     const { data: { user } } = await supabase.auth.getUser();
-    // Histórico em todos os desvios vinculados
-    const histPayload = desvioIds.map(did => ({
-      desvio_id: did, tipo: "plano_acao" as const,
-      descricao: `Plano de ação criado: ${input.acao}`,
-      user_id: user?.id ?? null, user_name: user?.email ?? null,
-    }));
-    await supabase.from("historico").insert(histPayload);
+    if (tipo === "corretivo" && desvioIds.length > 0) {
+      const vincPayload = desvioIds.map(did => ({ plano_id: data.id, desvio_id: did }));
+      await supabase.from("plano_desvios" as any).insert(vincPayload);
+      const histPayload = desvioIds.map(did => ({
+        desvio_id: did, tipo: "plano_acao" as const,
+        descricao: `Plano de ação criado: ${input.acao}`,
+        user_id: user?.id ?? null, user_name: user?.email ?? null,
+      }));
+      await supabase.from("historico").insert(histPayload);
+    }
     return mapPlanoFromDb(data);
   },
   "planos.update": async (input: any) => {
