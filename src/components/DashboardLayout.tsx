@@ -64,7 +64,6 @@ const menuItems: MenuItem[] = [
   { separator: true },
   { icon: CalendarDays, label: "Alocação", path: "/alocacao" },
   { icon: Building2, label: "Obras", path: "/obras" },
-  { icon: Layers, label: "Plantas", path: "/plantas" },
   { icon: Truck, label: "Fornecedores", path: "/fornecedores" },
   { icon: Users, label: "Usuários", path: "/usuarios" },
   { icon: Settings, label: "Administração", path: "/administracao" },

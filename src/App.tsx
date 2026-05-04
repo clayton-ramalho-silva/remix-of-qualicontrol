@@ -29,6 +29,8 @@ import Alocacao from "./pages/Alocacao";
 import PlanosAcao from "./pages/PlanosAcao";
 import PlanoAcaoNovo from "./pages/PlanoAcaoNovo";
 import PlanoAcaoDetalhe from "./pages/PlanoAcaoDetalhe";
+import ObraDetalhe from "./pages/ObraDetalhe";
+import AndarDetalhe from "./pages/AndarDetalhe";
 
 function ProtectedShell() {
   const { user, loading } = useAuth();
@@ -58,6 +60,8 @@ function ProtectedShell() {
         <Route path="/planos-acao/:id" component={PlanoAcaoDetalhe} />
         <Route path="/fornecedores" component={Fornecedores} />
         <Route path="/obras" component={Obras} />
+        <Route path="/obras/:obraId/edificios/:edId/andares/:anId" component={AndarDetalhe} />
+        <Route path="/obras/:obraId" component={ObraDetalhe} />
         <Route path="/assistente" component={Assistente} />
         <Route path="/relatorio" component={Relatorio} />
         <Route path="/verificacoes">{() => <Verificacoes />}</Route>

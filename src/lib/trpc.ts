@@ -130,6 +130,61 @@ const queryResolvers: Record<string, Resolver> = {
     return (data || []).map((p: any) => ({ ...p, fileKey: p.file_key, obraId: p.obra_id }));
   },
 
+  "plantas.listByAndar": async ({ andarId }: { andarId: number }) => {
+    const { data, error } = await (supabase.from("plantas") as any).select("*").eq("andar_id", andarId).order("ordem");
+    if (error) throw error;
+    return (data || []).map((p: any) => ({ ...p, fileKey: p.file_key, obraId: p.obra_id, andarId: p.andar_id }));
+  },
+
+  "plantas.semHierarquia": async ({ obraId }: { obraId: number }) => {
+    const { data, error } = await (supabase.from("plantas") as any).select("*").eq("obra_id", obraId).is("andar_id", null).order("ordem");
+    if (error) throw error;
+    return (data || []).map((p: any) => ({ ...p, fileKey: p.file_key, obraId: p.obra_id, andarId: p.andar_id ?? null }));
+  },
+
+  // --- EDIFICIOS / ANDARES ---
+  "edificios.listByObra": async ({ obraId }: { obraId: number }) => {
+    const { data: eds, error } = await supabase.from("edificios" as any).select("*").eq("obra_id", obraId).eq("ativo", 1).order("ordem").order("nome");
+    if (error) throw error;
+    const ids = (eds || []).map((e: any) => e.id);
+    let andares: any[] = [];
+    let plantasCount = new Map<number, number>();
+    if (ids.length > 0) {
+      const { data: ans } = await supabase.from("andares" as any).select("*").in("edificio_id", ids).eq("ativo", 1).order("numero").order("ordem");
+      andares = ans || [];
+      const andarIds = andares.map(a => a.id);
+      if (andarIds.length > 0) {
+        const { data: ps } = await (supabase.from("plantas") as any).select("andar_id").in("andar_id", andarIds);
+        (ps || []).forEach((p: any) => {
+          plantasCount.set(p.andar_id, (plantasCount.get(p.andar_id) || 0) + 1);
+        });
+      }
+    }
+    return (eds || []).map((e: any) => ({
+      ...e,
+      obraId: e.obra_id,
+      andares: andares.filter(a => a.edificio_id === e.id).map(a => ({
+        ...a,
+        edificioId: a.edificio_id,
+        plantasCount: plantasCount.get(a.id) || 0,
+      })),
+    }));
+  },
+  "edificios.getById": async ({ id }: { id: number }) => {
+    const { data, error } = await (supabase.from("edificios" as any) as any).select("*").eq("id", id).maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+    const d: any = data;
+    return { ...d, obraId: d.obra_id };
+  },
+  "andares.getById": async ({ id }: { id: number }) => {
+    const { data, error } = await (supabase.from("andares" as any) as any).select("*").eq("id", id).maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+    const d: any = data;
+    return { ...d, edificioId: d.edificio_id };
+  },
+
   "plantas.getById": async ({ id }: { id: number }) => {
     const { data, error } = await supabase.from("plantas").select("*").eq("id", id).maybeSingle();
     if (error) throw error;
@@ -728,28 +783,36 @@ const mutationResolvers: Record<string, Resolver> = {
     });
     if (upErr) throw upErr;
     const { data: pub } = supabase.storage.from("plantas").getPublicUrl(key);
-    const { data, error } = await supabase.from("plantas").insert({
+    const insertObj: any = {
       obra_id: input.obraId,
       nome: input.nome,
       file_key: key,
       url: pub.publicUrl,
       ordem: input.ordem ?? 0,
-    }).select().single();
+    };
+    if (input.andarId) insertObj.andar_id = input.andarId;
+    const { data, error } = await (supabase.from("plantas") as any).insert(insertObj).select().single();
     if (error) throw error;
     // Dispara extração de ambientes em background (sem bloquear)
     supabase.functions.invoke("extrair-ambientes-planta", {
       body: { plantaId: data.id },
     }).catch((e) => console.warn("Falha ao iniciar extração de ambientes:", e));
-    return { ...data, fileKey: data.file_key, obraId: data.obra_id };
+    return { ...data, fileKey: data.file_key, obraId: data.obra_id, andarId: data.andar_id ?? null };
   },
   "plantas.update": async (input: any) => {
     const { id, ...rest } = input;
     const patch: any = {};
     if ("nome" in rest) patch.nome = rest.nome;
     if ("ordem" in rest) patch.ordem = rest.ordem;
-    const { data, error } = await supabase.from("plantas").update(patch).eq("id", id).select().single();
+    if ("andarId" in rest) patch.andar_id = rest.andarId ?? null;
+    const { data, error } = await (supabase.from("plantas") as any).update(patch).eq("id", id).select().single();
     if (error) throw error;
-    return { ...data, fileKey: data.file_key, obraId: data.obra_id };
+    return { ...data, fileKey: data.file_key, obraId: data.obra_id, andarId: data.andar_id ?? null };
+  },
+  "plantas.mover": async (input: { id: number; andarId: number | null }) => {
+    const { error } = await (supabase.from("plantas") as any).update({ andar_id: input.andarId }).eq("id", input.id);
+    if (error) throw error;
+    return { ok: true };
   },
   "plantas.delete": async (input: any) => {
     const { data: planta } = await supabase.from("plantas").select("file_key").eq("id", input.id).maybeSingle();
@@ -1049,6 +1112,60 @@ const mutationResolvers: Record<string, Resolver> = {
   },
   "planoCategorias.delete": async (input: { id: number }) => {
     const { error } = await supabase.from("plano_categorias" as any).delete().eq("id", input.id);
+    if (error) throw error;
+    return { ok: true };
+  },
+
+  // --- EDIFICIOS ---
+  "edificios.create": async (input: { obraId: number; nome: string; codigo?: string; ordem?: number }) => {
+    const { data, error } = await (supabase.from("edificios" as any) as any).insert({
+      obra_id: input.obraId,
+      nome: input.nome,
+      codigo: input.codigo ?? null,
+      ordem: input.ordem ?? 0,
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
+  "edificios.update": async (input: { id: number; nome?: string; codigo?: string | null; ordem?: number; ativo?: number }) => {
+    const patch: any = {};
+    if (input.nome !== undefined) patch.nome = input.nome;
+    if (input.codigo !== undefined) patch.codigo = input.codigo;
+    if (input.ordem !== undefined) patch.ordem = input.ordem;
+    if (input.ativo !== undefined) patch.ativo = input.ativo;
+    const { data, error } = await (supabase.from("edificios" as any) as any).update(patch).eq("id", input.id).select().single();
+    if (error) throw error;
+    return data;
+  },
+  "edificios.delete": async (input: { id: number }) => {
+    const { error } = await (supabase.from("edificios" as any) as any).delete().eq("id", input.id);
+    if (error) throw error;
+    return { ok: true };
+  },
+
+  // --- ANDARES ---
+  "andares.create": async (input: { edificioId: number; nome: string; numero?: number; ordem?: number }) => {
+    const { data, error } = await (supabase.from("andares" as any) as any).insert({
+      edificio_id: input.edificioId,
+      nome: input.nome,
+      numero: input.numero ?? 0,
+      ordem: input.ordem ?? 0,
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
+  "andares.update": async (input: { id: number; nome?: string; numero?: number; ordem?: number; ativo?: number }) => {
+    const patch: any = {};
+    if (input.nome !== undefined) patch.nome = input.nome;
+    if (input.numero !== undefined) patch.numero = input.numero;
+    if (input.ordem !== undefined) patch.ordem = input.ordem;
+    if (input.ativo !== undefined) patch.ativo = input.ativo;
+    const { data, error } = await (supabase.from("andares" as any) as any).update(patch).eq("id", input.id).select().single();
+    if (error) throw error;
+    return data;
+  },
+  "andares.delete": async (input: { id: number }) => {
+    const { error } = await (supabase.from("andares" as any) as any).delete().eq("id", input.id);
     if (error) throw error;
     return { ok: true };
   },
