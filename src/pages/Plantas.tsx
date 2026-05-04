@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
-import { Map, Upload, Trash2, Pencil, Eye, Loader2, ImageIcon, Layers, Sparkles } from "lucide-react";
+import { Map, Upload, Trash2, Pencil, Eye, Loader2, ImageIcon, Layers, Sparkles, Info, ArrowRight } from "lucide-react";
 import { useLocation } from "wouter";
 import PlantaAmbientesDialog from "@/components/PlantaAmbientesDialog";
 
@@ -117,6 +117,18 @@ export default function Plantas() {
 
   return (
     <div className="space-y-6">
+      {/* Banner: a gestão agora vive em Obras */}
+      <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 flex items-start gap-3">
+        <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+        <div className="flex-1 text-sm">
+          <p className="font-medium">A gestão de plantas agora fica dentro de cada Obra.</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Use a hierarquia <strong>Obra › Edifício › Andar › Planta</strong> para organizar melhor.</p>
+        </div>
+        <Button size="sm" variant="outline" onClick={() => navigate("/obras")}>
+          Ir para Obras <ArrowRight className="h-3.5 w-3.5 ml-1" />
+        </Button>
+      </div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
