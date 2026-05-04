@@ -217,7 +217,12 @@ function KpiCard({ label, value, color, icon: Icon, clickable, onClick, active }
 
 function PlanoCard({ plano, onClick }: { plano: any; onClick: () => void }) {
   const overdue = plano.status !== "concluido" && plano.prazo && plano.prazo < Date.now();
-  const verticais = Array.from(new Set((plano.desvios || []).map((d: any) => d.origem))).filter(Boolean) as string[];
+  const isPreventivo = plano.tipo === "preventivo";
+  const verticaisFromDesvios = (plano.desvios || []).map((d: any) => d.origem);
+  const verticais = Array.from(new Set([
+    ...(plano.vertical ? [plano.vertical] : []),
+    ...verticaisFromDesvios,
+  ])).filter(Boolean) as string[];
   return (
     <button onClick={onClick} className="w-full text-left bg-white rounded-lg border border-slate-200 p-3 hover:shadow-md hover:border-teal-300 transition-all">
       <div className="flex items-start justify-between gap-2 mb-2">
@@ -227,10 +232,15 @@ function PlanoCard({ plano, onClick }: { plano: any; onClick: () => void }) {
         )}
       </div>
       <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+        {isPreventivo && (
+          <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border bg-blue-50 border-blue-200 text-blue-700">
+            <ShieldCheck className="h-2.5 w-2.5" /> Preventivo
+          </span>
+        )}
         {verticais.map((v: string) => (
           <span key={v} className={`text-[10px] px-1.5 py-0.5 rounded border ${VERTICAL_COLORS[v] || ""}`}>{VERTICAL_LABELS[v] || v}</span>
         ))}
-        {plano.desvios && plano.desvios.length > 0 && (
+        {!isPreventivo && plano.desvios && plano.desvios.length > 0 && (
           <span className="inline-flex items-center gap-1 text-[10px] text-slate-500">
             <Link2 className="h-2.5 w-2.5" /> {plano.desvios.length} desvio{plano.desvios.length !== 1 ? "s" : ""}
           </span>
