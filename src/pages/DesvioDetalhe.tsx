@@ -69,8 +69,16 @@ export default function DesvioDetalhe() {
     onSuccess: () => {
       utils.desvios.getById.invalidate({ id: desvioId });
       setFechamentoFotos([]);
+      setAberturaFotos([]);
       toast.success("Foto de fechamento enviada!");
     },
+  });
+  const deleteFoto = trpc.fotos.delete.useMutation({
+    onSuccess: () => {
+      utils.desvios.getById.invalidate({ id: desvioId });
+      toast.success("Foto removida.");
+    },
+    onError: (err: any) => toast.error(err?.message || "Erro ao remover foto."),
   });
 
   // Queries for responsible selector
@@ -81,6 +89,8 @@ export default function DesvioDetalhe() {
   const [comment, setComment] = useState("");
   const [fechamentoFotos, setFechamentoFotos] = useState<{ file: File; preview: string }[]>([]);
   const [uploadingFechamento, setUploadingFechamento] = useState(false);
+  const [aberturaFotos, setAberturaFotos] = useState<{ file: File; preview: string }[]>([]);
+  const [uploadingAbertura, setUploadingAbertura] = useState(false);
 
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
@@ -197,6 +207,52 @@ export default function DesvioDetalhe() {
     } finally {
       setUploadingFechamento(false);
     }
+  };
+
+  const handleAberturaFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    const newFotos = Array.from(files).map((file) => ({ file, preview: URL.createObjectURL(file) }));
+    setAberturaFotos((prev) => [...prev, ...newFotos]);
+    e.target.value = "";
+  };
+  const removeAberturaFoto = (index: number) => {
+    setAberturaFotos((prev) => {
+      URL.revokeObjectURL(prev[index].preview);
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+  const handleUploadAbertura = async () => {
+    if (aberturaFotos.length === 0) {
+      toast.error("Selecione pelo menos uma foto.");
+      return;
+    }
+    setUploadingAbertura(true);
+    try {
+      for (const foto of aberturaFotos) {
+        const reader = new FileReader();
+        const base64 = await new Promise<string>((resolve) => {
+          reader.onload = () => resolve((reader.result as string).split(",")[1]);
+          reader.readAsDataURL(foto.file);
+        });
+        await uploadFoto.mutateAsync({
+          desvioId,
+          fileBase64: base64,
+          fileName: foto.file.name,
+          contentType: foto.file.type,
+          tipo: "abertura",
+        });
+      }
+      toast.success("Fotos de abertura enviadas!");
+    } catch (err) {
+      toast.error("Erro ao enviar fotos.");
+    } finally {
+      setUploadingAbertura(false);
+    }
+  };
+  const handleDeleteFoto = async (id: number, label: string) => {
+    if (!confirm(`Remover esta foto de ${label}?`)) return;
+    await deleteFoto.mutateAsync({ id });
   };
 
   if (isLoading) {
@@ -523,25 +579,81 @@ export default function DesvioDetalhe() {
           )}
 
           {/* Fotos de Abertura */}
-          {fotosAbertura.length > 0 && (
-            <Card className="shadow-sm border-0">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Camera className="h-4 w-4 text-amber-500" /> Evidências de Abertura
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <Card className="shadow-sm border-0">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Camera className="h-4 w-4 text-amber-500" /> Evidências de Abertura
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {fotosAbertura.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
                   {fotosAbertura.map((foto: any) => (
-                    <a key={foto.id} href={foto.url} target="_blank" rel="noopener noreferrer"
-                      className="aspect-square rounded-lg overflow-hidden border hover:shadow-md transition-shadow">
-                      <img src={foto.url} alt={foto.descricao || "Evidência de abertura"} className="w-full h-full object-cover" />
-                    </a>
+                    <div key={foto.id} className="relative group aspect-square rounded-lg overflow-hidden border hover:shadow-md transition-shadow">
+                      <a href={foto.url} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+                        <img src={foto.url} alt={foto.descricao || "Evidência de abertura"} className="w-full h-full object-cover" />
+                      </a>
+                      {data.status !== "fechado" && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteFoto(foto.id, "abertura")}
+                          className="absolute top-1.5 right-1.5 bg-black/70 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                          title="Remover foto"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              )}
+
+              {data.status !== "fechado" && (
+                <div className={fotosAbertura.length > 0 ? "border-t pt-4" : ""}>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    {fotosAbertura.length > 0 ? "Adicionar mais fotos:" : "Adicione fotos de evidência:"}
+                  </p>
+                  <div className="flex flex-wrap gap-3 mb-3">
+                    {aberturaFotos.map((foto, i) => (
+                      <div key={i} className="relative group w-20 h-20 rounded-lg overflow-hidden border bg-muted">
+                        <img src={foto.preview} alt="" className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => removeAberturaFoto(i)}
+                          className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                    <PhotoPickerButton
+                      onFiles={handleAberturaFileChange}
+                      className="w-20 h-20 rounded-lg border-2 border-dashed border-amber-300/40 flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-amber-400 hover:bg-amber-50/50 transition-colors"
+                      iconClassName="h-4 w-4 text-amber-400"
+                      labelClassName="text-[9px] text-amber-500"
+                      label="Adicionar"
+                    />
+                  </div>
+                  {aberturaFotos.length > 0 && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-amber-300 text-amber-700 hover:bg-amber-50"
+                      onClick={handleUploadAbertura}
+                      disabled={uploadingAbertura}
+                    >
+                      {uploadingAbertura ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Upload className="h-3.5 w-3.5 mr-1.5" />}
+                      Enviar {aberturaFotos.length} foto{aberturaFotos.length > 1 ? "s" : ""}
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {fotosAbertura.length === 0 && data.status === "fechado" && (
+                <p className="text-sm text-muted-foreground text-center py-4">Nenhuma foto de abertura registrada.</p>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Fotos de Fechamento */}
           <Card className="shadow-sm border-0">
@@ -559,10 +671,21 @@ export default function DesvioDetalhe() {
               {fotosFechamento.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
                   {fotosFechamento.map((foto: any) => (
-                    <a key={foto.id} href={foto.url} target="_blank" rel="noopener noreferrer"
-                      className="aspect-square rounded-lg overflow-hidden border border-emerald-200 hover:shadow-md transition-shadow">
-                      <img src={foto.url} alt={foto.descricao || "Evidência de fechamento"} className="w-full h-full object-cover" />
-                    </a>
+                    <div key={foto.id} className="relative group aspect-square rounded-lg overflow-hidden border border-emerald-200 hover:shadow-md transition-shadow">
+                      <a href={foto.url} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+                        <img src={foto.url} alt={foto.descricao || "Evidência de fechamento"} className="w-full h-full object-cover" />
+                      </a>
+                      {data.status !== "fechado" && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteFoto(foto.id, "fechamento")}
+                          className="absolute top-1.5 right-1.5 bg-black/70 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                          title="Remover foto"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
                   ))}
                 </div>
               )}

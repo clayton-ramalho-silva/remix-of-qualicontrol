@@ -776,6 +776,26 @@ const mutationResolvers: Record<string, Resolver> = {
     return { ...data, fileKey: data.file_key };
   },
 
+  "fotos.delete": async (input: any) => {
+    // Buscar foto para obter file_key e desvio_id
+    const { data: foto, error: fErr } = await supabase
+      .from("fotos_evidencia").select("*").eq("id", input.id).single();
+    if (fErr) throw fErr;
+    // Remover do storage (best-effort)
+    if (foto?.file_key) {
+      await supabase.storage.from("evidencias").remove([foto.file_key]);
+    }
+    const { error } = await supabase.from("fotos_evidencia").delete().eq("id", input.id);
+    if (error) throw error;
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from("historico").insert({
+      desvio_id: foto.desvio_id, tipo: "foto",
+      descricao: `Foto de ${foto.tipo ?? "abertura"} removida`,
+      user_id: user?.id ?? null, user_name: user?.email ?? null,
+    });
+    return { ok: true };
+  },
+
   // --- NOTIFICACOES ---
   "notificacoes.markAsRead": async (input: any) => {
     const { error } = await supabase.from("notificacoes").update({ lida: 1 }).eq("id", input.id);
