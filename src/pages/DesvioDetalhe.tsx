@@ -619,8 +619,8 @@ export default function DesvioDetalhe() {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
                   {fotosAbertura.map((foto: any) => (
                     <div key={foto.id} className="relative group aspect-square rounded-lg overflow-hidden border hover:shadow-md transition-shadow">
-                      <a href={foto.url} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
-                        <img src={foto.url} alt={foto.descricao || "Evidência de abertura"} className="w-full h-full object-cover" />
+                      <a href={bustUrl(foto.url, foto.id)} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+                        <img src={bustUrl(foto.url, foto.id)} alt={foto.descricao || "Evidência de abertura"} className="w-full h-full object-cover" />
                       </a>
                       {data.status !== "fechado" && (
                         <>
@@ -711,8 +711,8 @@ export default function DesvioDetalhe() {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
                   {fotosFechamento.map((foto: any) => (
                     <div key={foto.id} className="relative group aspect-square rounded-lg overflow-hidden border border-emerald-200 hover:shadow-md transition-shadow">
-                      <a href={foto.url} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
-                        <img src={foto.url} alt={foto.descricao || "Evidência de fechamento"} className="w-full h-full object-cover" />
+                      <a href={bustUrl(foto.url, foto.id)} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+                        <img src={bustUrl(foto.url, foto.id)} alt={foto.descricao || "Evidência de fechamento"} className="w-full h-full object-cover" />
                       </a>
                       {data.status !== "fechado" && (
                         <>
