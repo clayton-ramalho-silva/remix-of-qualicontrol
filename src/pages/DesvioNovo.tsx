@@ -175,17 +175,18 @@ export default function DesvioNovo() {
         );
         const { error: insErr } = await supabase.from("fotos_evidencia").insert(uploaded);
         if (insErr) throw insErr;
-        const { data: { user } } = await supabase.auth.getUser();
-        await supabase.from("historico").insert(
-          uploaded.map(() => ({
-            desvio_id: result.id,
-            tipo: "foto" as const,
-            descricao: "Foto de abertura adicionada",
-            user_id: user?.id ?? null,
-            user_name: user?.email ?? null,
-          }))
-        );
-        utils.fotos && (utils as any).fotos?.list?.invalidate?.();
+        // Histórico das fotos é fire-and-forget — não bloqueia a UX
+        supabase.auth.getUser().then(({ data: { user } }) => {
+          supabase.from("historico").insert(
+            uploaded.map(() => ({
+              desvio_id: result.id,
+              tipo: "foto" as const,
+              descricao: "Foto de abertura adicionada",
+              user_id: user?.id ?? null,
+              user_name: user?.email ?? null,
+            }))
+          ).then(() => {});
+        });
       }
 
       setRegistrados(prev => [...prev, { id: result.id, descricao }]);
