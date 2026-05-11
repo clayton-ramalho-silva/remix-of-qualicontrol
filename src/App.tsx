@@ -21,6 +21,9 @@ import Verificacoes from "./pages/Verificacoes";
 import NovaVerificacao from "./pages/NovaVerificacao";
 import VerificacaoDetalhe from "./pages/VerificacaoDetalhe";
 import EditarVerificacao from "./pages/EditarVerificacao";
+import Ocorrencias from "./pages/Ocorrencias";
+import OcorrenciaNova from "./pages/OcorrenciaNova";
+import OcorrenciaDetalhe from "./pages/OcorrenciaDetalhe";
 import Administracao from "./pages/Administracao";
 import Usuarios from "./pages/Usuarios";
 import Plantas from "./pages/Plantas";
@@ -80,6 +83,9 @@ function ProtectedShell() {
         <Route path="/vistoria-recebimento/:id">
           {() => <VerificacaoDetalhe rotaBase="/vistoria-recebimento" titulo="Vistoria de Recebimento" />}
         </Route>
+        <Route path="/qsms/ocorrencias" component={Ocorrencias} />
+        <Route path="/qsms/ocorrencias/nova" component={OcorrenciaNova} />
+        <Route path="/qsms/ocorrencias/:id" component={OcorrenciaDetalhe} />
         <Route path="/qsms">
           {() => <Verificacoes categoria="qsms" titulo="Verificações QSMS" rotaBase="/qsms" />}
         </Route>
