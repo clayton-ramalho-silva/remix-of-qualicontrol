@@ -95,6 +95,12 @@ export default function DesvioDetalhe() {
   const [uploadingAbertura, setUploadingAbertura] = useState(false);
   const [annotatingFoto, setAnnotatingFoto] = useState<{ id: number; url: string; fileKey: string } | null>(null);
   const [savingAnnotation, setSavingAnnotation] = useState(false);
+  const [fotoVersions, setFotoVersions] = useState<Record<number, number>>({});
+  const bustUrl = (url: string, id: number) => {
+    const v = fotoVersions[id];
+    if (!v) return url;
+    return url + (url.includes("?") ? "&" : "?") + "v=" + v;
+  };
 
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
@@ -267,8 +273,8 @@ export default function DesvioDetalhe() {
         .from("evidencias")
         .upload(annotatingFoto.fileKey, blob, { contentType: "image/jpeg", upsert: true });
       if (error) throw error;
+      setFotoVersions((prev) => ({ ...prev, [annotatingFoto.id]: Date.now() }));
       toast.success("Anotação salva!");
-      // Força refetch quebrando cache do navegador
       utils.desvios.getById.invalidate({ id: desvioId });
     } catch (e: any) {
       toast.error(e.message || "Erro ao salvar anotação");
