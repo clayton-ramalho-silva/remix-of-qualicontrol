@@ -26,7 +26,7 @@ const STATUS_LABELS: Record<string, string> = {
 export default function OcorrenciaDetalhe() {
   const [, navigate] = useLocation();
   const [, params] = useRoute("/qsms/ocorrencias/:id");
-  const id = Number(params?.id);
+  const id = Number((params as any)?.id);
   const { data: ocorrencia, isLoading } = trpc.ocorrencias.getById.useQuery({ id }, { enabled: !!id });
   const { data: obras } = trpc.obras.list.useQuery();
   const update = trpc.ocorrencias.update.useMutation();
