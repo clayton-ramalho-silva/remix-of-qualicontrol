@@ -885,6 +885,14 @@ export default function DesvioDetalhe() {
           </Card>
         </div>
       </div>
+      {annotatingFoto && (
+        <PhotoAnnotator
+          open
+          src={annotatingFoto.url}
+          onClose={() => setAnnotatingFoto(null)}
+          onSave={handleSaveAnnotation}
+        />
+      )}
     </div>
   );
 }
