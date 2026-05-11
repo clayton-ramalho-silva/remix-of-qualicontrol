@@ -616,6 +616,11 @@ export default function Relatorio() {
             <CardContent className="p-8" ref={reportRef}>
               {/* Header */}
               <div className="report-header text-center border-b-2 border-primary pb-5 mb-6">
+                <img
+                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663403343148/3awzRPTf7NtQjpo8LEDXgX/Logo%20athie%20l%20wohnrath_Black_c476567f.png"
+                  alt="athie|wohnrath"
+                  className="h-9 object-contain mx-auto mb-2"
+                />
                 <h1 className="text-2xl font-bold text-foreground">AW Engenharia</h1>
                 <p className="text-base text-muted-foreground mt-1">
                   Relatório de Desvios
