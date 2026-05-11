@@ -587,11 +587,11 @@ const mutationResolvers: Record<string, Resolver> = {
     };
     const { data, error } = await supabase.from("desvios").insert(insertObj).select().single();
     if (error) throw error;
-    // historico de criação
-    await supabase.from("historico").insert({
+    // historico de criação — fire-and-forget para não atrasar a UX
+    supabase.from("historico").insert({
       desvio_id: data.id, tipo: "criacao", descricao: "Desvio criado",
       user_id: user?.id ?? null, user_name: user?.email ?? null,
-    });
+    }).then(() => {});
     return mapDesvioFromDb(data);
   },
   "desvios.update": async (input: any) => {
