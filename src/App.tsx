@@ -80,6 +80,18 @@ function ProtectedShell() {
         <Route path="/vistoria-recebimento/:id">
           {() => <VerificacaoDetalhe rotaBase="/vistoria-recebimento" titulo="Vistoria de Recebimento" />}
         </Route>
+        <Route path="/qsms">
+          {() => <Verificacoes categoria="qsms" titulo="Verificações QSMS" rotaBase="/qsms" />}
+        </Route>
+        <Route path="/qsms/nova">
+          {() => <NovaVerificacao categoria="qsms" titulo="Nova Verificação QSMS" rotaBase="/qsms" />}
+        </Route>
+        <Route path="/qsms/:id/editar">
+          {() => <EditarVerificacao rotaBase="/qsms" />}
+        </Route>
+        <Route path="/qsms/:id">
+          {() => <VerificacaoDetalhe rotaBase="/qsms" titulo="Verificação QSMS" />}
+        </Route>
         <Route path="/plantas" component={Plantas} />
         <Route path="/plantas/:id" component={PlantaView} />
         <Route path="/usuarios" component={Usuarios} />
