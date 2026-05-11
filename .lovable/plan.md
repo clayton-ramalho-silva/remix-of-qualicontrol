@@ -1,80 +1,45 @@
-# Acelerar "Tirar foto + Salvar desvio"
+## Análise
 
-## Diagnóstico
+Sim — a estrutura é **praticamente idêntica** ao que já temos para Qualidade e Vistoria de Recebimento. O sistema já foi construído de forma multi-vertical:
 
-Fluxo atual em `src/pages/DesvioNovo.tsx` + `src/lib/trpc.ts` (`desvios.create`):
+- `checklist_secoes` / `checklist_itens` têm o campo `categoria` (atualmente `qualidade` e `vistoria`).
+- `verificacoes` tem o campo `categoria`.
+- `config_faixas` tem `categoria`.
+- A página `Verificacoes.tsx` já aceita props `categoria`, `titulo`, `rotaBase` — basta plugar uma nova rota.
+- A Administração já tem um seletor de vertical (Qualidade / Vistoria) — basta adicionar QSMS.
+- O enum `origem_desvio` já contempla `qsms` (e `VERTICAL_CONFIG` já define a vertical QSMS em `VerticalContext`).
 
-1. Usuário tira foto → `URL.createObjectURL(file)` cria preview, mas o **arquivo bruto da câmera (3–8 MB, ~4000×3000)** fica em memória.
-2. Ao clicar "Salvar":
-   - `desvios.create` faz `INSERT … .select().single()` (1 round-trip).
-   - **Depois** disso, para cada foto: `supabase.storage.from('evidencias').upload(file)` com o arquivo bruto.
-   - Depois `INSERT` em `fotos_evidencia`.
-   - Só então a UI libera.
-3. Em rede móvel típica (1–3 Mbps upload), 3 fotos de 5 MB = ~40s. Esse é o gargalo dominante, **não** o banco.
+A planilha SST tem 9 seções (Acompanhamento, Condições de Obra, Documentos Legais, Equipamentos/Ferramentas, Sinalização, Avaliação, Apontamento MT, Situações NAT, Observações) com respostas **AT / NAT / NA / RI** e códigos de infração (I1–I4) com UFIR. Para a primeira versão proponho reutilizar o mesmo modelo de resposta atual (`sim/nao/na`) mapeando AT=sim, NAT=nao, NA=na, e tratar **RI (Reincidência)** e **código de infração (I1–I4 / UFIR)** como extensões futuras se necessário — assim o QSMS entra no ar imediatamente sem mudança de schema.
 
-Causas raiz, em ordem de impacto:
+## Plano
 
-| # | Causa | Impacto |
-|---|---|---|
-| 1 | Upload do JPEG cru da câmera, sem compressão | ~95% do tempo |
-| 2 | Uploads só começam *depois* do clique em Salvar | ~3–5s perdidos |
-| 3 | Insert do desvio espera todos os uploads antes de fechar a UX | bloqueio percebido |
-| 4 | `INSERT … select().single()` round-trip extra | ~100–300 ms |
+### 1. Menu e navegação
+- Em `DashboardLayout.tsx`, adicionar item de menu **"QSMS"** (ícone `ShieldAlert` ou `HardHat`), apontando para `/qsms`.
+- Em `App.tsx`, registrar rotas espelhando vistoria:
+  - `/qsms` → `<Verificacoes categoria="qsms" titulo="Verificações QSMS" rotaBase="/qsms" />`
+  - `/qsms/nova` → `<NovaVerificacao categoria="qsms" titulo="Nova Verificação QSMS" rotaBase="/qsms" />`
+  - `/qsms/:id` → `<VerificacaoDetalhe rotaBase="/qsms" titulo="Verificação QSMS" />`
+  - `/qsms/:id/editar` → `<EditarVerificacao rotaBase="/qsms" />`
 
-## Solução
+### 2. Administração — vertical QSMS
+- Em `Administracao.tsx`, adicionar `{ id: "qsms", label: "QSMS" }` no seletor de vertical (junto com Qualidade e Vistoria).
+- Nenhum outro código muda: as Tabs (Pesos, Itens, Faixas) já filtram por `categoria` via tRPC, então criar/editar seções, itens e faixas de QSMS funciona automaticamente.
+- Adicionar faixas padrão de QSMS na migração (ex.: ÓTIMA ≥90, REGULAR 70–89, RUIM 50–69, CRÍTICO <50 — mesmas faixas de qualidade, ajustáveis depois).
 
-Quatro frentes, todas frontend (sem mudar schema/edge function).
+### 3. Checklist SST pré-carregado
+Migração de seed inserindo em `checklist_secoes` (categoria `qsms`) as 9 seções da planilha + itens de cada seção (códigos 1.1, 2.1…2.5, 3.1…3.9, 4.x, 5.x, 6.x). Itens de "Avaliação", "Apontamento MT", "Situações NAT" e "Observações" entram como seções de texto/observação, com peso 0 ou ajustável depois pela Administração.
 
-### 1. Compressão client-side antes de subir (maior ganho)
+### 4. Dashboard, Desvios e Planos de Ação
+- `VERTICAL_CONFIG.qsms` já existe — nenhum ajuste necessário no `VerticalSwitcher`/filtros.
+- Desvios gerados a partir de uma verificação QSMS herdam `origem='qsms'` (enum já existe).
+- Planos de Ação e Relatórios já são multi-vertical via `vertical`.
 
-Reduzir cada foto para no máx. 1600 px no lado maior, JPEG qualidade 0.8, antes de qualquer upload. 5 MB → ~250 KB (~20× menor). Mantém qualidade visual para evidência de obra.
+### Detalhes técnicos
 
-- Novo util `src/lib/image-compress.ts` usando `createImageBitmap` + `OffscreenCanvas` (fallback `<canvas>`), saída `Blob` JPEG.
-- Aplicar em `handleFileChange` de `DesvioNovo.tsx` e também em `RespostaFotosUploader.tsx` (vistoria) para consistência.
+- Não há mudança de schema necessária para o MVP — tudo encaixa nas tabelas existentes (`checklist_secoes/itens`, `verificacoes`, `verificacao_respostas`, `verificacao_resposta_fotos`, `config_faixas`).
+- Eventual extensão futura (RI/reincidência por resposta, código de infração I1–I4 e UFIR por item): adicionar colunas `infracao_codigo` (text) e `ufir` (numeric) em `checklist_itens`, e `reincidencia` (int) em `verificacao_respostas`. **Fora do escopo deste plano.**
+- Reaproveitamos 100% as páginas `Verificacoes`, `NovaVerificacao`, `VerificacaoDetalhe`, `EditarVerificacao` via props.
 
-### 2. Pré-upload no momento da seleção da foto
+### Pergunta antes de executar
 
-Assim que o usuário escolhe/tira a foto, já fazemos upload para o bucket `evidencias` numa pasta temporária (`tmp/<uuid>/...`) **em paralelo** com o restante do preenchimento. Ao salvar o desvio, só linkamos a `file_key` já existente.
-
-- Estado da foto vira `{ file, preview, fileKey?, status: 'uploading'|'done'|'error' }`.
-- Pequeno spinner em cima da thumb enquanto sobe.
-- Botão "Salvar" desabilita só se houver foto ainda `uploading` (raro, pois já vai estar pronta).
-
-Resultado: no clique "Salvar", o que falta é só o `INSERT` do desvio + `INSERT` das linhas em `fotos_evidencia` → tipicamente <500 ms.
-
-### 3. Salvamento otimista + histórico em background
-
-- `createDesvio.mutateAsync` continua, mas o `INSERT` em `fotos_evidencia` e o `historico` viram fire-and-forget (já é o caso do histórico). Toast de sucesso e reset do form acontecem imediatamente após o insert do desvio.
-- Manter retry silencioso se o insert das fotos falhar (raro pois o upload já passou).
-
-### 4. Limpeza de pequenas latências
-
-- Cachear `supabase.auth.getUser()` uma vez por sessão da página (já temos o user no contexto via `useAuth`) em vez de chamar dentro de `desvios.create`.
-- Continuar usando `.select().single()` (precisamos do id) — mas só esse round-trip permanece bloqueante.
-
-## Detalhes técnicos
-
-```text
-Antes:                       Depois:
-[click Salvar]               [escolher foto]
-  └ INSERT desvio (~300ms)     └ comprime (50ms) + upload bg (~400ms p/ 250KB)
-  └ upload foto 1 (~12s)     [click Salvar]
-  └ upload foto 2 (~12s)       └ INSERT desvio (~300ms)
-  └ INSERT fotos (~200ms)      └ INSERT fotos_evidencia (~200ms)  → fecha
-  └ fecha                      └ historico fire-and-forget
-Total: ~25s p/ 2 fotos       Total percebido: ~500ms
-```
-
-Arquivos a tocar:
-- `src/lib/image-compress.ts` (novo)
-- `src/pages/DesvioNovo.tsx` (handleFileChange, salvarDesvio, tipo Foto, UI da thumb)
-- `src/components/RespostaFotosUploader.tsx` (aplicar compressão no `handleFiles`)
-- `src/lib/trpc.ts` → opcional: remover `getUser()` interno de `desvios.create` aceitando `createdById/Name` do cliente para economizar 1 chamada.
-
-Sem mudança de schema, sem edge function, sem migração.
-
-## Fora de escopo
-
-- Conversão para WebP (ganho marginal vs. JPEG já comprimido; alguns iOS antigos perdem suporte).
-- Upload chunked/resumable — não necessário com fotos de ~250 KB.
-- Service Worker / fila offline — pode vir depois se necessário.
+Você quer que eu já popule o **checklist SST completo** da planilha (todas as 9 seções com seus itens) como seed inicial em QSMS, ou prefere começar com QSMS **vazio** e cadastrar pela tela de Administração?
