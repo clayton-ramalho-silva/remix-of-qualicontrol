@@ -368,6 +368,16 @@ export default function DesvioNovo() {
                   {fotos.map((foto, i) => (
                     <div key={i} className="relative group w-24 h-24 rounded-lg overflow-hidden border bg-muted">
                       <img src={foto.preview} alt="" className="w-full h-full object-cover" />
+                      {foto.status === "uploading" && (
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                          <Loader2 className="h-5 w-5 text-white animate-spin" />
+                        </div>
+                      )}
+                      {foto.status === "error" && (
+                        <div className="absolute inset-0 bg-red-600/60 flex items-center justify-center text-[10px] text-white font-medium">
+                          Erro
+                        </div>
+                      )}
                       <button
                         type="button"
                         onClick={() => removeFoto(i)}
