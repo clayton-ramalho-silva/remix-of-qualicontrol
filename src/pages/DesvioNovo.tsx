@@ -150,19 +150,42 @@ export default function DesvioNovo() {
         pinY: pinY || undefined,
       });
 
-      for (const foto of fotos) {
-        const base64 = await new Promise<string>(resolve => {
-          const reader = new FileReader();
-          reader.onload = () => resolve((reader.result as string).split(",")[1]);
-          reader.readAsDataURL(foto.file);
-        });
-        await uploadFoto.mutateAsync({
-          desvioId: result.id,
-          fileBase64: base64,
-          fileName: foto.file.name,
-          contentType: foto.file.type,
-          tipo: "abertura",
-        });
+      // Upload em paralelo direto para o storage (sem base64 — muito mais rápido)
+      if (fotos.length > 0) {
+        const uploaded = await Promise.all(
+          fotos.map(async (foto) => {
+            const ext = foto.file.name.split(".").pop() || "jpg";
+            const key = `desvio-${result.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+            const { error: upErr } = await supabase.storage
+              .from("evidencias")
+              .upload(key, foto.file, {
+                contentType: foto.file.type || "image/jpeg",
+                upsert: false,
+              });
+            if (upErr) throw upErr;
+            const { data: pub } = supabase.storage.from("evidencias").getPublicUrl(key);
+            return {
+              desvio_id: result.id,
+              tipo: "abertura" as const,
+              file_key: key,
+              url: pub.publicUrl,
+              descricao: null,
+            };
+          })
+        );
+        const { error: insErr } = await supabase.from("fotos_evidencia").insert(uploaded);
+        if (insErr) throw insErr;
+        const { data: { user } } = await supabase.auth.getUser();
+        await supabase.from("historico").insert(
+          uploaded.map(() => ({
+            desvio_id: result.id,
+            tipo: "foto",
+            descricao: "Foto de abertura adicionada",
+            user_id: user?.id ?? null,
+            user_name: user?.email ?? null,
+          }))
+        );
+        utils.fotos && (utils as any).fotos?.list?.invalidate?.();
       }
 
       setRegistrados(prev => [...prev, { id: result.id, descricao }]);
