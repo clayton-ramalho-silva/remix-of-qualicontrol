@@ -4,6 +4,7 @@
 // Opcionalmente chama Lovable AI para gerar análise executiva.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import * as XLSX from "https://esm.sh/xlsx@0.18.5";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -184,6 +185,62 @@ Deno.serve(async (req) => {
         .eq("id", obraId)
         .maybeSingle();
       obraInfo = obra;
+    }
+
+    // ---- Excel ----
+    if (formato === "excel") {
+      const wb = XLSX.utils.book_new();
+      const kpisRows = [
+        ["Indicador", "Valor"],
+        ["Total", kpis.total],
+        ["Abertos", kpis.abertos],
+        ["Em andamento", kpis.emAndamento],
+        ["Aguardando aceite", kpis.aguardandoAceite],
+        ["Fechados", kpis.fechados],
+        ["Atrasados", kpis.atrasados],
+        ["Graves", kpis.graves],
+        ["Taxa de fechamento (%)", kpis.taxaFechamento],
+      ];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(kpisRows), "KPIs");
+
+      const fmtDate = (ts: number | null) =>
+        ts ? new Date(ts).toISOString().slice(0, 10) : "";
+      const desviosRows = [
+        [
+          "ID", "Descrição", "Disciplina", "Fornecedor", "Severidade",
+          "Status", "Origem", "Localização", "Data identificação",
+          "Prazo sugerido", "Data fechamento", "Crítico",
+          "Segurança", "Solicitado cliente", "Planta",
+        ],
+        ...desviosOut.map((d: any) => [
+          d.id, d.descricao, d.disciplina, d.fornecedor, d.severidade,
+          d.status, d.origem, d.localizacao,
+          fmtDate(d.dataIdentificacao), fmtDate(d.prazoSugerido), fmtDate(d.dataFechamento),
+          d.tagCritico ? "Sim" : "Não",
+          d.tagSegurancaTrabalho ? "Sim" : "Não",
+          d.tagSolicitadoCliente ? "Sim" : "Não",
+          d.plantaNome || "",
+        ]),
+      ];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(desviosRows), "Desvios");
+
+      const discRows = [
+        ["Disciplina", "Total", "Abertos", "Em andamento", "Ag. aceite", "Fechados", "Atrasados", "Graves"],
+        ...Object.entries(porDisciplina).map(([k, v]: any) => [
+          k, v.total, v.abertos, v.emAndamento, v.aguardandoAceite, v.fechados, v.atrasados, v.graves,
+        ]),
+      ];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(discRows), "Por disciplina");
+
+      const perfRows = [
+        ["Fornecedor", "Total", "Abertos", "Fechados", "Graves", "Taxa fechamento (%)"],
+        ...performance.map((f: any) => [f.nome, f.total, f.abertos, f.fechados, f.graves, f.taxaFechamento]),
+      ];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(perfRows), "Fornecedores");
+
+      const buf = XLSX.write(wb, { type: "base64", bookType: "xlsx" });
+      const excelUrl = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${buf}`;
+      return json({ formato: "excel", excelUrl, kpis, obraInfo, config: cfg });
     }
 
     // ---- Análise IA opcional ----
