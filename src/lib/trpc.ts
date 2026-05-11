@@ -507,6 +507,43 @@ const queryResolvers: Record<string, Resolver> = {
     if (error) throw error;
     return data || [];
   },
+
+  // --- OCORRENCIAS (queries) ---
+  "ocorrencias.list": async (filters: any = {}) => {
+    let q = (supabase.from("ocorrencias" as any) as any).select("*").order("data_ocorrencia", { ascending: false });
+    if (filters?.obraId) q = q.eq("obra_id", filters.obraId);
+    if (filters?.status) q = q.eq("status", filters.status);
+    if (filters?.classificacao) q = q.eq("classificacao", filters.classificacao);
+    const { data, error } = await q;
+    if (error) throw error;
+    return (data || []).map(mapOcorrenciaFromDb);
+  },
+  "ocorrencias.getById": async ({ id }: { id: number }) => {
+    const { data, error } = await (supabase.from("ocorrencias" as any) as any).select("*").eq("id", id).maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+    const [{ data: comissao }, { data: testemunhas }, { data: cronologia }, { data: causas }, { data: porques }, { data: fotos }, { data: documentos }, { data: planos }] = await Promise.all([
+      (supabase.from("ocorrencia_comissao" as any) as any).select("*").eq("ocorrencia_id", id).order("created_at"),
+      (supabase.from("ocorrencia_testemunhas" as any) as any).select("*").eq("ocorrencia_id", id).order("created_at"),
+      (supabase.from("ocorrencia_cronologia" as any) as any).select("*").eq("ocorrencia_id", id).order("ordem"),
+      (supabase.from("ocorrencia_causas" as any) as any).select("*").eq("ocorrencia_id", id).order("created_at"),
+      (supabase.from("ocorrencia_porques" as any) as any).select("*").eq("ocorrencia_id", id).order("nivel").order("ordem"),
+      (supabase.from("ocorrencia_fotos" as any) as any).select("*").eq("ocorrencia_id", id).order("created_at"),
+      (supabase.from("ocorrencia_documentos" as any) as any).select("*").eq("ocorrencia_id", id).order("created_at"),
+      (supabase.from("planos_acao" as any) as any).select("*").eq("ocorrencia_id", id).order("created_at"),
+    ]);
+    return {
+      ...mapOcorrenciaFromDb(data),
+      comissao: comissao || [],
+      testemunhas: testemunhas || [],
+      cronologia: cronologia || [],
+      causas: causas || [],
+      porques: porques || [],
+      fotos: (fotos || []).map((f: any) => ({ ...f, fileKey: f.file_key })),
+      documentos: (documentos || []).map((d: any) => ({ ...d, fileKey: d.file_key })),
+      planosAcao: (planos || []).map(mapPlanoFromDb),
+    };
+  },
 };
 
 const mutationResolvers: Record<string, Resolver> = {
