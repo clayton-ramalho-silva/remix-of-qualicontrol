@@ -619,6 +619,396 @@ export type Database = {
         }
         Relationships: []
       }
+      ocorrencia_causas: {
+        Row: {
+          categoria:
+            | Database["public"]["Enums"]["categoria_causa_ocorrencia"]
+            | null
+          created_at: string
+          descricao: string
+          id: number
+          ocorrencia_id: number
+          tipo: Database["public"]["Enums"]["tipo_causa_ocorrencia"]
+        }
+        Insert: {
+          categoria?:
+            | Database["public"]["Enums"]["categoria_causa_ocorrencia"]
+            | null
+          created_at?: string
+          descricao: string
+          id?: number
+          ocorrencia_id: number
+          tipo: Database["public"]["Enums"]["tipo_causa_ocorrencia"]
+        }
+        Update: {
+          categoria?:
+            | Database["public"]["Enums"]["categoria_causa_ocorrencia"]
+            | null
+          created_at?: string
+          descricao?: string
+          id?: number
+          ocorrencia_id?: number
+          tipo?: Database["public"]["Enums"]["tipo_causa_ocorrencia"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocorrencia_causas_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "ocorrencias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocorrencia_comissao: {
+        Row: {
+          contato: string | null
+          created_at: string
+          id: number
+          is_coordenador: number
+          nome: string
+          ocorrencia_id: number
+          papel: string | null
+        }
+        Insert: {
+          contato?: string | null
+          created_at?: string
+          id?: number
+          is_coordenador?: number
+          nome: string
+          ocorrencia_id: number
+          papel?: string | null
+        }
+        Update: {
+          contato?: string | null
+          created_at?: string
+          id?: number
+          is_coordenador?: number
+          nome?: string
+          ocorrencia_id?: number
+          papel?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocorrencia_comissao_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "ocorrencias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocorrencia_cronologia: {
+        Row: {
+          created_at: string
+          descricao: string
+          etapa: string
+          id: number
+          momento: string | null
+          ocorrencia_id: number
+          ordem: number
+        }
+        Insert: {
+          created_at?: string
+          descricao: string
+          etapa: string
+          id?: number
+          momento?: string | null
+          ocorrencia_id: number
+          ordem?: number
+        }
+        Update: {
+          created_at?: string
+          descricao?: string
+          etapa?: string
+          id?: number
+          momento?: string | null
+          ocorrencia_id?: number
+          ordem?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocorrencia_cronologia_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "ocorrencias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocorrencia_documentos: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          file_key: string
+          id: number
+          ocorrencia_id: number
+          tipo: Database["public"]["Enums"]["tipo_doc_ocorrencia"]
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          file_key: string
+          id?: number
+          ocorrencia_id: number
+          tipo?: Database["public"]["Enums"]["tipo_doc_ocorrencia"]
+          url: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          file_key?: string
+          id?: number
+          ocorrencia_id?: number
+          tipo?: Database["public"]["Enums"]["tipo_doc_ocorrencia"]
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocorrencia_documentos_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "ocorrencias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocorrencia_fotos: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          etapa: Database["public"]["Enums"]["etapa_foto_ocorrencia"]
+          file_key: string
+          id: number
+          ocorrencia_id: number
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          etapa?: Database["public"]["Enums"]["etapa_foto_ocorrencia"]
+          file_key: string
+          id?: number
+          ocorrencia_id: number
+          url: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          etapa?: Database["public"]["Enums"]["etapa_foto_ocorrencia"]
+          file_key?: string
+          id?: number
+          ocorrencia_id?: number
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocorrencia_fotos_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "ocorrencias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocorrencia_porques: {
+        Row: {
+          created_at: string
+          id: number
+          nivel: number
+          ocorrencia_id: number
+          ordem: number
+          parent_id: number | null
+          pergunta: string | null
+          resposta: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          nivel?: number
+          ocorrencia_id: number
+          ordem?: number
+          parent_id?: number | null
+          pergunta?: string | null
+          resposta: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          nivel?: number
+          ocorrencia_id?: number
+          ordem?: number
+          parent_id?: number | null
+          pergunta?: string | null
+          resposta?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocorrencia_porques_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "ocorrencias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencia_porques_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "ocorrencia_porques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocorrencia_testemunhas: {
+        Row: {
+          contato: string | null
+          created_at: string
+          depoimento: string | null
+          id: number
+          identidade: string | null
+          nome: string
+          ocorrencia_id: number
+        }
+        Insert: {
+          contato?: string | null
+          created_at?: string
+          depoimento?: string | null
+          id?: number
+          identidade?: string | null
+          nome: string
+          ocorrencia_id: number
+        }
+        Update: {
+          contato?: string | null
+          created_at?: string
+          depoimento?: string | null
+          id?: number
+          identidade?: string | null
+          nome?: string
+          ocorrencia_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocorrencia_testemunhas_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "ocorrencias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocorrencias: {
+        Row: {
+          acao_imediata: string | null
+          acidentado_funcao: string | null
+          acidentado_idade: number | null
+          acidentado_nome: string | null
+          atestado_dias: number | null
+          awfor149_anexada: number
+          cat_emitida: number
+          cat_numero: string | null
+          cidade: string | null
+          classificacao: Database["public"]["Enums"]["classificacao_ocorrencia"]
+          cnpj_principal: string | null
+          cnpj_subcontratada: string | null
+          created_at: string
+          created_by_id: string | null
+          created_by_name: string | null
+          data_fechamento: number | null
+          data_ocorrencia: number
+          descricao_preliminar: string
+          empresa_principal: string | null
+          empresa_subcontratada: string | null
+          endereco: string | null
+          hora: string | null
+          id: number
+          local_ocorrencia: string | null
+          obra_id: number
+          observacoes: string | null
+          prazo_comissao: number | null
+          prazo_investigacao: number | null
+          prazo_plano: number | null
+          responsavel_obra: string | null
+          responsavel_preenchimento: string | null
+          status: Database["public"]["Enums"]["status_ocorrencia"]
+          uf: string | null
+          updated_at: string
+        }
+        Insert: {
+          acao_imediata?: string | null
+          acidentado_funcao?: string | null
+          acidentado_idade?: number | null
+          acidentado_nome?: string | null
+          atestado_dias?: number | null
+          awfor149_anexada?: number
+          cat_emitida?: number
+          cat_numero?: string | null
+          cidade?: string | null
+          classificacao: Database["public"]["Enums"]["classificacao_ocorrencia"]
+          cnpj_principal?: string | null
+          cnpj_subcontratada?: string | null
+          created_at?: string
+          created_by_id?: string | null
+          created_by_name?: string | null
+          data_fechamento?: number | null
+          data_ocorrencia: number
+          descricao_preliminar: string
+          empresa_principal?: string | null
+          empresa_subcontratada?: string | null
+          endereco?: string | null
+          hora?: string | null
+          id?: number
+          local_ocorrencia?: string | null
+          obra_id: number
+          observacoes?: string | null
+          prazo_comissao?: number | null
+          prazo_investigacao?: number | null
+          prazo_plano?: number | null
+          responsavel_obra?: string | null
+          responsavel_preenchimento?: string | null
+          status?: Database["public"]["Enums"]["status_ocorrencia"]
+          uf?: string | null
+          updated_at?: string
+        }
+        Update: {
+          acao_imediata?: string | null
+          acidentado_funcao?: string | null
+          acidentado_idade?: number | null
+          acidentado_nome?: string | null
+          atestado_dias?: number | null
+          awfor149_anexada?: number
+          cat_emitida?: number
+          cat_numero?: string | null
+          cidade?: string | null
+          classificacao?: Database["public"]["Enums"]["classificacao_ocorrencia"]
+          cnpj_principal?: string | null
+          cnpj_subcontratada?: string | null
+          created_at?: string
+          created_by_id?: string | null
+          created_by_name?: string | null
+          data_fechamento?: number | null
+          data_ocorrencia?: number
+          descricao_preliminar?: string
+          empresa_principal?: string | null
+          empresa_subcontratada?: string | null
+          endereco?: string | null
+          hora?: string | null
+          id?: number
+          local_ocorrencia?: string | null
+          obra_id?: number
+          observacoes?: string | null
+          prazo_comissao?: number | null
+          prazo_investigacao?: number | null
+          prazo_plano?: number | null
+          responsavel_obra?: string | null
+          responsavel_preenchimento?: string | null
+          status?: Database["public"]["Enums"]["status_ocorrencia"]
+          uf?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       plano_categorias: {
         Row: {
           ativo: number
@@ -679,6 +1069,7 @@ export type Database = {
           notificado_em: number | null
           obra_id: number | null
           observacoes: string | null
+          ocorrencia_id: number | null
           prazo: number
           prioridade: Database["public"]["Enums"]["prioridade_plano"]
           responsavel: string
@@ -701,6 +1092,7 @@ export type Database = {
           notificado_em?: number | null
           obra_id?: number | null
           observacoes?: string | null
+          ocorrencia_id?: number | null
           prazo: number
           prioridade?: Database["public"]["Enums"]["prioridade_plano"]
           responsavel: string
@@ -723,6 +1115,7 @@ export type Database = {
           notificado_em?: number | null
           obra_id?: number | null
           observacoes?: string | null
+          ocorrencia_id?: number | null
           prazo?: number
           prioridade?: Database["public"]["Enums"]["prioridade_plano"]
           responsavel?: string
@@ -1067,6 +1460,19 @@ export type Database = {
         | "diretoria"
         | "coordenador"
         | "tecnico"
+      categoria_causa_ocorrencia:
+        | "ato_abaixo_padrao"
+        | "condicao_abaixo_padrao"
+        | "fator_pessoal"
+        | "fator_trabalho"
+      classificacao_ocorrencia:
+        | "incidente"
+        | "incidente_ambiental"
+        | "aca"
+        | "asa"
+        | "af"
+        | "at"
+      etapa_foto_ocorrencia: "cena" | "simulacao" | "evidencia" | "plano"
       origem_desvio: "qualidade" | "checklist" | "qsms"
       prioridade_plano: "urgente" | "normal" | "baixa"
       referencia_tipo: "desvio" | "plano" | "verificacao"
@@ -1075,7 +1481,20 @@ export type Database = {
       severidade_desvio: "leve" | "moderado" | "grave"
       status_desvio: "aberto" | "em_andamento" | "fechado" | "aguardando_aceite"
       status_obra: "ativa" | "concluida" | "pausada"
+      status_ocorrencia:
+        | "comunicado"
+        | "em_investigacao"
+        | "em_analise"
+        | "acao_em_andamento"
+        | "encerrado"
       status_plano: "pendente" | "em_andamento" | "concluido"
+      tipo_causa_ocorrencia: "imediata" | "basica"
+      tipo_doc_ocorrencia:
+        | "cat"
+        | "atestado"
+        | "awfor149"
+        | "memorando"
+        | "outro"
       tipo_foto: "abertura" | "fechamento"
       tipo_historico:
         | "criacao"
@@ -1230,6 +1649,21 @@ export const Constants = {
         "coordenador",
         "tecnico",
       ],
+      categoria_causa_ocorrencia: [
+        "ato_abaixo_padrao",
+        "condicao_abaixo_padrao",
+        "fator_pessoal",
+        "fator_trabalho",
+      ],
+      classificacao_ocorrencia: [
+        "incidente",
+        "incidente_ambiental",
+        "aca",
+        "asa",
+        "af",
+        "at",
+      ],
+      etapa_foto_ocorrencia: ["cena", "simulacao", "evidencia", "plano"],
       origem_desvio: ["qualidade", "checklist", "qsms"],
       prioridade_plano: ["urgente", "normal", "baixa"],
       referencia_tipo: ["desvio", "plano", "verificacao"],
@@ -1238,7 +1672,22 @@ export const Constants = {
       severidade_desvio: ["leve", "moderado", "grave"],
       status_desvio: ["aberto", "em_andamento", "fechado", "aguardando_aceite"],
       status_obra: ["ativa", "concluida", "pausada"],
+      status_ocorrencia: [
+        "comunicado",
+        "em_investigacao",
+        "em_analise",
+        "acao_em_andamento",
+        "encerrado",
+      ],
       status_plano: ["pendente", "em_andamento", "concluido"],
+      tipo_causa_ocorrencia: ["imediata", "basica"],
+      tipo_doc_ocorrencia: [
+        "cat",
+        "atestado",
+        "awfor149",
+        "memorando",
+        "outro",
+      ],
       tipo_foto: ["abertura", "fechamento"],
       tipo_historico: [
         "criacao",
