@@ -308,9 +308,12 @@ export default function DesvioDetalhe() {
           <Card className="shadow-sm border-0">
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <CardTitle className="text-base">Detalhes</CardTitle>
-              {data.status !== "fechado" && !isEditing && (
+              {!isEditing && (
                 <Button size="sm" variant="outline" onClick={startEditing}>
                   <Edit3 className="h-3.5 w-3.5 mr-1.5" /> Editar
+                  {data.status === "fechado" && (
+                    <span className="ml-2 text-[10px] font-medium text-amber-600">(fechado)</span>
+                  )}
                 </Button>
               )}
             </CardHeader>
