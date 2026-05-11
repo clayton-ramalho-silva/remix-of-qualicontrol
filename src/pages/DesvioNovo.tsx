@@ -22,6 +22,12 @@ import { supabase } from "@/integrations/supabase/client";
 
 type Foto = { file: File; preview: string };
 
+// Converte uma string YYYY-MM-DD em timestamp local (meio-dia para evitar fuso/DST).
+function localDateMs(s: string): number {
+  const [y, m, d] = s.split("-").map(Number);
+  return new Date(y, (m || 1) - 1, d || 1, 12, 0, 0).getTime();
+}
+
 const HINTS = {
   obra: "Selecione a obra onde a inspeção está sendo realizada.",
   ambiente: "Local específico que está sendo inspecionado. Ex: Banheiro Suíte - Apto 301.",
@@ -143,8 +149,8 @@ export default function DesvioNovo() {
         tagCritico: tagCritico ? 1 : 0,
         tagSegurancaTrabalho: tagDepProjeto ? 1 : 0,
         tagSolicitadoCliente: tagPendenteGo ? 1 : 0,
-        dataIdentificacao: new Date(dataInspecao).getTime(),
-        prazoSugerido: prazoSugerido ? new Date(prazoSugerido).getTime() : undefined,
+        dataIdentificacao: localDateMs(dataInspecao),
+        prazoSugerido: prazoSugerido ? localDateMs(prazoSugerido) : undefined,
         plantaId: plantaId || undefined,
         pinX: pinX || undefined,
         pinY: pinY || undefined,
@@ -488,12 +494,20 @@ export default function DesvioNovo() {
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <Button
                 variant="outline"
-                disabled={submitting || registrados.length === 0}
-                onClick={() => setLocation("/desvios")}
+                disabled={submitting || (registrados.length === 0 && (!grupoId || !descricao.trim()))}
+                onClick={() => {
+                  const temFormPreenchido = !!grupoId && !!descricao.trim();
+                  if (temFormPreenchido) {
+                    salvarDesvio(false);
+                  } else if (registrados.length > 0) {
+                    toast.success(`Inspeção concluída: ${registrados.length} desvio(s) registrado(s)`);
+                    setLocation("/desvios");
+                  }
+                }}
                 className="w-full sm:w-auto"
               >
                 <CheckCircle2 className="h-4 w-4 mr-2" />
-                Concluir Inspeção
+                Salvar e Concluir
               </Button>
               <Button
                 disabled={submitting}

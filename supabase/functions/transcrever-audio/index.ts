@@ -31,6 +31,20 @@ Deno.serve(async (req) => {
 
     if (!audioBase64) return json({ error: "audioBase64 é obrigatório" }, 400);
 
+    // Mapeia mime real para o "format" aceito pelo gateway
+    const mt = mimeType.toLowerCase();
+    const audioFormat = mt.includes("mp4") || mt.includes("aac") || mt.includes("m4a")
+      ? "mp4"
+      : mt.includes("wav")
+      ? "wav"
+      : mt.includes("ogg")
+      ? "ogg"
+      : mt.includes("mp3") || mt.includes("mpeg")
+      ? "mp3"
+      : "webm";
+
+    console.log("transcrever-audio: bytes=", audioBase64.length, "mime=", mimeType, "format=", audioFormat);
+
     // Etapa 1: transcrição bruta com Gemini multimodal
     const transcResp = await fetch(AI_URL, {
       method: "POST",
@@ -39,23 +53,23 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-pro",
         messages: [
           {
             role: "system",
             content:
-              "Você transcreve áudios em português brasileiro de profissionais de obra civil. Retorne APENAS o texto falado, sem comentários, sem aspas, sem formatação extra. Se o áudio estiver vazio ou inaudível, retorne string vazia.",
+              "Você transcreve áudios em português brasileiro de profissionais de obra civil. Tarefa: transcrever LITERALMENTE o que foi falado, mantendo termos técnicos (contrapiso, prumo, gesso, drywall, esquadria, etc.), nomes próprios e números exatamente como ditos. NÃO resuma, NÃO traduza, NÃO invente conteúdo. Retorne APENAS o texto falado, sem comentários, sem aspas, sem formatação. Se o áudio estiver vazio ou inaudível, retorne string vazia.",
           },
           {
             role: "user",
             content: [
               {
                 type: "text",
-                text: `Transcreva o áudio a seguir.${contexto ? ` Contexto: ${contexto}.` : ""}`,
+                text: `Transcreva LITERALMENTE o áudio em português brasileiro.${contexto ? ` Contexto: ${contexto}.` : ""}`,
               },
               {
                 type: "input_audio",
-                input_audio: { data: audioBase64, format: mimeType.includes("mp4") ? "mp4" : mimeType.includes("wav") ? "wav" : "webm" },
+                input_audio: { data: audioBase64, format: audioFormat },
               },
             ],
           },
@@ -76,7 +90,7 @@ Deno.serve(async (req) => {
 
     if (!textoBruto) return json({ texto: "" });
 
-    // Etapa 2: limpeza/formalização do texto
+    // Etapa 2: APENAS pontuação/capitalização (não altera palavras)
     const cleanResp = await fetch(AI_URL, {
       method: "POST",
       headers: {
@@ -84,12 +98,12 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
+        model: "google/gemini-2.5-flash",
         messages: [
           {
             role: "system",
             content:
-              "Você limpa transcrições de voz de profissionais de construção civil. Tarefas: corrigir pontuação e capitalização, remover muletas ('né', 'tipo', 'então', 'hã', 'éh'), remover repetições e gaguejos, manter o conteúdo técnico exatamente como dito, manter termos de obra (ex: contrapiso, prumo, gesso). NÃO invente informação, NÃO resuma, NÃO traduza. Retorne APENAS o texto limpo, sem aspas, sem comentários.",
+              "Você adiciona APENAS pontuação e capitalização a uma transcrição de voz em português brasileiro. REGRAS ESTRITAS: NÃO altere palavras, NÃO remova palavras, NÃO troque sinônimos, NÃO resuma, NÃO reescreva. Apenas: adicionar pontos, vírgulas, pontos de interrogação, capitalizar inícios de frase e nomes próprios óbvios. Mantenha todas as palavras técnicas e números exatamente como vieram. Retorne APENAS o texto, sem aspas, sem comentários.",
           },
           { role: "user", content: textoBruto },
         ],

@@ -60,15 +60,18 @@ export default function VoiceRecorderButton({
       });
       streamRef.current = stream;
 
-      // Escolhe melhor mime suportado
+      // Escolhe melhor mime suportado (prioriza opus para qualidade de voz)
       const candidates = [
         "audio/webm;codecs=opus",
+        "audio/ogg;codecs=opus",
         "audio/webm",
         "audio/mp4",
         "audio/ogg",
       ];
       const mime = candidates.find((m) => MediaRecorder.isTypeSupported(m)) || "";
-      const rec = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+      const recOpts: MediaRecorderOptions = { audioBitsPerSecond: 64000 };
+      if (mime) recOpts.mimeType = mime;
+      const rec = new MediaRecorder(stream, recOpts);
       recRef.current = rec;
       chunksRef.current = [];
 

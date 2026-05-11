@@ -47,6 +47,38 @@ export default function PlantaPinSelector({ obraId, plantaId, pinX, pinY, onChan
     }
   }, [selectedPlanta, edificios]);
 
+  // Auto-selecionar quando há apenas uma combinação possível
+  useEffect(() => {
+    if (readOnly || plantaId) return;
+    if (!plantas || !edificios) return;
+
+    // Caso 1: 1 edifício + 1 andar + 1 planta
+    if (edificios.length === 1) {
+      const ed: any = edificios[0];
+      const andares = ed.andares || [];
+      if (andares.length === 1) {
+        const andar = andares[0];
+        const plantasDoAndarAuto = plantas.filter((p: any) => p.andarId === andar.id);
+        if (plantasDoAndarAuto.length === 1) {
+          setEdificioId(ed.id);
+          setAndarId(andar.id);
+          setShowPlanta(true);
+          onChange({ plantaId: plantasDoAndarAuto[0].id, pinX: null, pinY: null });
+          return;
+        }
+      }
+    }
+
+    // Caso 2: sem edifícios e 1 planta legada (sem andar)
+    if (edificios.length === 0) {
+      const legadas = plantas.filter((p: any) => !p.andarId);
+      if (legadas.length === 1) {
+        setShowPlanta(true);
+        onChange({ plantaId: legadas[0].id, pinX: null, pinY: null });
+      }
+    }
+  }, [plantas, edificios, plantaId, readOnly]);
+
   const andaresDoEdificio = useMemo(() => {
     if (!edificioId || !edificios) return [];
     const ed = edificios.find((e: any) => e.id === edificioId);
