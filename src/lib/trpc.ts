@@ -1318,6 +1318,22 @@ function mapVerificacaoFromDb(v: any) {
   };
 }
 
+function mapOcorrenciaFromDb(o: any) {
+  return {
+    ...o,
+    obraId: o.obra_id,
+    dataOcorrencia: o.data_ocorrencia ? Number(o.data_ocorrencia) : null,
+    prazoComissao: o.prazo_comissao ? Number(o.prazo_comissao) : null,
+    prazoInvestigacao: o.prazo_investigacao ? Number(o.prazo_investigacao) : null,
+    prazoPlano: o.prazo_plano ? Number(o.prazo_plano) : null,
+    dataFechamento: o.data_fechamento ? Number(o.data_fechamento) : null,
+    catEmitida: o.cat_emitida === 1,
+    awfor149Anexada: o.awfor149_anexada === 1,
+    createdById: o.created_by_id,
+    createdByName: o.created_by_name,
+  };
+}
+
 // ---------- Proxy ----------
 
 function makeProcedureProxy(path: string): any {
