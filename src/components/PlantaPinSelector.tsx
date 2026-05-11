@@ -168,13 +168,15 @@ export default function PlantaPinSelector({ obraId, plantaId, pinX, pinY, onChan
                 }}
                 disabled={semEdificios}
               >
-                <SelectTrigger className="h-9">
+                <SelectTrigger className="h-9 min-w-0">
                   <Building2 className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
-                  <SelectValue placeholder="Edifício..." />
+                  <SelectValue placeholder="Edifício..." className="truncate" />
                 </SelectTrigger>
                 <SelectContent>
                   {(edificios || []).map((e: any) => (
-                    <SelectItem key={e.id} value={String(e.id)}>{e.nome}</SelectItem>
+                    <SelectItem key={e.id} value={String(e.id)}>
+                      <span className="block truncate max-w-[260px]" title={e.nome}>{e.nome}</span>
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -187,13 +189,15 @@ export default function PlantaPinSelector({ obraId, plantaId, pinX, pinY, onChan
                 }}
                 disabled={!edificioId || andaresDoEdificio.length === 0}
               >
-                <SelectTrigger className="h-9">
+                <SelectTrigger className="h-9 min-w-0">
                   <Layers className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
-                  <SelectValue placeholder="Andar..." />
+                  <SelectValue placeholder="Andar..." className="truncate" />
                 </SelectTrigger>
                 <SelectContent>
                   {andaresDoEdificio.map((a: any) => (
-                    <SelectItem key={a.id} value={String(a.id)}>{a.nome}</SelectItem>
+                    <SelectItem key={a.id} value={String(a.id)}>
+                      <span className="block truncate max-w-[260px]" title={a.nome}>{a.nome}</span>
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -205,13 +209,15 @@ export default function PlantaPinSelector({ obraId, plantaId, pinX, pinY, onChan
                 }}
                 disabled={plantasDoAndar.length === 0}
               >
-                <SelectTrigger className="h-9">
+                <SelectTrigger className="h-9 min-w-0">
                   <MapPin className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
-                  <SelectValue placeholder="Planta..." />
+                  <SelectValue placeholder="Planta..." className="truncate" />
                 </SelectTrigger>
                 <SelectContent>
                   {plantasDoAndar.map((p: any) => (
-                    <SelectItem key={p.id} value={String(p.id)}>{p.nome}</SelectItem>
+                    <SelectItem key={p.id} value={String(p.id)}>
+                      <span className="block truncate max-w-[260px]" title={p.nome}>{p.nome}</span>
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>

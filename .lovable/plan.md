@@ -1,33 +1,21 @@
-## Reorganizar Grid de Edição do Desvio
+## Problema
 
-### Problema
-Em `DesvioDetalhe.tsx` (modo edição), os campos **Origem**, **Descrição** e **Prazo Sugerido** ocupam linhas inteiras sozinhos, quebrando o ritmo visual do grid de 2 colunas usado pelos demais campos.
+O 3º select da "Localização na Planta" exibe o nome do arquivo da planta (ex: `PHOTO 2026 05 11 09 17 49.jpg`). Quando o nome é longo, ele estoura a largura do trigger e dos itens do dropdown.
 
-### Solução
-Reorganizar o `CardContent` de edição (linhas ~321-465) para um único grid `md:grid-cols-2` consistente:
+## Solução
 
-```
-┌─────────────────┬─────────────────┐
-│ Grupo *         │ Fornecedor      │
-├─────────────────┼─────────────────┤
-│ Origem *        │ Severidade *    │
-├─────────────────┼─────────────────┤
-│ Localização     │ Prazo Sugerido  │
-├─────────────────┴─────────────────┤
-│ Descrição *  (col-span-2)         │
-├───────────────────────────────────┤
-│ Classificações  (col-span-2)      │
-├───────────────────────────────────┤
-│ Localização na Planta (col-span-2)│
-└───────────────────────────────────┘
-```
+Manter o nome real (não renomear nem esconder), apenas garantir que o texto seja truncado com `…` dentro dos limites do componente, com tooltip para ver o nome completo no hover.
 
-### Detalhes técnicos
-- Substituir os três blocos `<div className="grid grid-cols-1 md:grid-cols-2 gap-4">` independentes + campos soltos por **um único grid** envolvendo todos os campos curtos.
-- Aplicar `md:col-span-2` em **Descrição**, **Classificações**, **PlantaPinSelector** e na barra de botões (Cancelar/Salvar) para que ocupem a linha inteira.
-- Manter espaçamento `gap-4` e a estrutura interna de cada campo (Label + Select/Input/Textarea) intacta — sem mudanças no estado, validação ou backend.
-- O `VoiceRecorderButton` continua ancorado dentro do Textarea de Descrição.
+## Mudanças
 
-### O que NÃO muda
-- Modo leitura (`!isEditing`) permanece como está.
-- Nenhuma mudança em `OcorrenciaEditar`, `EditarVerificacao`, rotas ou backend.
+**Arquivo:** `src/components/PlantaPinSelector.tsx`
+
+1. No `SelectTrigger` da Planta (linha ~208): adicionar classes para evitar overflow — `min-w-0` no trigger e `truncate` no `SelectValue` (envolto num `<span className="truncate">`).
+2. Nos `SelectItem` da lista de plantas (linha ~213-215): envolver `{p.nome}` em `<span className="truncate block max-w-[260px]" title={p.nome}>` para limitar largura visível e mostrar tooltip nativo com nome completo.
+3. Mesmo tratamento (defensivo) nos selects de Edifício e Andar caso nomes longos apareçam: adicionar `min-w-0` no trigger e `truncate` no value.
+
+Sem mudanças de backend, schema, ou em outros arquivos.
+
+## Resultado esperado
+
+O dropdown sempre cabe dentro do grid de 3 colunas, mostrando `PHOTO 2026 05 11 09 17 49…` ou similar, e o usuário pode passar o mouse para ver o nome completo.
