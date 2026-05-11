@@ -284,7 +284,7 @@ export default function Relatorio() {
     <div style="font-size:28px;font-weight:800;color:#0f172a;letter-spacing:-0.5px">AW Engenharia</div>
     <div style="font-size:16px;color:#475569;margin-top:6px">Relatório de Desvios${obraInfo ? ` — ${obraInfo.codigo} ${obraInfo.nome}` : " — Todas as Obras"}</div>
     ${origens && origens.length > 0 && origens.length < 3 ? `<div style="font-size:11px;color:#64748b;margin-top:4px">Verticais: ${origens.map((o: string) => oLabels[o] || o).join(", ")}</div>` : ""}
-    <div style="font-size:10px;color:#94a3b8;margin-top:6px">Gerado em ${new Date(data.dataGeracao).toLocaleDateString("pt-BR")} às ${new Date(data.dataGeracao).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</div>
+    <div style="font-size:10px;color:#94a3b8;margin-top:6px">Gerado em ${new Date(data.dataGeracao || Date.now()).toLocaleDateString("pt-BR")} às ${new Date(data.dataGeracao || Date.now()).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</div>
   </div>
 
   <!-- KPIs -->
@@ -632,7 +632,7 @@ export default function Relatorio() {
                   </p>
                 )}
                 <p className="text-xs text-muted-foreground mt-1">
-                  Gerado em {new Date(data.dataGeracao).toLocaleDateString("pt-BR")} às {new Date(data.dataGeracao).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                  Gerado em {new Date(data.dataGeracao || Date.now()).toLocaleDateString("pt-BR")} às {new Date(data.dataGeracao || Date.now()).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                 </p>
               </div>
 
