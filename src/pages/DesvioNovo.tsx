@@ -18,6 +18,7 @@ import {
 import PlantaPinSelector from "@/components/PlantaPinSelector";
 import VoiceRecorderButton from "@/components/VoiceRecorderButton";
 import { PhotoPickerButton } from "@/components/PhotoPickerButton";
+import { supabase } from "@/integrations/supabase/client";
 
 type Foto = { file: File; preview: string };
 
@@ -41,7 +42,6 @@ export default function DesvioNovo() {
   const { data: grupos } = trpc.grupos.list.useQuery();
 
   const createDesvio = trpc.desvios.create.useMutation();
-  const uploadFoto = trpc.fotos.upload.useMutation();
 
   // ---------- Etapa 1: Contexto ----------
   const [step, setStep] = useState<1 | 2>(1);
