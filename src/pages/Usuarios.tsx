@@ -186,7 +186,7 @@ export default function Usuarios() {
     count: membros.filter(m => m.cargo === c.value).length,
   }));
 
-  const FormFields = () => (
+  const formFields = (
     <div className="space-y-4">
       <div>
         <div className="flex items-center gap-2 mb-1.5">
@@ -331,7 +331,7 @@ export default function Usuarios() {
             <DialogHeader>
               <DialogTitle>Adicionar Membro da Equipe</DialogTitle>
             </DialogHeader>
-            <FormFields />
+            {formFields}
             <div className="flex justify-end gap-2 mt-4">
               <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
               <Button onClick={handleSubmit} disabled={createMutation.isPending}>
@@ -481,7 +481,7 @@ export default function Usuarios() {
           <DialogHeader>
             <DialogTitle>Editar Membro</DialogTitle>
           </DialogHeader>
-          <FormFields />
+          {formFields}
           <div className="flex justify-end gap-2 mt-4">
             <Button variant="outline" onClick={() => setEditDialogOpen(false)}>Cancelar</Button>
             <Button onClick={handleUpdate} disabled={updateMutation.isPending}>
