@@ -179,7 +179,7 @@ export default function DesvioNovo() {
         await supabase.from("historico").insert(
           uploaded.map(() => ({
             desvio_id: result.id,
-            tipo: "foto",
+            tipo: "foto" as const,
             descricao: "Foto de abertura adicionada",
             user_id: user?.id ?? null,
             user_name: user?.email ?? null,
