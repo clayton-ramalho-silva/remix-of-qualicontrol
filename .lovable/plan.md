@@ -1,61 +1,80 @@
-# Ajustes de UX — Novo Desvio
+# Acelerar "Tirar foto + Salvar desvio"
 
-## 1. Mostrar planta automaticamente quando só há 1 andar e 1 planta
+## Diagnóstico
 
-**Onde:** `src/components/PlantaPinSelector.tsx`
+Fluxo atual em `src/pages/DesvioNovo.tsx` + `src/lib/trpc.ts` (`desvios.create`):
 
-Hoje o usuário precisa clicar em "Marcar na Planta" e selecionar Edifício → Andar → Planta manualmente. Quando a obra só tem uma combinação possível, vamos pré-selecionar e já abrir a imagem.
+1. Usuário tira foto → `URL.createObjectURL(file)` cria preview, mas o **arquivo bruto da câmera (3–8 MB, ~4000×3000)** fica em memória.
+2. Ao clicar "Salvar":
+   - `desvios.create` faz `INSERT … .select().single()` (1 round-trip).
+   - **Depois** disso, para cada foto: `supabase.storage.from('evidencias').upload(file)` com o arquivo bruto.
+   - Depois `INSERT` em `fotos_evidencia`.
+   - Só então a UI libera.
+3. Em rede móvel típica (1–3 Mbps upload), 3 fotos de 5 MB = ~40s. Esse é o gargalo dominante, **não** o banco.
 
-- Adicionar um `useEffect` que, quando `edificios` e `plantas` carregarem:
-  - Se houver exatamente 1 edifício, setar `edificioId` automaticamente.
-  - Se esse edifício tiver exatamente 1 andar, setar `andarId`.
-  - Se houver exatamente 1 planta nesse andar (ou exatamente 1 planta legada sem andar quando não há edifícios), chamar `onChange({ plantaId, pinX:null, pinY:null })` e `setShowPlanta(true)`.
-- Só executa quando `plantaId` ainda está `null` (não sobrescreve escolha do usuário).
+Causas raiz, em ordem de impacto:
 
-## 2. Permitir "Concluir Inspeção" salvando o desvio atual
+| # | Causa | Impacto |
+|---|---|---|
+| 1 | Upload do JPEG cru da câmera, sem compressão | ~95% do tempo |
+| 2 | Uploads só começam *depois* do clique em Salvar | ~3–5s perdidos |
+| 3 | Insert do desvio espera todos os uploads antes de fechar a UX | bloqueio percebido |
+| 4 | `INSERT … select().single()` round-trip extra | ~100–300 ms |
 
-**Onde:** `src/pages/DesvioNovo.tsx` (botões da Etapa 2)
+## Solução
 
-Problema: o botão "Concluir Inspeção" hoje só está habilitado quando já existem desvios registrados, e ele apenas redireciona — descarta o desvio atual em edição. Se o usuário só quer registrar 1 desvio, é forçado a clicar em "Salvar e Continuar".
+Quatro frentes, todas frontend (sem mudar schema/edge function).
 
-Mudança:
-- Renomear/ajustar o botão para **"Salvar e Concluir"**.
-- Habilitar sempre que `descricao` + `grupoId` estiverem preenchidos (mesmas regras de `salvarDesvio`), ou quando já houver `registrados.length > 0`.
-- Comportamento ao clicar:
-  - Se há campos preenchidos no form atual → chama `salvarDesvio(false)` (que já salva e redireciona para `/desvios`).
-  - Se não há nada preenchido e já existem registrados → apenas redireciona com toast de conclusão.
-- Manter "Salvar e Continuar" como ação secundária.
+### 1. Compressão client-side antes de subir (maior ganho)
 
-## 3. Qualidade da transcrição de áudio
+Reduzir cada foto para no máx. 1600 px no lado maior, JPEG qualidade 0.8, antes de qualquer upload. 5 MB → ~250 KB (~20× menor). Mantém qualidade visual para evidência de obra.
 
-**Onde:** `supabase/functions/transcrever-audio/index.ts` e `src/components/VoiceRecorderButton.tsx`
+- Novo util `src/lib/image-compress.ts` usando `createImageBitmap` + `OffscreenCanvas` (fallback `<canvas>`), saída `Blob` JPEG.
+- Aplicar em `handleFileChange` de `DesvioNovo.tsx` e também em `RespostaFotosUploader.tsx` (vistoria) para consistência.
 
-Suspeitas pelo código atual:
-- O mapeamento `format` é frágil: `mimeType.includes("mp4") ? "mp4" : "webm"`. No iOS/Safari o blob vem como `audio/mp4` mas o codec real é `aac`; alguns providers exigem `format: "mp3"` ou `"wav"`.
-- Etapa 2 (limpeza) usa `gemini-2.5-flash-lite`, que às vezes "reescreve" demais e altera o conteúdo técnico, dando a sensação de "transcrição errada".
-- Áudios longos em `webm/opus` podem chegar truncados na ponta do gateway.
+### 2. Pré-upload no momento da seleção da foto
 
-Ações:
-- Trocar a transcrição para `google/gemini-2.5-pro` (mais robusto para multimodal de áudio) e ajustar o `format` para o mime real (`webm` / `mp4` / `wav` / `ogg`) com fallback explícito.
-- Pular a etapa de "limpeza" por padrão (ou usar `gemini-2.5-flash` apenas para pontuação, com prompt mais restritivo "NÃO altere palavras, apenas adicione pontuação"). Adicionar flag para desativar facilmente.
-- No client (`VoiceRecorderButton.tsx`), priorizar `audio/webm;codecs=opus` e enviar bitrate explícito (`audioBitsPerSecond: 64000`) para reduzir ruído de codec. Garantir `mimeType` enviado bate com o real do `MediaRecorder`.
-- Logar no edge function o tamanho do base64 recebido e o `format` final para facilitar debug.
+Assim que o usuário escolhe/tira a foto, já fazemos upload para o bucket `evidencias` numa pasta temporária (`tmp/<uuid>/...`) **em paralelo** com o restante do preenchimento. Ao salvar o desvio, só linkamos a `file_key` já existente.
 
-## 4. Data "Identificado em" pegando dia anterior
+- Estado da foto vira `{ file, preview, fileKey?, status: 'uploading'|'done'|'error' }`.
+- Pequeno spinner em cima da thumb enquanto sobe.
+- Botão "Salvar" desabilita só se houver foto ainda `uploading` (raro, pois já vai estar pronta).
 
-**Onde:** `src/pages/DesvioNovo.tsx` linha 146 (e 147 para `prazoSugerido`)
+Resultado: no clique "Salvar", o que falta é só o `INSERT` do desvio + `INSERT` das linhas em `fotos_evidencia` → tipicamente <500 ms.
 
-Causa: `new Date("2026-05-11").getTime()` é interpretado como **UTC 00:00**, e em fuso BR (UTC-3) vira `10/05 21:00`. Ao formatar com `toLocaleDateString` no detalhe, mostra 10/05.
+### 3. Salvamento otimista + histórico em background
 
-Fix:
-- Criar helper `localDateMs(yyyyMmDd)` que faz `const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d, 12, 0, 0).getTime();` (meio-dia local, imune a DST/fuso).
-- Aplicar em `dataIdentificacao` e `prazoSugerido` no `salvarDesvio`.
-- Mesma correção em qualquer outro `new Date(<input type=date>)` da página.
+- `createDesvio.mutateAsync` continua, mas o `INSERT` em `fotos_evidencia` e o `historico` viram fire-and-forget (já é o caso do histórico). Toast de sucesso e reset do form acontecem imediatamente após o insert do desvio.
+- Manter retry silencioso se o insert das fotos falhar (raro pois o upload já passou).
 
-> O desvio 11 já existente continuará com a data errada no banco; o fix vale para novos. Se desejar, posso adicionar uma migration para corrigir registros antigos por `data_identificacao`, mas isso fica fora deste escopo a menos que você peça.
+### 4. Limpeza de pequenas latências
+
+- Cachear `supabase.auth.getUser()` uma vez por sessão da página (já temos o user no contexto via `useAuth`) em vez de chamar dentro de `desvios.create`.
+- Continuar usando `.select().single()` (precisamos do id) — mas só esse round-trip permanece bloqueante.
 
 ## Detalhes técnicos
 
-- Nenhuma mudança de schema/migration.
-- Edge function `transcrever-audio` será redeployada automaticamente.
-- Sem alterações em rotas, auth ou RLS.
+```text
+Antes:                       Depois:
+[click Salvar]               [escolher foto]
+  └ INSERT desvio (~300ms)     └ comprime (50ms) + upload bg (~400ms p/ 250KB)
+  └ upload foto 1 (~12s)     [click Salvar]
+  └ upload foto 2 (~12s)       └ INSERT desvio (~300ms)
+  └ INSERT fotos (~200ms)      └ INSERT fotos_evidencia (~200ms)  → fecha
+  └ fecha                      └ historico fire-and-forget
+Total: ~25s p/ 2 fotos       Total percebido: ~500ms
+```
+
+Arquivos a tocar:
+- `src/lib/image-compress.ts` (novo)
+- `src/pages/DesvioNovo.tsx` (handleFileChange, salvarDesvio, tipo Foto, UI da thumb)
+- `src/components/RespostaFotosUploader.tsx` (aplicar compressão no `handleFiles`)
+- `src/lib/trpc.ts` → opcional: remover `getUser()` interno de `desvios.create` aceitando `createdById/Name` do cliente para economizar 1 chamada.
+
+Sem mudança de schema, sem edge function, sem migração.
+
+## Fora de escopo
+
+- Conversão para WebP (ganho marginal vs. JPEG já comprimido; alguns iOS antigos perdem suporte).
+- Upload chunked/resumable — não necessário com fotos de ~250 KB.
+- Service Worker / fila offline — pode vir depois se necessário.
