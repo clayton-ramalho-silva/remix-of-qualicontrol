@@ -201,12 +201,63 @@ function DashboardLayoutContent({
           <SidebarContent className="gap-0">
             <SidebarMenu className="px-2 py-1">
               {menuItems.map((item, idx) => {
-                if ('separator' in item && item.separator) {
+                if ('separator' in item) {
                   return (
                     <div key={`sep-${idx}`} className="my-2 mx-2 border-t border-sidebar-border/40" />
                   );
                 }
-                const navItem = item as Exclude<MenuItem, { separator: true }>;
+                if ('group' in item) {
+                  const groupActive = location.startsWith(item.basePath);
+                  return (
+                    <Collapsible key={item.basePath} defaultOpen={groupActive} asChild>
+                      <SidebarMenuItem>
+                        <CollapsibleTrigger asChild>
+                          <SidebarMenuButton
+                            isActive={groupActive}
+                            tooltip={item.label}
+                            className="h-10 transition-all font-normal"
+                          >
+                            <item.icon className={`h-4 w-4 ${groupActive ? "text-sidebar-primary" : ""}`} />
+                            <span className="flex-1 truncate">{item.label}</span>
+                            {!isCollapsed && (
+                              <ChevronRight className="h-4 w-4 transition-transform data-[state=open]:rotate-90 group-data-[state=open]/collapsible:rotate-90" />
+                            )}
+                          </SidebarMenuButton>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <SidebarMenuSub>
+                            {item.children.map((child) => {
+                              const childActive = child.path === item.basePath
+                                ? location === child.path
+                                : location.startsWith(child.path);
+                              return (
+                                <SidebarMenuSubItem key={child.path}>
+                                  <SidebarMenuSubButton
+                                    asChild
+                                    isActive={childActive}
+                                  >
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setLocation(child.path);
+                                        if (sidebarIsMobile) setOpenMobile(false);
+                                      }}
+                                      className="w-full text-left"
+                                    >
+                                      <child.icon className="h-4 w-4" />
+                                      <span className="truncate">{child.label}</span>
+                                    </button>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              );
+                            })}
+                          </SidebarMenuSub>
+                        </CollapsibleContent>
+                      </SidebarMenuItem>
+                    </Collapsible>
+                  );
+                }
+                const navItem = item;
                 const isActive = navItem.path === "/"
                   ? location === "/"
                   : location.startsWith(navItem.path);
