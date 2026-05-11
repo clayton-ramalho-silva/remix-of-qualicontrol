@@ -259,6 +259,25 @@ export default function DesvioDetalhe() {
     await deleteFoto.mutateAsync({ id });
   };
 
+  const handleSaveAnnotation = async (blob: Blob) => {
+    if (!annotatingFoto) return;
+    setSavingAnnotation(true);
+    try {
+      const { error } = await supabase.storage
+        .from("evidencias")
+        .upload(annotatingFoto.fileKey, blob, { contentType: "image/jpeg", upsert: true });
+      if (error) throw error;
+      toast.success("Anotação salva!");
+      // Força refetch quebrando cache do navegador
+      utils.desvios.getById.invalidate({ id: desvioId });
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao salvar anotação");
+      throw e;
+    } finally {
+      setSavingAnnotation(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
