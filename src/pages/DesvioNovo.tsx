@@ -13,11 +13,12 @@ import { useLocation } from "wouter";
 import { toast } from "sonner";
 import {
   HelpCircle, Upload, X, ArrowLeft, Loader2, MapPin, ClipboardList,
-  Camera, CheckCircle2, Save, ChevronDown, ChevronUp, Sparkles, Check,
+  Camera, CheckCircle2, Save, ChevronDown, ChevronUp, Sparkles, Check, Pencil,
 } from "lucide-react";
 import PlantaPinSelector from "@/components/PlantaPinSelector";
 import VoiceRecorderButton from "@/components/VoiceRecorderButton";
 import { PhotoPickerButton } from "@/components/PhotoPickerButton";
+import PhotoAnnotator from "@/components/PhotoAnnotator";
 import { supabase } from "@/integrations/supabase/client";
 import { compressImage } from "@/lib/image-compress";
 
@@ -96,6 +97,7 @@ export default function DesvioNovo() {
   const [fotos, setFotos] = useState<Foto[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [registrados, setRegistrados] = useState<{ id: number; descricao: string }[]>([]);
+  const [annotatingIdx, setAnnotatingIdx] = useState<number | null>(null);
 
   // ---------- Helpers ----------
   const obraSelecionada = obras?.find(o => String(o.id) === obraId);
@@ -144,6 +146,17 @@ export default function DesvioNovo() {
       URL.revokeObjectURL(prev[i].preview);
       return prev.filter((_, idx) => idx !== i);
     });
+  };
+
+  const handleAnnotateSave = async (idx: number, blob: Blob) => {
+    const foto = fotos[idx];
+    if (!foto) return;
+    const newFile = new File([blob], foto.file.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" });
+    const newPreview = URL.createObjectURL(blob);
+    URL.revokeObjectURL(foto.preview);
+    const updated: Foto = { file: newFile, preview: newPreview, status: "uploading" };
+    setFotos(prev => prev.map((f, i) => (i === idx ? updated : f)));
+    void uploadFotoBackground(updated);
   };
 
   const resetForm = () => {
@@ -378,6 +391,16 @@ export default function DesvioNovo() {
                           Erro
                         </div>
                       )}
+                      {foto.status !== "uploading" && (
+                        <button
+                          type="button"
+                          onClick={() => setAnnotatingIdx(i)}
+                          className="absolute bottom-1 left-1 bg-black/60 text-white rounded px-1.5 py-0.5 text-[10px] flex items-center gap-0.5 opacity-0 group-hover:opacity-100 hover:bg-teal-600"
+                          title="Anotar foto"
+                        >
+                          <Pencil className="h-2.5 w-2.5" /> Anotar
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => removeFoto(i)}
@@ -551,6 +574,14 @@ export default function DesvioNovo() {
             </div>
           </div>
         </>
+      )}
+      {annotatingIdx !== null && fotos[annotatingIdx] && (
+        <PhotoAnnotator
+          open
+          src={fotos[annotatingIdx].preview}
+          onClose={() => setAnnotatingIdx(null)}
+          onSave={(blob) => handleAnnotateSave(annotatingIdx, blob)}
+        />
       )}
     </div>
   );

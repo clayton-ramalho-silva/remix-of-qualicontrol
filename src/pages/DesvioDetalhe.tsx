@@ -18,9 +18,11 @@ import {
   ArrowLeft, AlertTriangle, CheckCircle2, Clock, FileWarning,
   PlusCircle, MessageSquare, Camera, ClipboardCheck, Edit3,
   Send, Loader2, Image as ImageIcon, Upload, X, Tag, UserCheck, ShieldAlert,
-  HelpCircle, Save, MapPin,
+  HelpCircle, Save, MapPin, Pencil,
 } from "lucide-react";
 import PlantaPinSelector from "@/components/PlantaPinSelector";
+import PhotoAnnotator from "@/components/PhotoAnnotator";
+import { supabase } from "@/integrations/supabase/client";
 
 // Grupos carregados do banco de dados (substitui disciplinas fixas)
 
@@ -91,6 +93,14 @@ export default function DesvioDetalhe() {
   const [uploadingFechamento, setUploadingFechamento] = useState(false);
   const [aberturaFotos, setAberturaFotos] = useState<{ file: File; preview: string }[]>([]);
   const [uploadingAbertura, setUploadingAbertura] = useState(false);
+  const [annotatingFoto, setAnnotatingFoto] = useState<{ id: number; url: string; fileKey: string } | null>(null);
+  const [savingAnnotation, setSavingAnnotation] = useState(false);
+  const [fotoVersions, setFotoVersions] = useState<Record<number, number>>({});
+  const bustUrl = (url: string, id: number) => {
+    const v = fotoVersions[id];
+    if (!v) return url;
+    return url + (url.includes("?") ? "&" : "?") + "v=" + v;
+  };
 
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
@@ -253,6 +263,25 @@ export default function DesvioDetalhe() {
   const handleDeleteFoto = async (id: number, label: string) => {
     if (!confirm(`Remover esta foto de ${label}?`)) return;
     await deleteFoto.mutateAsync({ id });
+  };
+
+  const handleSaveAnnotation = async (blob: Blob) => {
+    if (!annotatingFoto) return;
+    setSavingAnnotation(true);
+    try {
+      const { error } = await supabase.storage
+        .from("evidencias")
+        .upload(annotatingFoto.fileKey, blob, { contentType: "image/jpeg", upsert: true });
+      if (error) throw error;
+      setFotoVersions((prev) => ({ ...prev, [annotatingFoto.id]: Date.now() }));
+      toast.success("Anotação salva!");
+      utils.desvios.getById.invalidate({ id: desvioId });
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao salvar anotação");
+      throw e;
+    } finally {
+      setSavingAnnotation(false);
+    }
   };
 
   if (isLoading) {
@@ -590,18 +619,28 @@ export default function DesvioDetalhe() {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
                   {fotosAbertura.map((foto: any) => (
                     <div key={foto.id} className="relative group aspect-square rounded-lg overflow-hidden border hover:shadow-md transition-shadow">
-                      <a href={foto.url} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
-                        <img src={foto.url} alt={foto.descricao || "Evidência de abertura"} className="w-full h-full object-cover" />
+                      <a href={bustUrl(foto.url, foto.id)} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+                        <img src={bustUrl(foto.url, foto.id)} alt={foto.descricao || "Evidência de abertura"} className="w-full h-full object-cover" />
                       </a>
                       {data.status !== "fechado" && (
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteFoto(foto.id, "abertura")}
-                          className="absolute top-1.5 right-1.5 bg-black/70 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                          title="Remover foto"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setAnnotatingFoto({ id: foto.id, url: foto.url, fileKey: foto.fileKey })}
+                            className="absolute bottom-1.5 left-1.5 bg-black/70 text-white rounded px-2 py-0.5 text-[11px] flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-teal-600"
+                            title="Anotar foto"
+                          >
+                            <Pencil className="h-3 w-3" /> Anotar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteFoto(foto.id, "abertura")}
+                            className="absolute top-1.5 right-1.5 bg-black/70 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                            title="Remover foto"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </>
                       )}
                     </div>
                   ))}
@@ -672,18 +711,28 @@ export default function DesvioDetalhe() {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
                   {fotosFechamento.map((foto: any) => (
                     <div key={foto.id} className="relative group aspect-square rounded-lg overflow-hidden border border-emerald-200 hover:shadow-md transition-shadow">
-                      <a href={foto.url} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
-                        <img src={foto.url} alt={foto.descricao || "Evidência de fechamento"} className="w-full h-full object-cover" />
+                      <a href={bustUrl(foto.url, foto.id)} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+                        <img src={bustUrl(foto.url, foto.id)} alt={foto.descricao || "Evidência de fechamento"} className="w-full h-full object-cover" />
                       </a>
                       {data.status !== "fechado" && (
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteFoto(foto.id, "fechamento")}
-                          className="absolute top-1.5 right-1.5 bg-black/70 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                          title="Remover foto"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setAnnotatingFoto({ id: foto.id, url: foto.url, fileKey: foto.fileKey })}
+                            className="absolute bottom-1.5 left-1.5 bg-black/70 text-white rounded px-2 py-0.5 text-[11px] flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-emerald-600"
+                            title="Anotar foto"
+                          >
+                            <Pencil className="h-3 w-3" /> Anotar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteFoto(foto.id, "fechamento")}
+                            className="absolute top-1.5 right-1.5 bg-black/70 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                            title="Remover foto"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </>
                       )}
                     </div>
                   ))}
@@ -842,6 +891,14 @@ export default function DesvioDetalhe() {
           </Card>
         </div>
       </div>
+      {annotatingFoto && (
+        <PhotoAnnotator
+          open
+          src={bustUrl(annotatingFoto.url, annotatingFoto.id)}
+          onClose={() => setAnnotatingFoto(null)}
+          onSave={handleSaveAnnotation}
+        />
+      )}
     </div>
   );
 }
