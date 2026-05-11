@@ -494,12 +494,20 @@ export default function DesvioNovo() {
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <Button
                 variant="outline"
-                disabled={submitting || registrados.length === 0}
-                onClick={() => setLocation("/desvios")}
+                disabled={submitting || (registrados.length === 0 && (!grupoId || !descricao.trim()))}
+                onClick={() => {
+                  const temFormPreenchido = !!grupoId && !!descricao.trim();
+                  if (temFormPreenchido) {
+                    salvarDesvio(false);
+                  } else if (registrados.length > 0) {
+                    toast.success(`Inspeção concluída: ${registrados.length} desvio(s) registrado(s)`);
+                    setLocation("/desvios");
+                  }
+                }}
                 className="w-full sm:w-auto"
               >
                 <CheckCircle2 className="h-4 w-4 mr-2" />
-                Concluir Inspeção
+                Salvar e Concluir
               </Button>
               <Button
                 disabled={submitting}
