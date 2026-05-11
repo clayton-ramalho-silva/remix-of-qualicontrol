@@ -391,6 +391,16 @@ export default function DesvioNovo() {
                           Erro
                         </div>
                       )}
+                      {foto.status !== "uploading" && (
+                        <button
+                          type="button"
+                          onClick={() => setAnnotatingIdx(i)}
+                          className="absolute bottom-1 left-1 bg-black/60 text-white rounded px-1.5 py-0.5 text-[10px] flex items-center gap-0.5 opacity-0 group-hover:opacity-100 hover:bg-teal-600"
+                          title="Anotar foto"
+                        >
+                          <Pencil className="h-2.5 w-2.5" /> Anotar
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => removeFoto(i)}
