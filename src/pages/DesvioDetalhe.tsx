@@ -69,8 +69,16 @@ export default function DesvioDetalhe() {
     onSuccess: () => {
       utils.desvios.getById.invalidate({ id: desvioId });
       setFechamentoFotos([]);
+      setAberturaFotos([]);
       toast.success("Foto de fechamento enviada!");
     },
+  });
+  const deleteFoto = trpc.fotos.delete.useMutation({
+    onSuccess: () => {
+      utils.desvios.getById.invalidate({ id: desvioId });
+      toast.success("Foto removida.");
+    },
+    onError: (err: any) => toast.error(err?.message || "Erro ao remover foto."),
   });
 
   // Queries for responsible selector
@@ -81,6 +89,8 @@ export default function DesvioDetalhe() {
   const [comment, setComment] = useState("");
   const [fechamentoFotos, setFechamentoFotos] = useState<{ file: File; preview: string }[]>([]);
   const [uploadingFechamento, setUploadingFechamento] = useState(false);
+  const [aberturaFotos, setAberturaFotos] = useState<{ file: File; preview: string }[]>([]);
+  const [uploadingAbertura, setUploadingAbertura] = useState(false);
 
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
