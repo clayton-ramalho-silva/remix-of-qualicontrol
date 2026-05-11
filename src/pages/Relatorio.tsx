@@ -171,7 +171,7 @@ export default function Relatorio() {
       const rows = desvios.map((d: any) => {
         const tdForn = cfg.mostrarFornecedores ? `<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9">${d.fornecedor || "—"}</td>` : "";
         const tdPrazo = cfg.mostrarDataPrevista ? `<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${fmtDate(d.prazoSugerido)}</td>` : "";
-        return `<tr><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;font-family:monospace;color:#64748b">${d.id}</td><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9">${d.disciplina}</td>${tdForn}<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.descricao}</td><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${sevBadge(d.severidade)}</td><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${stBadge(d.status)}</td><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${oLabels[d.origem] || d.origem}</td><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;color:#64748b">${fmtDate(d.dataIdentificacao)}</td>${tdPrazo}</tr>`;
+        return `<tr><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;font-family:monospace;color:#64748b;vertical-align:top">${d.id}</td><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;vertical-align:top">${d.disciplina}</td>${tdForn}<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;white-space:normal;word-break:break-word;vertical-align:top">${d.descricao}</td><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;vertical-align:top">${sevBadge(d.severidade)}</td><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;vertical-align:top">${stBadge(d.status)}</td><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;vertical-align:top">${oLabels[d.origem] || d.origem}</td><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;color:#64748b;vertical-align:top">${fmtDate(d.dataIdentificacao)}</td>${tdPrazo}</tr>`;
       }).join("");
       indexHtml = `<div style="margin-top:28px;page-break-before:always"><h2 style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #0d9488">Índice de Desvios (${desvios.length})</h2><table style="width:100%;border-collapse:collapse;font-size:10px"><thead><tr style="background:#f1f5f9"><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">#</th><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Grupo</th>${thForn}<th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Descrição</th><th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Severidade</th><th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Status</th><th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Origem</th><th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Data</th>${thPrazo}</tr></thead><tbody>${rows}</tbody></table></div>`;
     }
@@ -236,9 +236,10 @@ export default function Relatorio() {
 
         return `<div style="border:1px solid #e2e8f0;border-radius:8px;padding:14px;margin-bottom:14px;page-break-inside:avoid">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <div style="font-size:13px;font-weight:600"><span style="color:#94a3b8;margin-right:6px">#${d.id}</span>${d.descricao}</div>
+            <div style="font-size:13px;font-weight:600"><span style="color:#94a3b8;margin-right:6px">#${d.id}</span>Desvio</div>
             <div style="display:flex;gap:6px">${sevBadge(d.severidade)} ${stBadge(d.status)}</div>
           </div>
+          <div style="font-size:11px;color:#1e293b;background:#f8fafc;border-left:3px solid #0d9488;padding:6px 10px;border-radius:4px;margin-bottom:8px;white-space:pre-wrap;word-break:break-word"><strong style="color:#0f172a">Descrição:</strong> ${d.descricao}</div>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px 12px;font-size:10px;color:#475569;margin-bottom:6px">${metaItems.join("")}</div>
           ${tags.length > 0 ? `<div style="display:flex;gap:4px;margin-bottom:6px">${tags.join("")}</div>` : ""}
           ${planosHtml}
@@ -758,7 +759,7 @@ export default function Relatorio() {
                               <td className="py-1.5 px-2 font-mono text-muted-foreground">{d.id}</td>
                               <td className="py-1.5 px-2">{d.disciplina}</td>
                               {data.config?.mostrarFornecedores && <td className="py-1.5 px-2">{d.fornecedor || "—"}</td>}
-                              <td className="py-1.5 px-2 max-w-[180px] truncate">{d.descricao}</td>
+                              <td className="py-1.5 px-2 whitespace-normal break-words min-w-[200px]">{d.descricao}</td>
                               <td className="py-1.5 px-2 text-center">
                                 <span className={`badge inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${sevColors[d.severidade] || ""}`}>
                                   {d.severidade}
@@ -801,7 +802,7 @@ export default function Relatorio() {
                           <div className="flex items-center justify-between mb-2">
                             <h3 className="text-sm font-semibold flex items-center gap-2">
                               <span className="text-muted-foreground">#{d.id}</span>
-                              {d.descricao}
+                              Desvio
                             </h3>
                             <div className="flex gap-1.5">
                               <span className={`badge inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${sevColors[d.severidade] || ""}`}>
@@ -811,6 +812,10 @@ export default function Relatorio() {
                                 {statusLabels[d.status] || d.status}
                               </span>
                             </div>
+                          </div>
+                          <div className="text-xs bg-muted/40 border-l-2 border-primary px-3 py-2 rounded mb-3 whitespace-pre-wrap break-words">
+                            <span className="font-semibold text-foreground">Descrição: </span>
+                            {d.descricao}
                           </div>
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-muted-foreground mb-3">
                             <div><span className="font-medium text-foreground">Grupo:</span> {d.disciplina}</div>
