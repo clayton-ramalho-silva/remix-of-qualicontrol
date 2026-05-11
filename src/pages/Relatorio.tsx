@@ -500,6 +500,10 @@ export default function Relatorio() {
                 <Users className="h-3.5 w-3.5 text-muted-foreground" /> Mostra responsáveis
               </label>
               <label className="flex items-center gap-2 cursor-pointer text-sm">
+                <Checkbox checked={mostrarVertical} onCheckedChange={(v) => setMostrarVertical(!!v)} />
+                <BarChart3 className="h-3.5 w-3.5 text-muted-foreground" /> Mostra vertical
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm">
                 <Checkbox checked={mostrarDataPrevista} onCheckedChange={(v) => setMostrarDataPrevista(!!v)} />
                 <Calendar className="h-3.5 w-3.5 text-muted-foreground" /> Mostra data prevista
               </label>
