@@ -503,6 +503,7 @@ export type Database = {
           obra_ids: Json | null
           telefone: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           ativo?: number
@@ -514,6 +515,7 @@ export type Database = {
           obra_ids?: Json | null
           telefone?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           ativo?: number
@@ -525,6 +527,7 @@ export type Database = {
           obra_ids?: Json | null
           telefone?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
