@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Calendar, MapPin, Building2, User, Clock, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Building2, User, Clock, AlertTriangle, Pencil } from "lucide-react";
 
 const CLASSIF_LABELS: Record<string, string> = {
   incidente: "Incidente",
@@ -69,6 +69,9 @@ export default function OcorrenciaDetalhe() {
             <Badge className="bg-slate-100 text-slate-700">{STATUS_LABELS[o.status]}</Badge>
           </div>
         </div>
+        <Button variant="outline" size="sm" onClick={() => navigate(`/qsms/ocorrencias/${o.id}/editar`)}>
+          <Pencil className="h-4 w-4 mr-1.5" /> Editar
+        </Button>
       </div>
 
       {/* Indicadores de prazo */}
