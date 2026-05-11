@@ -58,6 +58,7 @@ export default function Relatorio() {
   // Seção 4 — Conteúdo
   const [mostrarFornecedores, setMostrarFornecedores] = useState(true);
   const [mostrarResponsaveis, setMostrarResponsaveis] = useState(true);
+  const [mostrarVertical, setMostrarVertical] = useState(true);
   const [mostrarDataPrevista, setMostrarDataPrevista] = useState(true);
   const [mostrarDataFinalizacao, setMostrarDataFinalizacao] = useState(true);
   const [mostrarAbertos, setMostrarAbertos] = useState(true);
@@ -92,6 +93,7 @@ export default function Relatorio() {
       tagSolicitadoCliente: tagSolicitado,
       mostrarFornecedores,
       mostrarResponsaveis,
+      mostrarVertical,
       mostrarDataPrevista,
       mostrarDataFinalizacao,
       mostrarAbertos,
