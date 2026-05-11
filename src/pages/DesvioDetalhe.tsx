@@ -894,7 +894,7 @@ export default function DesvioDetalhe() {
       {annotatingFoto && (
         <PhotoAnnotator
           open
-          src={annotatingFoto.url}
+          src={bustUrl(annotatingFoto.url, annotatingFoto.id)}
           onClose={() => setAnnotatingFoto(null)}
           onSave={handleSaveAnnotation}
         />
