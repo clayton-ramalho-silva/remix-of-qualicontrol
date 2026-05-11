@@ -18,9 +18,11 @@ import {
   ArrowLeft, AlertTriangle, CheckCircle2, Clock, FileWarning,
   PlusCircle, MessageSquare, Camera, ClipboardCheck, Edit3,
   Send, Loader2, Image as ImageIcon, Upload, X, Tag, UserCheck, ShieldAlert,
-  HelpCircle, Save, MapPin,
+  HelpCircle, Save, MapPin, Pencil,
 } from "lucide-react";
 import PlantaPinSelector from "@/components/PlantaPinSelector";
+import PhotoAnnotator from "@/components/PhotoAnnotator";
+import { supabase } from "@/integrations/supabase/client";
 
 // Grupos carregados do banco de dados (substitui disciplinas fixas)
 
@@ -91,6 +93,8 @@ export default function DesvioDetalhe() {
   const [uploadingFechamento, setUploadingFechamento] = useState(false);
   const [aberturaFotos, setAberturaFotos] = useState<{ file: File; preview: string }[]>([]);
   const [uploadingAbertura, setUploadingAbertura] = useState(false);
+  const [annotatingFoto, setAnnotatingFoto] = useState<{ id: number; url: string; fileKey: string } | null>(null);
+  const [savingAnnotation, setSavingAnnotation] = useState(false);
 
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
