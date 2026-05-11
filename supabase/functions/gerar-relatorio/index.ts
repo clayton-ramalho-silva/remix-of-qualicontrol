@@ -240,7 +240,7 @@ Deno.serve(async (req) => {
 
       const buf = XLSX.write(wb, { type: "base64", bookType: "xlsx" });
       const excelUrl = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${buf}`;
-      return json({ formato: "excel", excelUrl, kpis, obraInfo, config: cfg });
+      return json({ formato: "excel", excelUrl, kpis, obraInfo, config: cfg, dataGeracao: Date.now() });
     }
 
     // ---- Análise IA opcional ----
@@ -295,6 +295,7 @@ Top fornecedores: ${topForn || "—"}`;
       performance,
       analise,
       config: cfg,
+      dataGeracao: Date.now(),
     });
   } catch (e) {
     console.error("gerar-relatorio error", e);
