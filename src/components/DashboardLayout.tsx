@@ -38,6 +38,7 @@ import {
   Layers,
   CalendarDays,
   Target,
+  HardHat,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -56,6 +57,7 @@ const menuItems: MenuItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
   { icon: ClipboardCheck, label: "Qualidade", path: "/verificacoes" },
   { icon: ClipboardCheck, label: "Vistoria de Recebimento", path: "/vistoria-recebimento" },
+  { icon: HardHat, label: "QSMS", path: "/qsms" },
   { icon: PlusCircle, label: "Novo Desvio", path: "/desvios/novo" },
   { icon: ClipboardList, label: "Desvios", path: "/desvios" },
   { icon: Target, label: "Planos de Ação", path: "/planos-acao", badgeKey: "planosPendentes" },
