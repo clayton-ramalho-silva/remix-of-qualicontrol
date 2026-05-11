@@ -1,45 +1,119 @@
-## Análise
 
-Sim — a estrutura é **praticamente idêntica** ao que já temos para Qualidade e Vistoria de Recebimento. O sistema já foi construído de forma multi-vertical:
+# Investigação e Análise de Ocorrências (QSMS)
 
-- `checklist_secoes` / `checklist_itens` têm o campo `categoria` (atualmente `qualidade` e `vistoria`).
-- `verificacoes` tem o campo `categoria`.
-- `config_faixas` tem `categoria`.
-- A página `Verificacoes.tsx` já aceita props `categoria`, `titulo`, `rotaBase` — basta plugar uma nova rota.
-- A Administração já tem um seletor de vertical (Qualidade / Vistoria) — basta adicionar QSMS.
-- O enum `origem_desvio` já contempla `qsms` (e `VERTICAL_CONFIG` já define a vertical QSMS em `VerticalContext`).
+Novo módulo dentro de QSMS para registrar, investigar e acompanhar incidentes/acidentes conforme AWPRO 012 e AWFOR 094.
 
-A planilha SST tem 9 seções (Acompanhamento, Condições de Obra, Documentos Legais, Equipamentos/Ferramentas, Sinalização, Avaliação, Apontamento MT, Situações NAT, Observações) com respostas **AT / NAT / NA / RI** e códigos de infração (I1–I4) com UFIR. Para a primeira versão proponho reutilizar o mesmo modelo de resposta atual (`sim/nao/na`) mapeando AT=sim, NAT=nao, NA=na, e tratar **RI (Reincidência)** e **código de infração (I1–I4 / UFIR)** como extensões futuras se necessário — assim o QSMS entra no ar imediatamente sem mudança de schema.
+## 1. Conceito
 
-## Plano
+Diferente de "Verificações QSMS" (checklist de inspeção do dia a dia), este é um **processo de ocorrência reativa**: começa com a comunicação imediata e evolui por etapas (classificação → investigação → causas → plano de ação → encerramento) com prazos da norma (24h para constituir comissão, 7 dias para investigação, 15 dias para evidências do plano).
 
-### 1. Menu e navegação
-- Em `DashboardLayout.tsx`, adicionar item de menu **"QSMS"** (ícone `ShieldAlert` ou `HardHat`), apontando para `/qsms`.
-- Em `App.tsx`, registrar rotas espelhando vistoria:
-  - `/qsms` → `<Verificacoes categoria="qsms" titulo="Verificações QSMS" rotaBase="/qsms" />`
-  - `/qsms/nova` → `<NovaVerificacao categoria="qsms" titulo="Nova Verificação QSMS" rotaBase="/qsms" />`
-  - `/qsms/:id` → `<VerificacaoDetalhe rotaBase="/qsms" titulo="Verificação QSMS" />`
-  - `/qsms/:id/editar` → `<EditarVerificacao rotaBase="/qsms" />`
+## 2. Estrutura de menu
 
-### 2. Administração — vertical QSMS
-- Em `Administracao.tsx`, adicionar `{ id: "qsms", label: "QSMS" }` no seletor de vertical (junto com Qualidade e Vistoria).
-- Nenhum outro código muda: as Tabs (Pesos, Itens, Faixas) já filtram por `categoria` via tRPC, então criar/editar seções, itens e faixas de QSMS funciona automaticamente.
-- Adicionar faixas padrão de QSMS na migração (ex.: ÓTIMA ≥90, REGULAR 70–89, RUIM 50–69, CRÍTICO <50 — mesmas faixas de qualidade, ajustáveis depois).
+- Sidebar continua com **QSMS** (lista de verificações).
+- Adicionar item **"Ocorrências QSMS"** logo abaixo (ícone `AlertOctagon` ou `Siren`), com rotas:
+  - `/qsms/ocorrencias` — lista
+  - `/qsms/ocorrencias/nova` — comunicação inicial (campos do AWFOR 094 página 1)
+  - `/qsms/ocorrencias/:id` — detalhe com abas (Comunicação · Investigação · Causas · Plano de Ação · Encerramento · Anexos)
+- Em **Administração**, adicionar dentro do vertical QSMS uma aba "Categorias de Ocorrência" (para tipos customizáveis se necessário; classificações padrão vêm fixas).
 
-### 3. Checklist SST pré-carregado
-Migração de seed inserindo em `checklist_secoes` (categoria `qsms`) as 9 seções da planilha + itens de cada seção (códigos 1.1, 2.1…2.5, 3.1…3.9, 4.x, 5.x, 6.x). Itens de "Avaliação", "Apontamento MT", "Situações NAT" e "Observações" entram como seções de texto/observação, com peso 0 ou ajustável depois pela Administração.
+## 3. Fluxo (espelhando AWFOR 094 + AWPRO 012)
 
-### 4. Dashboard, Desvios e Planos de Ação
-- `VERTICAL_CONFIG.qsms` já existe — nenhum ajuste necessário no `VerticalSwitcher`/filtros.
-- Desvios gerados a partir de uma verificação QSMS herdam `origem='qsms'` (enum já existe).
-- Planos de Ação e Relatórios já são multi-vertical via `vertical`.
+```text
+[Nova ocorrência]
+  └─ Comunicação imediata (página 1 do AWFOR 094)
+      ├─ Obra, data/hora, local, endereço
+      ├─ Empresa principal / Subcontratada (CNPJ)
+      ├─ Acidentado (quando houver)
+      ├─ Classificação: Incidente | Incidente Ambiental | ACA | ASA | AF | AT
+      ├─ Descrição preliminar
+      ├─ Ação imediata
+      └─ Responsável pelo preenchimento + Responsável pela obra
+        ↓ status: comunicado
+[Investigação] (até 7 dias)
+  ├─ Comissão (lista de membros: QSMS, CIPA, testemunhas, coordenador)
+  ├─ Cronologia dos fatos
+  ├─ Testemunhas (nome, identidade, contato)
+  ├─ Evidências fotográficas
+  └─ CAT emitida? / AWFOR-149 anexada?
+        ↓ status: em_investigacao
+[Análise de Causas]
+  ├─ Árvore dos Porquês (5 níveis livres)
+  ├─ Causas imediatas (ato/condição abaixo dos padrões)
+  └─ Causas básicas/raiz (fatores pessoais / de trabalho)
+        ↓ status: em_analise
+[Plano de Ação]
+  └─ Reusa planos_acao existentes (vertical=qsms, ligados à ocorrência)
+        ↓ status: acao_em_andamento
+[Encerramento]
+  ├─ Evidências do plano (até 15 dias)
+  └─ Assinaturas + data fechamento
+        ↓ status: encerrado
+```
 
-### Detalhes técnicos
+## 4. Modelo de dados
 
-- Não há mudança de schema necessária para o MVP — tudo encaixa nas tabelas existentes (`checklist_secoes/itens`, `verificacoes`, `verificacao_respostas`, `verificacao_resposta_fotos`, `config_faixas`).
-- Eventual extensão futura (RI/reincidência por resposta, código de infração I1–I4 e UFIR por item): adicionar colunas `infracao_codigo` (text) e `ufir` (numeric) em `checklist_itens`, e `reincidencia` (int) em `verificacao_respostas`. **Fora do escopo deste plano.**
-- Reaproveitamos 100% as páginas `Verificacoes`, `NovaVerificacao`, `VerificacaoDetalhe`, `EditarVerificacao` via props.
+Tabelas novas (categoria reutiliza o vertical `qsms`):
 
-### Pergunta antes de executar
+- **`ocorrencias`** — registro principal
+  - obra_id, data_ocorrencia, hora, local, endereco, cidade, uf
+  - empresa_principal, cnpj_principal, empresa_subcontratada, cnpj_sub
+  - acidentado_nome, acidentado_funcao, acidentado_idade
+  - classificacao (enum: incidente, incidente_ambiental, aca, asa, af, at)
+  - descricao_preliminar, acao_imediata
+  - responsavel_preenchimento, responsavel_obra
+  - cat_emitida (bool), cat_numero, atestado_dias
+  - awfor149_anexada (bool)
+  - status (enum: comunicado, em_investigacao, em_analise, acao_em_andamento, encerrado)
+  - prazo_comissao (24h), prazo_investigacao (7d), prazo_plano (15d) — calculados
+  - created_by_id/nome
+- **`ocorrencia_comissao`** — membros (nome, papel, é_coordenador)
+- **`ocorrencia_testemunhas`** — nome, identidade, contato, depoimento
+- **`ocorrencia_cronologia`** — etapa, momento, descrição, ordem
+- **`ocorrencia_causas`** — tipo (imediata/basica), categoria (ato/condicao/fator_pessoal/fator_trabalho), descricao
+- **`ocorrencia_porques`** — pergunta, resposta, nível (1–5), parent_id
+- **`ocorrencia_fotos`** — file_key, url, descrição, etapa (cena/simulacao/evidencia/plano)
+- **`ocorrencia_documentos`** — file_key, tipo (CAT, atestado, AWFOR149, memorando, outro)
 
-Você quer que eu já popule o **checklist SST completo** da planilha (todas as 9 seções com seus itens) como seed inicial em QSMS, ou prefere começar com QSMS **vazio** e cadastrar pela tela de Administração?
+Planos de ação existentes ganham um link opcional `ocorrencia_id` (ou reusa `desvio_id` via desvio gerado automaticamente — ver abaixo). Recomendação: adicionar coluna `ocorrencia_id` em `planos_acao`.
+
+Todas com RLS `authenticated` (igual padrão do projeto).
+
+## 5. Reuso do que já existe
+
+- **Storage** `evidencias` para fotos/documentos (mesmo bucket, prefixo `ocorrencias/`).
+- **Compressão** via `src/lib/image-compress.ts` (já implementado).
+- **Planos de Ação**: gerados a partir da ocorrência, com `vertical='qsms'` e `ocorrencia_id`. Aparecem em `/planos-acao`.
+- **Notificações**: alertas automáticos de prazos (24h comissão, 7d investigação, 15d plano) usando a tabela `notificacoes`.
+- **Relatório**: incluir contagem de ocorrências por classificação no Dashboard QSMS.
+
+## 6. Telas (componentes novos)
+
+- `src/pages/Ocorrencias.tsx` — lista filtrável por obra/classificação/status.
+- `src/pages/OcorrenciaNova.tsx` — wizard de comunicação inicial (AWFOR 094 pág. 1).
+- `src/pages/OcorrenciaDetalhe.tsx` — abas:
+  - **Comunicação** (read-only após salvar)
+  - **Investigação** (comissão + cronologia + testemunhas + fotos)
+  - **Causas** (Árvore dos Porquês + causas imediatas/básicas)
+  - **Plano de Ação** (lista planos vinculados + criar novo)
+  - **Encerramento** (checklist de evidências + assinaturas)
+  - **Anexos** (CAT, atestado, AWFOR-149, memorando da comissão)
+- `src/components/ArvorePorques.tsx` — componente para os 5 porquês em árvore.
+- Indicador visual de prazos (verde/amarelo/vermelho conforme proximidade).
+
+## 7. Exportação
+
+Botão "Exportar AWFOR 094" no detalhe — gera PDF preenchido com todos os campos da investigação (estrutura do XLSX original, mantendo identidade visual A|W).
+
+## 8. Entregas em fases
+
+1. **Fase 1 (mínimo viável)** — Tabelas + tela de Comunicação Inicial + lista + detalhe básico (Investigação simples + fotos). Permite registrar ocorrências hoje.
+2. **Fase 2** — Comissão, testemunhas, Árvore dos Porquês, causas estruturadas, vínculo com planos de ação.
+3. **Fase 3** — Notificações de prazo, exportação PDF AWFOR 094, dashboard QSMS de estatísticas (taxas de frequência/gravidade, planilha de indicadores 5º dia útil).
+
+## Detalhes técnicos
+
+- Migrations: criar 7 tabelas + 2 enums (`classificacao_ocorrencia`, `status_ocorrencia`) + RLS `authenticated all`.
+- Adicionar `ocorrencia_id bigint` em `planos_acao`.
+- tRPC routers novos: `ocorrencias.*` (list, get, create, update, addMembro, addTestemunha, addCausa, addPorque, addFoto, addDocumento, close).
+- Reusar `PhotoPickerButton` e padrão de upload compressed do DesvioNovo.
+- `App.tsx` registra as 3 rotas; `DashboardLayout` adiciona o item de menu.
