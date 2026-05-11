@@ -186,7 +186,7 @@ export default function Usuarios() {
     count: membros.filter(m => m.cargo === c.value).length,
   }));
 
-  const FormFields = () => (
+  const formFields = (
     <div className="space-y-4">
       <div>
         <div className="flex items-center gap-2 mb-1.5">
