@@ -759,7 +759,7 @@ export default function Relatorio() {
                               <td className="py-1.5 px-2 font-mono text-muted-foreground">{d.id}</td>
                               <td className="py-1.5 px-2">{d.disciplina}</td>
                               {data.config?.mostrarFornecedores && <td className="py-1.5 px-2">{d.fornecedor || "—"}</td>}
-                              <td className="py-1.5 px-2 max-w-[180px] truncate">{d.descricao}</td>
+                              <td className="py-1.5 px-2 whitespace-normal break-words min-w-[200px]">{d.descricao}</td>
                               <td className="py-1.5 px-2 text-center">
                                 <span className={`badge inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${sevColors[d.severidade] || ""}`}>
                                   {d.severidade}
@@ -802,7 +802,7 @@ export default function Relatorio() {
                           <div className="flex items-center justify-between mb-2">
                             <h3 className="text-sm font-semibold flex items-center gap-2">
                               <span className="text-muted-foreground">#{d.id}</span>
-                              {d.descricao}
+                              Desvio
                             </h3>
                             <div className="flex gap-1.5">
                               <span className={`badge inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${sevColors[d.severidade] || ""}`}>
@@ -812,6 +812,10 @@ export default function Relatorio() {
                                 {statusLabels[d.status] || d.status}
                               </span>
                             </div>
+                          </div>
+                          <div className="text-xs bg-muted/40 border-l-2 border-primary px-3 py-2 rounded mb-3 whitespace-pre-wrap break-words">
+                            <span className="font-semibold text-foreground">Descrição: </span>
+                            {d.descricao}
                           </div>
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-muted-foreground mb-3">
                             <div><span className="font-medium text-foreground">Grupo:</span> {d.disciplina}</div>
