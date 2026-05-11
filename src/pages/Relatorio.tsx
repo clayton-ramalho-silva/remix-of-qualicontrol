@@ -752,7 +752,7 @@ export default function Relatorio() {
                             <th className="text-left py-2 px-2 font-semibold">Descrição</th>
                             <th className="text-center py-2 px-2 font-semibold">Severidade</th>
                             <th className="text-center py-2 px-2 font-semibold">Status</th>
-                            <th className="text-center py-2 px-2 font-semibold">Vertical</th>
+                            {data.config?.mostrarVertical && <th className="text-center py-2 px-2 font-semibold">Vertical</th>}
                             <th className="text-center py-2 px-2 font-semibold">Data</th>
                             {data.config?.mostrarDataPrevista && <th className="text-center py-2 px-2 font-semibold">Prazo</th>}
                           </tr>
@@ -774,7 +774,7 @@ export default function Relatorio() {
                                   {statusLabels[d.status] || d.status}
                                 </span>
                               </td>
-                              <td className="py-1.5 px-2 text-center text-xs">{origemLabels[d.origem] || d.origem}</td>
+                              {data.config?.mostrarVertical && <td className="py-1.5 px-2 text-center text-xs">{origemLabels[d.origem] || d.origem}</td>}
                               <td className="py-1.5 px-2 text-center text-muted-foreground">
                                 {d.dataIdentificacao ? new Date(d.dataIdentificacao).toLocaleDateString("pt-BR") : "—"}
                               </td>
@@ -824,7 +824,7 @@ export default function Relatorio() {
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-muted-foreground mb-3">
                             <div><span className="font-medium text-foreground">Grupo:</span> {d.disciplina}</div>
                             {data.config?.mostrarFornecedores && <div><span className="font-medium text-foreground">Fornecedor:</span> {d.fornecedor || "—"}</div>}
-                            <div><span className="font-medium text-foreground">Vertical:</span> {origemLabels[d.origem] || d.origem}</div>
+                            {data.config?.mostrarVertical && <div><span className="font-medium text-foreground">Vertical:</span> {origemLabels[d.origem] || d.origem}</div>}
                             <div><span className="font-medium text-foreground">Local:</span> {d.localizacao || "—"}</div>
                             <div><span className="font-medium text-foreground">Identificação:</span> {d.dataIdentificacao ? new Date(d.dataIdentificacao).toLocaleDateString("pt-BR") : "—"}</div>
                             {data.config?.mostrarDataPrevista && <div><span className="font-medium text-foreground">Prazo:</span> {d.prazoSugerido ? new Date(d.prazoSugerido).toLocaleDateString("pt-BR") : "—"}</div>}
