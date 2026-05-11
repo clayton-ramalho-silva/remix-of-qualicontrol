@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Camera, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { compressImage } from "@/lib/image-compress";
 
 export type RespostaFoto = {
   url: string;
@@ -32,10 +33,10 @@ export default function RespostaFotosUploader({ fotos, onChange, max = 5 }: Prop
     try {
       const novos: RespostaFoto[] = [];
       for (const file of toUpload) {
-        const ext = file.name.split(".").pop() || "jpg";
-        const key = `vistoria/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-        const { error: upErr } = await supabase.storage.from("evidencias").upload(key, file, {
-          contentType: file.type || "image/jpeg",
+        const compressed = await compressImage(file, { maxDim: 1600, quality: 0.8 });
+        const key = `vistoria/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+        const { error: upErr } = await supabase.storage.from("evidencias").upload(key, compressed, {
+          contentType: compressed.type || "image/jpeg",
           upsert: false,
         });
         if (upErr) throw upErr;

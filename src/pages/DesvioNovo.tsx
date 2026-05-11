@@ -19,8 +19,15 @@ import PlantaPinSelector from "@/components/PlantaPinSelector";
 import VoiceRecorderButton from "@/components/VoiceRecorderButton";
 import { PhotoPickerButton } from "@/components/PhotoPickerButton";
 import { supabase } from "@/integrations/supabase/client";
+import { compressImage } from "@/lib/image-compress";
 
-type Foto = { file: File; preview: string };
+type Foto = {
+  file: File;
+  preview: string;
+  fileKey?: string;
+  publicUrl?: string;
+  status: "uploading" | "done" | "error";
+};
 
 // Converte uma string YYYY-MM-DD em timestamp local (meio-dia para evitar fuso/DST).
 function localDateMs(s: string): number {
@@ -96,9 +103,40 @@ export default function DesvioNovo() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-    const novas = Array.from(files).map(file => ({ file, preview: URL.createObjectURL(file) }));
+    const novas: Foto[] = Array.from(files).map(file => ({
+      file,
+      preview: URL.createObjectURL(file),
+      status: "uploading" as const,
+    }));
     setFotos(prev => [...prev, ...novas]);
     e.target.value = "";
+    novas.forEach(foto => { void uploadFotoBackground(foto); });
+  };
+
+  const uploadFotoBackground = async (foto: Foto) => {
+    try {
+      const compressed = await compressImage(foto.file, { maxDim: 1600, quality: 0.8 });
+      const key = `tmp/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+      const { error: upErr } = await supabase.storage
+        .from("evidencias")
+        .upload(key, compressed, {
+          contentType: compressed.type || "image/jpeg",
+          upsert: false,
+        });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("evidencias").getPublicUrl(key);
+      setFotos(prev =>
+        prev.map(f =>
+          f.preview === foto.preview
+            ? { ...f, fileKey: key, publicUrl: pub.publicUrl, status: "done" as const }
+            : f
+        )
+      );
+    } catch {
+      setFotos(prev =>
+        prev.map(f => (f.preview === foto.preview ? { ...f, status: "error" as const } : f))
+      );
+    }
   };
 
   const removeFoto = (i: number) => {
@@ -133,6 +171,10 @@ export default function DesvioNovo() {
     if (!grupoId) { toast.error("Selecione o grupo"); return; }
     if (!descricao.trim()) { toast.error("Descreva o desvio"); return; }
     if (!vertical) { toast.error("Selecione a vertical"); return; }
+    if (fotos.some(f => f.status === "uploading")) {
+      toast.message("Aguarde o upload das fotos terminar…");
+      return;
+    }
     const grupo = grupos?.find(g => g.id === parseInt(grupoId));
 
     setSubmitting(true);
@@ -156,42 +198,18 @@ export default function DesvioNovo() {
         pinY: pinY || undefined,
       });
 
-      // Upload em paralelo direto para o storage (sem base64 — muito mais rápido)
-      if (fotos.length > 0) {
-        const uploaded = await Promise.all(
-          fotos.map(async (foto) => {
-            const ext = foto.file.name.split(".").pop() || "jpg";
-            const key = `desvio-${result.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-            const { error: upErr } = await supabase.storage
-              .from("evidencias")
-              .upload(key, foto.file, {
-                contentType: foto.file.type || "image/jpeg",
-                upsert: false,
-              });
-            if (upErr) throw upErr;
-            const { data: pub } = supabase.storage.from("evidencias").getPublicUrl(key);
-            return {
-              desvio_id: result.id,
-              tipo: "abertura" as const,
-              file_key: key,
-              url: pub.publicUrl,
-              descricao: null,
-            };
-          })
-        );
-        const { error: insErr } = await supabase.from("fotos_evidencia").insert(uploaded);
-        if (insErr) throw insErr;
-        // Histórico das fotos é fire-and-forget — não bloqueia a UX
-        supabase.auth.getUser().then(({ data: { user } }) => {
-          supabase.from("historico").insert(
-            uploaded.map(() => ({
-              desvio_id: result.id,
-              tipo: "foto" as const,
-              descricao: "Foto de abertura adicionada",
-              user_id: user?.id ?? null,
-              user_name: user?.email ?? null,
-            }))
-          ).then(() => {});
+      // Fotos já foram pré-uploadadas; aqui só linkamos (fire-and-forget).
+      const prontas = fotos.filter(f => f.status === "done" && f.fileKey && f.publicUrl);
+      if (prontas.length > 0) {
+        const rows = prontas.map(f => ({
+          desvio_id: result.id,
+          tipo: "abertura" as const,
+          file_key: f.fileKey!,
+          url: f.publicUrl!,
+          descricao: null,
+        }));
+        supabase.from("fotos_evidencia").insert(rows).then(({ error }) => {
+          if (error) console.error("Falha ao linkar fotos:", error);
         });
       }
 
@@ -350,6 +368,16 @@ export default function DesvioNovo() {
                   {fotos.map((foto, i) => (
                     <div key={i} className="relative group w-24 h-24 rounded-lg overflow-hidden border bg-muted">
                       <img src={foto.preview} alt="" className="w-full h-full object-cover" />
+                      {foto.status === "uploading" && (
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                          <Loader2 className="h-5 w-5 text-white animate-spin" />
+                        </div>
+                      )}
+                      {foto.status === "error" && (
+                        <div className="absolute inset-0 bg-red-600/60 flex items-center justify-center text-[10px] text-white font-medium">
+                          Erro
+                        </div>
+                      )}
                       <button
                         type="button"
                         onClick={() => removeFoto(i)}
