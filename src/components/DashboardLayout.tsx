@@ -15,10 +15,14 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarProvider,
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import {
@@ -40,6 +44,7 @@ import {
   Target,
   HardHat,
   Siren,
+  ChevronRight,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -52,14 +57,25 @@ import { trpc } from "@/lib/trpc";
 const AW_LOGO_WHITE = "https://d2xsxph8kpxj0f.cloudfront.net/310519663403343148/3awzRPTf7NtQjpo8LEDXgX/Logo athie l wohnrath_White_462306ea.png";
 const AW_LOGO_BLACK = "https://d2xsxph8kpxj0f.cloudfront.net/310519663403343148/3awzRPTf7NtQjpo8LEDXgX/Logo athie l wohnrath_Black_c476567f.png";
 
-type MenuItem = { icon: typeof LayoutDashboard; label: string; path: string; badgeKey?: "planosPendentes"; separator?: false } | { separator: true };
+type NavLeaf = { icon: typeof LayoutDashboard; label: string; path: string; badgeKey?: "planosPendentes" };
+type NavGroup = { group: true; icon: typeof LayoutDashboard; label: string; basePath: string; children: NavLeaf[] };
+type NavSeparator = { separator: true };
+type MenuItem = NavLeaf | NavGroup | NavSeparator;
 
 const menuItems: MenuItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
   { icon: ClipboardCheck, label: "Qualidade", path: "/verificacoes" },
   { icon: ClipboardCheck, label: "Vistoria de Recebimento", path: "/vistoria-recebimento" },
-  { icon: HardHat, label: "QSMS", path: "/qsms" },
-  { icon: Siren, label: "Ocorrências QSMS", path: "/qsms/ocorrencias" },
+  {
+    group: true,
+    icon: HardHat,
+    label: "QSMS",
+    basePath: "/qsms",
+    children: [
+      { icon: ClipboardCheck, label: "Lista de Verificação", path: "/qsms" },
+      { icon: Siren, label: "Ocorrências", path: "/qsms/ocorrencias" },
+    ],
+  },
   { icon: PlusCircle, label: "Novo Desvio", path: "/desvios/novo" },
   { icon: ClipboardList, label: "Desvios", path: "/desvios" },
   { icon: Target, label: "Planos de Ação", path: "/planos-acao", badgeKey: "planosPendentes" },
@@ -117,8 +133,12 @@ function DashboardLayoutContent({
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const navItems = menuItems.filter((item): item is Exclude<MenuItem, { separator: true }> => !('separator' in item && item.separator));
-  const activeMenuItem = navItems.find(
+  const navLeaves: NavLeaf[] = menuItems.flatMap((item) => {
+    if ('separator' in item) return [];
+    if ('group' in item) return item.children;
+    return [item];
+  });
+  const activeMenuItem = navLeaves.find(
     (item) => item.path === "/" ? location === "/" : location.startsWith(item.path)
   );
   const isMobile = useIsMobile();
@@ -181,12 +201,63 @@ function DashboardLayoutContent({
           <SidebarContent className="gap-0">
             <SidebarMenu className="px-2 py-1">
               {menuItems.map((item, idx) => {
-                if ('separator' in item && item.separator) {
+                if ('separator' in item) {
                   return (
                     <div key={`sep-${idx}`} className="my-2 mx-2 border-t border-sidebar-border/40" />
                   );
                 }
-                const navItem = item as Exclude<MenuItem, { separator: true }>;
+                if ('group' in item) {
+                  const groupActive = location.startsWith(item.basePath);
+                  return (
+                    <Collapsible key={item.basePath} defaultOpen={groupActive} asChild>
+                      <SidebarMenuItem>
+                        <CollapsibleTrigger asChild>
+                          <SidebarMenuButton
+                            isActive={groupActive}
+                            tooltip={item.label}
+                            className="h-10 transition-all font-normal"
+                          >
+                            <item.icon className={`h-4 w-4 ${groupActive ? "text-sidebar-primary" : ""}`} />
+                            <span className="flex-1 truncate">{item.label}</span>
+                            {!isCollapsed && (
+                              <ChevronRight className="h-4 w-4 transition-transform data-[state=open]:rotate-90 group-data-[state=open]/collapsible:rotate-90" />
+                            )}
+                          </SidebarMenuButton>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <SidebarMenuSub>
+                            {item.children.map((child) => {
+                              const childActive = child.path === item.basePath
+                                ? location === child.path
+                                : location.startsWith(child.path);
+                              return (
+                                <SidebarMenuSubItem key={child.path}>
+                                  <SidebarMenuSubButton
+                                    asChild
+                                    isActive={childActive}
+                                  >
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setLocation(child.path);
+                                        if (sidebarIsMobile) setOpenMobile(false);
+                                      }}
+                                      className="w-full text-left"
+                                    >
+                                      <child.icon className="h-4 w-4" />
+                                      <span className="truncate">{child.label}</span>
+                                    </button>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              );
+                            })}
+                          </SidebarMenuSub>
+                        </CollapsibleContent>
+                      </SidebarMenuItem>
+                    </Collapsible>
+                  );
+                }
+                const navItem = item;
                 const isActive = navItem.path === "/"
                   ? location === "/"
                   : location.startsWith(navItem.path);
