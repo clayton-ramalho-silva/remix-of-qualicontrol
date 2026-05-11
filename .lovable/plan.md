@@ -1,60 +1,61 @@
-## Objetivo
-Permitir que um administrador defina ou redefina a palavra-passe de um membro da equipe diretamente na página **Equipe**, sem que o utilizador precise passar pelo fluxo de "Criar conta" em `/auth`.
+# Ajustes de UX — Novo Desvio
 
-## Como vai funcionar para o utilizador
+## 1. Mostrar planta automaticamente quando só há 1 andar e 1 planta
 
-**Ao criar novo membro** (botão "Novo Membro"):
-- Surge um campo opcional **"Palavra-passe inicial"** (mín. 6 caracteres).
-- Se o email + senha forem preenchidos:
-  - O sistema cria a conta de login automaticamente (email já confirmado, sem precisar de email de confirmação).
-  - O membro fica ligado ao utilizador autenticado pelo email.
-  - Ao guardar, mostra um aviso: *"Conta criada. Partilhe a senha com o membro — ele deve trocá-la no primeiro login."*
-- Se a senha não for preenchida, comporta-se como hoje (só registo de contacto, sem login).
+**Onde:** `src/components/PlantaPinSelector.tsx`
 
-**Em cada linha da lista de membros**:
-- Novo botão **"Definir/Redefinir senha"** (ícone de chave) ao lado do botão editar.
-- Abre diálogo simples: campo "Nova senha" + "Confirmar".
-- Se o email do membro ainda não tem conta → cria nova conta com essa senha.
-- Se já tem conta → atualiza a senha.
-- Mostra toast: *"Senha definida. Partilhe com o utilizador."*
+Hoje o usuário precisa clicar em "Marcar na Planta" e selecionar Edifício → Andar → Planta manualmente. Quando a obra só tem uma combinação possível, vamos pré-selecionar e já abrir a imagem.
 
-## Segurança
-- Apenas utilizadores com role **admin** veem os botões e podem usar a função.
-- A operação é feita por uma **edge function** (`admin-set-password`) que:
-  - Valida o JWT do chamador.
-  - Confirma via `has_role(uid, 'admin')` no banco antes de qualquer coisa.
-  - Usa a service role key (apenas no servidor) para criar/atualizar a senha via API admin.
-  - Valida senha mínima de 6 caracteres, email válido.
-- Service role key **nunca** sai do servidor.
+- Adicionar um `useEffect` que, quando `edificios` e `plantas` carregarem:
+  - Se houver exatamente 1 edifício, setar `edificioId` automaticamente.
+  - Se esse edifício tiver exatamente 1 andar, setar `andarId`.
+  - Se houver exatamente 1 planta nesse andar (ou exatamente 1 planta legada sem andar quando não há edifícios), chamar `onChange({ plantaId, pinX:null, pinY:null })` e `setShowPlanta(true)`.
+- Só executa quando `plantaId` ainda está `null` (não sobrescreve escolha do usuário).
 
-## Mudanças técnicas
+## 2. Permitir "Concluir Inspeção" salvando o desvio atual
 
-### 1. Banco (migração)
-- Adicionar coluna `user_id uuid` em `membros_equipe` (nullable, único quando preenchido).
-- Trigger `on_auth_user_login`: quando um utilizador faz login, se existir `membro` com mesmo email e `user_id` nulo, faz o vínculo automaticamente. *(Cobre os casos antigos como o da Maria Claudia.)*
-- Atualizar `handle_new_user` para também tentar ligar a um membro existente por email no momento da criação.
+**Onde:** `src/pages/DesvioNovo.tsx` (botões da Etapa 2)
 
-### 2. Edge function nova: `admin-set-password`
-- Input: `{ email, password, nome?, cargo?, membroId? }`.
-- Fluxo:
-  1. Autentica chamador, verifica role admin.
-  2. Tenta `supabase.auth.admin.getUserByEmail()`.
-  3. Se não existir: `auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { name } })`.
-  4. Se existir: `auth.admin.updateUserById(id, { password })`.
-  5. Liga `membros_equipe.user_id` ao uuid retornado, se `membroId` foi passado.
-- `verify_jwt = false` (validação manual no código, padrão Lovable).
+Problema: o botão "Concluir Inspeção" hoje só está habilitado quando já existem desvios registrados, e ele apenas redireciona — descarta o desvio atual em edição. Se o usuário só quer registrar 1 desvio, é forçado a clicar em "Salvar e Continuar".
 
-### 3. Frontend
-- `src/pages/Usuarios.tsx`:
-  - Adicionar campo `senha` no formulário de criação (só mostrado para admin).
-  - Botão "Chave" em cada linha → abre `ResetSenhaDialog`.
-  - Em ambos os fluxos, invoca `supabase.functions.invoke('admin-set-password', ...)`.
-- Esconder os controlos quando `user.role !== "admin"`.
+Mudança:
+- Renomear/ajustar o botão para **"Salvar e Concluir"**.
+- Habilitar sempre que `descricao` + `grupoId` estiverem preenchidos (mesmas regras de `salvarDesvio`), ou quando já houver `registrados.length > 0`.
+- Comportamento ao clicar:
+  - Se há campos preenchidos no form atual → chama `salvarDesvio(false)` (que já salva e redireciona para `/desvios`).
+  - Se não há nada preenchido e já existem registrados → apenas redireciona com toast de conclusão.
+- Manter "Salvar e Continuar" como ação secundária.
 
-## Fora do escopo (para depois)
-- Convite por email (magic link) com auto-definição de senha.
-- Mapeamento automático cargo → role admin/user.
-- Forçar troca de senha no primeiro login (Supabase não tem isto nativo; ficaria como flag no `profiles`).
+## 3. Qualidade da transcrição de áudio
 
-## Resumo da experiência
-Admin abre Equipe → cria Maria Claudia com email + senha → entrega a senha → Maria entra direto em `/auth`. Senha esquecida? Admin clica no ícone de chave, define nova e comunica. Sem necessidade de email de confirmação para o utilizador.
+**Onde:** `supabase/functions/transcrever-audio/index.ts` e `src/components/VoiceRecorderButton.tsx`
+
+Suspeitas pelo código atual:
+- O mapeamento `format` é frágil: `mimeType.includes("mp4") ? "mp4" : "webm"`. No iOS/Safari o blob vem como `audio/mp4` mas o codec real é `aac`; alguns providers exigem `format: "mp3"` ou `"wav"`.
+- Etapa 2 (limpeza) usa `gemini-2.5-flash-lite`, que às vezes "reescreve" demais e altera o conteúdo técnico, dando a sensação de "transcrição errada".
+- Áudios longos em `webm/opus` podem chegar truncados na ponta do gateway.
+
+Ações:
+- Trocar a transcrição para `google/gemini-2.5-pro` (mais robusto para multimodal de áudio) e ajustar o `format` para o mime real (`webm` / `mp4` / `wav` / `ogg`) com fallback explícito.
+- Pular a etapa de "limpeza" por padrão (ou usar `gemini-2.5-flash` apenas para pontuação, com prompt mais restritivo "NÃO altere palavras, apenas adicione pontuação"). Adicionar flag para desativar facilmente.
+- No client (`VoiceRecorderButton.tsx`), priorizar `audio/webm;codecs=opus` e enviar bitrate explícito (`audioBitsPerSecond: 64000`) para reduzir ruído de codec. Garantir `mimeType` enviado bate com o real do `MediaRecorder`.
+- Logar no edge function o tamanho do base64 recebido e o `format` final para facilitar debug.
+
+## 4. Data "Identificado em" pegando dia anterior
+
+**Onde:** `src/pages/DesvioNovo.tsx` linha 146 (e 147 para `prazoSugerido`)
+
+Causa: `new Date("2026-05-11").getTime()` é interpretado como **UTC 00:00**, e em fuso BR (UTC-3) vira `10/05 21:00`. Ao formatar com `toLocaleDateString` no detalhe, mostra 10/05.
+
+Fix:
+- Criar helper `localDateMs(yyyyMmDd)` que faz `const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d, 12, 0, 0).getTime();` (meio-dia local, imune a DST/fuso).
+- Aplicar em `dataIdentificacao` e `prazoSugerido` no `salvarDesvio`.
+- Mesma correção em qualquer outro `new Date(<input type=date>)` da página.
+
+> O desvio 11 já existente continuará com a data errada no banco; o fix vale para novos. Se desejar, posso adicionar uma migration para corrigir registros antigos por `data_identificacao`, mas isso fica fora deste escopo a menos que você peça.
+
+## Detalhes técnicos
+
+- Nenhuma mudança de schema/migration.
+- Edge function `transcrever-audio` será redeployada automaticamente.
+- Sem alterações em rotas, auth ou RLS.
