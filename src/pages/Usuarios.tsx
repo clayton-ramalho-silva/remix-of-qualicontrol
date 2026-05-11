@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,7 +13,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { toast } from "sonner";
 import {
   Users, Plus, Search, Pencil, Phone, Mail, Building2,
-  HelpCircle, UserCheck, Briefcase, Shield, Layers
+  HelpCircle, UserCheck, Briefcase, Shield, Layers, KeyRound
 } from "lucide-react";
 
 const CARGOS = [
@@ -31,6 +33,8 @@ function getCargoInfo(cargo: string) {
 }
 
 export default function Usuarios() {
+  const { user: currentUser } = useAuth();
+  const isAdmin = currentUser?.role === "admin";
   const [search, setSearch] = useState("");
   const [filterCargo, setFilterCargo] = useState<string>("todos");
   const [filterObra, setFilterObra] = useState<string>("todas");
@@ -44,17 +48,42 @@ export default function Usuarios() {
   const [telefone, setTelefone] = useState("");
   const [cargo, setCargo] = useState<CargoValue>("avaliador");
   const [selectedObras, setSelectedObras] = useState<number[]>([]);
+  const [senha, setSenha] = useState("");
+
+  // Reset password dialog
+  const [pwDialogOpen, setPwDialogOpen] = useState(false);
+  const [pwMembro, setPwMembro] = useState<any>(null);
+  const [pwNova, setPwNova] = useState("");
+  const [pwConf, setPwConf] = useState("");
+  const [pwLoading, setPwLoading] = useState(false);
 
   const utils = trpc.useUtils();
   const { data: membros = [], isLoading } = trpc.membros.list.useQuery();
   const { data: obras = [] } = trpc.obras.list.useQuery();
 
   const createMutation = trpc.membros.create.useMutation({
-    onSuccess: () => {
+    onSuccess: async (created: any) => {
       utils.membros.list.invalidate();
+      // Se foi indicada senha + email, criar conta de login
+      if (senha && email.trim() && isAdmin) {
+        const { data, error } = await supabase.functions.invoke("admin-set-password", {
+          body: {
+            email: email.trim(),
+            password: senha,
+            nome: nome.trim(),
+            membroId: created?.id,
+          },
+        });
+        if (error || (data as any)?.error) {
+          toast.error("Membro criado, mas falhou criar conta: " + (error?.message || (data as any)?.error));
+        } else {
+          toast.success("Membro e conta criados! Partilhe a senha com o utilizador.");
+        }
+      } else {
+        toast.success("Membro adicionado com sucesso!");
+      }
       setDialogOpen(false);
       resetForm();
-      toast.success("Membro adicionado com sucesso!");
     },
     onError: () => toast.error("Erro ao adicionar membro"),
   });
@@ -71,7 +100,7 @@ export default function Usuarios() {
 
   function resetForm() {
     setNome(""); setEmail(""); setTelefone("");
-    setCargo("avaliador"); setSelectedObras([]); setEditId(null);
+    setCargo("avaliador"); setSelectedObras([]); setEditId(null); setSenha("");
   }
 
   function openEdit(membro: any) {
@@ -111,6 +140,31 @@ export default function Usuarios() {
     setSelectedObras(prev =>
       prev.includes(obraId) ? prev.filter(id => id !== obraId) : [...prev, obraId]
     );
+  }
+
+  function openResetSenha(membro: any) {
+    setPwMembro(membro);
+    setPwNova("");
+    setPwConf("");
+    setPwDialogOpen(true);
+  }
+
+  async function submitResetSenha() {
+    if (!pwMembro?.email) { toast.error("Membro sem email"); return; }
+    if (pwNova.length < 6) { toast.error("Senha mínima 6 caracteres"); return; }
+    if (pwNova !== pwConf) { toast.error("Senhas não coincidem"); return; }
+    setPwLoading(true);
+    const { data, error } = await supabase.functions.invoke("admin-set-password", {
+      body: { email: pwMembro.email, password: pwNova, nome: pwMembro.nome, membroId: pwMembro.id },
+    });
+    setPwLoading(false);
+    if (error || (data as any)?.error) {
+      toast.error((error?.message || (data as any)?.error) ?? "Erro ao definir senha");
+      return;
+    }
+    toast.success("Senha definida. Partilhe com o utilizador.");
+    setPwDialogOpen(false);
+    utils.membros.list.invalidate();
   }
 
   // Filtros
@@ -231,6 +285,30 @@ export default function Usuarios() {
           )}
         </div>
       </div>
+
+      {isAdmin && !editId && (
+        <div>
+          <div className="flex items-center gap-2 mb-1.5">
+            <Label htmlFor="senha">Palavra-passe inicial (opcional)</Label>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                Se preencher, será criada uma conta de login com este email e senha. O utilizador entra directamente sem precisar de confirmar email.
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          <Input
+            id="senha"
+            type="text"
+            placeholder="Mín. 6 caracteres"
+            value={senha}
+            onChange={e => setSenha(e.target.value)}
+            autoComplete="new-password"
+          />
+        </div>
+      )}
     </div>
   );
 
@@ -384,6 +462,11 @@ export default function Usuarios() {
                     <Button variant="ghost" size="icon" onClick={() => openEdit(membro)}>
                       <Pencil className="h-4 w-4" />
                     </Button>
+                    {isAdmin && membro.email && (
+                      <Button variant="ghost" size="icon" onClick={() => openResetSenha(membro)} title="Definir/Redefinir senha">
+                        <KeyRound className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 );
               })}
@@ -403,6 +486,34 @@ export default function Usuarios() {
             <Button variant="outline" onClick={() => setEditDialogOpen(false)}>Cancelar</Button>
             <Button onClick={handleUpdate} disabled={updateMutation.isPending}>
               {updateMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de definir/redefinir senha */}
+      <Dialog open={pwDialogOpen} onOpenChange={setPwDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Definir senha — {pwMembro?.nome}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Email: <span className="font-medium">{pwMembro?.email}</span>
+            </p>
+            <div>
+              <Label htmlFor="pw-nova">Nova senha</Label>
+              <Input id="pw-nova" type="text" value={pwNova} onChange={e => setPwNova(e.target.value)} placeholder="Mín. 6 caracteres" />
+            </div>
+            <div>
+              <Label htmlFor="pw-conf">Confirmar senha</Label>
+              <Input id="pw-conf" type="text" value={pwConf} onChange={e => setPwConf(e.target.value)} />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setPwDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={submitResetSenha} disabled={pwLoading}>
+              {pwLoading ? "A guardar..." : "Definir senha"}
             </Button>
           </div>
         </DialogContent>
