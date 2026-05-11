@@ -22,6 +22,12 @@ import { supabase } from "@/integrations/supabase/client";
 
 type Foto = { file: File; preview: string };
 
+// Converte uma string YYYY-MM-DD em timestamp local (meio-dia para evitar fuso/DST).
+function localDateMs(s: string): number {
+  const [y, m, d] = s.split("-").map(Number);
+  return new Date(y, (m || 1) - 1, d || 1, 12, 0, 0).getTime();
+}
+
 const HINTS = {
   obra: "Selecione a obra onde a inspeção está sendo realizada.",
   ambiente: "Local específico que está sendo inspecionado. Ex: Banheiro Suíte - Apto 301.",
@@ -143,8 +149,8 @@ export default function DesvioNovo() {
         tagCritico: tagCritico ? 1 : 0,
         tagSegurancaTrabalho: tagDepProjeto ? 1 : 0,
         tagSolicitadoCliente: tagPendenteGo ? 1 : 0,
-        dataIdentificacao: new Date(dataInspecao).getTime(),
-        prazoSugerido: prazoSugerido ? new Date(prazoSugerido).getTime() : undefined,
+        dataIdentificacao: localDateMs(dataInspecao),
+        prazoSugerido: prazoSugerido ? localDateMs(prazoSugerido) : undefined,
         plantaId: plantaId || undefined,
         pinX: pinX || undefined,
         pinY: pinY || undefined,
