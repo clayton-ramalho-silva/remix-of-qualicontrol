@@ -617,25 +617,27 @@ export default function Relatorio() {
           <Card className="shadow-sm border-0 bg-card">
             <CardContent className="p-8" ref={reportRef}>
               {/* Header */}
-              <div className="report-header text-center border-b-2 border-primary pb-5 mb-6">
+              <div className="report-header flex items-start justify-between border-b-2 border-primary pb-5 mb-6">
                 <img
                   src="https://d2xsxph8kpxj0f.cloudfront.net/310519663403343148/3awzRPTf7NtQjpo8LEDXgX/Logo%20athie%20l%20wohnrath_Black_c476567f.png"
                   alt="athie|wohnrath"
-                  className="h-9 object-contain mx-auto mb-2"
+                  className="h-14 object-contain"
                 />
-                <h1 className="text-2xl font-bold text-foreground">AW Engenharia</h1>
-                <p className="text-base text-muted-foreground mt-1">
-                  Relatório de Desvios
-                  {data.obraInfo ? ` — ${data.obraInfo.codigo} ${data.obraInfo.nome}` : " — Todas as Obras"}
-                </p>
-                {data.config?.origens && data.config.origens.length > 0 && data.config.origens.length < 3 && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Verticais: {data.config.origens.map((o: string) => origemLabels[o] || o).join(", ")}
+                <div className="text-right">
+                  <h1 className="text-2xl font-bold text-foreground">AW Engenharia</h1>
+                  <p className="text-base text-muted-foreground mt-1">
+                    Relatório de Desvios
+                    {data.obraInfo ? ` — ${data.obraInfo.codigo} ${data.obraInfo.nome}` : " — Todas as Obras"}
                   </p>
-                )}
-                <p className="text-xs text-muted-foreground mt-1">
-                  Gerado em {new Date(data.dataGeracao || Date.now()).toLocaleDateString("pt-BR")} às {new Date(data.dataGeracao || Date.now()).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                </p>
+                  {data.config?.origens && data.config.origens.length > 0 && data.config.origens.length < 3 && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Verticais: {data.config.origens.map((o: string) => origemLabels[o] || o).join(", ")}
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Gerado em {new Date(data.dataGeracao || Date.now()).toLocaleDateString("pt-BR")} às {new Date(data.dataGeracao || Date.now()).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                  </p>
+                </div>
               </div>
 
               {/* KPIs */}
