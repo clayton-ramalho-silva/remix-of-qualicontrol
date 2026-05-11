@@ -319,50 +319,48 @@ export default function DesvioDetalhe() {
             </CardHeader>
             <CardContent>
               {isEditing ? (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-sm font-medium">Grupo *</Label>
-                      <Select value={editDisciplina} onValueChange={setEditDisciplina}>
-                        <SelectTrigger className="mt-1 bg-background">
-                          <SelectValue placeholder="Selecione o grupo..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <div className="px-2 pb-2">
-                            <Input
-                              placeholder="Buscar grupo..."
-                              value={editGrupoSearch}
-                              onChange={e => setEditGrupoSearch(e.target.value)}
-                              className="h-8 text-sm"
-                              onClick={e => e.stopPropagation()}
-                              onKeyDown={e => e.stopPropagation()}
-                            />
-                          </div>
-                          {(grupos || []).filter(g => {
-                            if (!editGrupoSearch) return true;
-                            const term = editGrupoSearch.toLowerCase();
-                            return g.nome.toLowerCase().includes(term) || g.codigo.toLowerCase().includes(term);
-                          }).slice(0, 50).map((g) => (
-                            <SelectItem key={g.id} value={`${g.codigo} - ${g.nome}`}>
-                              {g.codigo} - {g.nome}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium">Fornecedor</Label>
-                      <Select value={editFornecedorNome} onValueChange={setEditFornecedorNome}>
-                        <SelectTrigger className="mt-1 bg-background">
-                          <SelectValue placeholder="Selecione ou deixe em branco..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {fornecedoresData?.map((f) => (
-                            <SelectItem key={f.id} value={f.nome}>{f.nome}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium">Grupo *</Label>
+                    <Select value={editDisciplina} onValueChange={setEditDisciplina}>
+                      <SelectTrigger className="mt-1 bg-background">
+                        <SelectValue placeholder="Selecione o grupo..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <div className="px-2 pb-2">
+                          <Input
+                            placeholder="Buscar grupo..."
+                            value={editGrupoSearch}
+                            onChange={e => setEditGrupoSearch(e.target.value)}
+                            className="h-8 text-sm"
+                            onClick={e => e.stopPropagation()}
+                            onKeyDown={e => e.stopPropagation()}
+                          />
+                        </div>
+                        {(grupos || []).filter(g => {
+                          if (!editGrupoSearch) return true;
+                          const term = editGrupoSearch.toLowerCase();
+                          return g.nome.toLowerCase().includes(term) || g.codigo.toLowerCase().includes(term);
+                        }).slice(0, 50).map((g) => (
+                          <SelectItem key={g.id} value={`${g.codigo} - ${g.nome}`}>
+                            {g.codigo} - {g.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Fornecedor</Label>
+                    <Select value={editFornecedorNome} onValueChange={setEditFornecedorNome}>
+                      <SelectTrigger className="mt-1 bg-background">
+                        <SelectValue placeholder="Selecione ou deixe em branco..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {fornecedoresData?.map((f) => (
+                          <SelectItem key={f.id} value={f.nome}>{f.nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div>
@@ -378,8 +376,40 @@ export default function DesvioDetalhe() {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div>
+                    <Label className="text-sm font-medium">Severidade *</Label>
+                    <Select value={editSeveridade} onValueChange={setEditSeveridade}>
+                      <SelectTrigger className="mt-1 bg-background">
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="leve">Leve</SelectItem>
+                        <SelectItem value="moderado">Moderado</SelectItem>
+                        <SelectItem value="grave">Grave</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
                   <div>
+                    <Label className="text-sm font-medium">Localização</Label>
+                    <Input
+                      value={editLocalizacao}
+                      onChange={(e) => setEditLocalizacao(e.target.value)}
+                      placeholder="Ex: 5º andar, sala de reuniões"
+                      className="mt-1 bg-background"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Prazo Sugerido</Label>
+                    <Input
+                      type="date"
+                      value={editPrazoSugerido}
+                      onChange={(e) => setEditPrazoSugerido(e.target.value)}
+                      className="mt-1 bg-background"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
                     <Label className="text-sm font-medium">Descrição *</Label>
                     <div className="relative mt-1">
                       <Textarea
@@ -398,43 +428,8 @@ export default function DesvioDetalhe() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-sm font-medium">Localização</Label>
-                      <Input
-                        value={editLocalizacao}
-                        onChange={(e) => setEditLocalizacao(e.target.value)}
-                        placeholder="Ex: 5º andar, sala de reuniões"
-                        className="mt-1 bg-background"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium">Severidade *</Label>
-                      <Select value={editSeveridade} onValueChange={setEditSeveridade}>
-                        <SelectTrigger className="mt-1 bg-background">
-                          <SelectValue placeholder="Selecione..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="leve">Leve</SelectItem>
-                          <SelectItem value="moderado">Moderado</SelectItem>
-                          <SelectItem value="grave">Grave</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label className="text-sm font-medium">Prazo Sugerido</Label>
-                    <Input
-                      type="date"
-                      value={editPrazoSugerido}
-                      onChange={(e) => setEditPrazoSugerido(e.target.value)}
-                      className="mt-1 bg-background"
-                    />
-                  </div>
-
                   {/* Tags / Classificações */}
-                  <div>
+                  <div className="md:col-span-2">
                     <div className="flex items-center gap-2 mb-3">
                       <Tag className="h-4 w-4 text-muted-foreground" />
                       <Label className="text-sm font-medium">Classificações</Label>
@@ -465,19 +460,21 @@ export default function DesvioDetalhe() {
                   </div>
 
                   {/* Localização na Planta (edição) */}
-                  <PlantaPinSelector
-                    obraId={data.obraId}
-                    plantaId={editPlantaId}
-                    pinX={editPinX}
-                    pinY={editPinY}
-                    onChange={({ plantaId: pId, pinX: px, pinY: py }) => {
-                      setEditPlantaId(pId);
-                      setEditPinX(px);
-                      setEditPinY(py);
-                    }}
-                  />
+                  <div className="md:col-span-2">
+                    <PlantaPinSelector
+                      obraId={data.obraId}
+                      plantaId={editPlantaId}
+                      pinX={editPinX}
+                      pinY={editPinY}
+                      onChange={({ plantaId: pId, pinX: px, pinY: py }) => {
+                        setEditPlantaId(pId);
+                        setEditPinX(px);
+                        setEditPinY(py);
+                      }}
+                    />
+                  </div>
 
-                  <div className="flex justify-end gap-2 pt-2 border-t">
+                  <div className="md:col-span-2 flex justify-end gap-2 pt-2 border-t">
                     <Button variant="outline" size="sm" onClick={() => setIsEditing(false)} disabled={savingEdit}>
                       Cancelar
                     </Button>
