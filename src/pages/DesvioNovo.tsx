@@ -575,6 +575,14 @@ export default function DesvioNovo() {
           </div>
         </>
       )}
+      {annotatingIdx !== null && fotos[annotatingIdx] && (
+        <PhotoAnnotator
+          open
+          src={fotos[annotatingIdx].preview}
+          onClose={() => setAnnotatingIdx(null)}
+          onSave={(blob) => handleAnnotateSave(annotatingIdx, blob)}
+        />
+      )}
     </div>
   );
 }
