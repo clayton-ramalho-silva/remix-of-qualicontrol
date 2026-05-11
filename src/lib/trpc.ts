@@ -1206,6 +1206,190 @@ const mutationResolvers: Record<string, Resolver> = {
     if (error) throw error;
     return { ok: true };
   },
+
+  // --- OCORRENCIAS (mutations) ---
+  "ocorrencias.create": async (input: any) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    const now = Date.now();
+    const dataOcorrencia = input.dataOcorrencia ?? now;
+    const insertObj: any = {
+      obra_id: input.obraId,
+      data_ocorrencia: dataOcorrencia,
+      hora: input.hora ?? null,
+      local_ocorrencia: input.local ?? null,
+      endereco: input.endereco ?? null,
+      cidade: input.cidade ?? null,
+      uf: input.uf ?? null,
+      empresa_principal: input.empresaPrincipal ?? null,
+      cnpj_principal: input.cnpjPrincipal ?? null,
+      empresa_subcontratada: input.empresaSubcontratada ?? null,
+      cnpj_subcontratada: input.cnpjSubcontratada ?? null,
+      acidentado_nome: input.acidentadoNome ?? null,
+      acidentado_funcao: input.acidentadoFuncao ?? null,
+      acidentado_idade: input.acidentadoIdade ?? null,
+      classificacao: input.classificacao,
+      descricao_preliminar: input.descricaoPreliminar,
+      acao_imediata: input.acaoImediata ?? null,
+      responsavel_preenchimento: input.responsavelPreenchimento ?? null,
+      responsavel_obra: input.responsavelObra ?? null,
+      cat_emitida: input.catEmitida ? 1 : 0,
+      cat_numero: input.catNumero ?? null,
+      atestado_dias: input.atestadoDias ?? null,
+      awfor149_anexada: input.awfor149Anexada ? 1 : 0,
+      status: input.status ?? "comunicado",
+      prazo_comissao: dataOcorrencia + 24 * 60 * 60 * 1000,
+      prazo_investigacao: dataOcorrencia + 7 * 24 * 60 * 60 * 1000,
+      prazo_plano: dataOcorrencia + 15 * 24 * 60 * 60 * 1000,
+      created_by_id: user?.id ?? null,
+      created_by_name: input.createdByName ?? user?.email ?? null,
+    };
+    const { data, error } = await (supabase.from("ocorrencias" as any) as any).insert(insertObj).select().single();
+    if (error) throw error;
+    // Fotos iniciais (cena)
+    if (Array.isArray(input.fotos) && input.fotos.length > 0) {
+      const rows = input.fotos
+        .filter((f: any) => f?.url && f?.fileKey)
+        .map((f: any) => ({
+          ocorrencia_id: (data as any).id,
+          file_key: f.fileKey,
+          url: f.url,
+          descricao: f.descricao ?? null,
+          etapa: f.etapa ?? "cena",
+        }));
+      if (rows.length > 0) await (supabase.from("ocorrencia_fotos" as any) as any).insert(rows);
+    }
+    return mapOcorrenciaFromDb(data);
+  },
+  "ocorrencias.update": async (input: any) => {
+    const { id } = input;
+    const patch: any = {};
+    const mapKeys: Array<[string, string]> = [
+      ["hora", "hora"], ["local", "local_ocorrencia"], ["endereco", "endereco"],
+      ["cidade", "cidade"], ["uf", "uf"],
+      ["empresaPrincipal", "empresa_principal"], ["cnpjPrincipal", "cnpj_principal"],
+      ["empresaSubcontratada", "empresa_subcontratada"], ["cnpjSubcontratada", "cnpj_subcontratada"],
+      ["acidentadoNome", "acidentado_nome"], ["acidentadoFuncao", "acidentado_funcao"], ["acidentadoIdade", "acidentado_idade"],
+      ["classificacao", "classificacao"], ["descricaoPreliminar", "descricao_preliminar"], ["acaoImediata", "acao_imediata"],
+      ["responsavelPreenchimento", "responsavel_preenchimento"], ["responsavelObra", "responsavel_obra"],
+      ["catNumero", "cat_numero"], ["atestadoDias", "atestado_dias"],
+      ["status", "status"], ["observacoes", "observacoes"],
+      ["dataFechamento", "data_fechamento"],
+    ];
+    mapKeys.forEach(([k, col]) => { if (k in input) patch[col] = input[k] ?? null; });
+    if ("catEmitida" in input) patch.cat_emitida = input.catEmitida ? 1 : 0;
+    if ("awfor149Anexada" in input) patch.awfor149_anexada = input.awfor149Anexada ? 1 : 0;
+    const { data, error } = await (supabase.from("ocorrencias" as any) as any).update(patch).eq("id", id).select().single();
+    if (error) throw error;
+    return mapOcorrenciaFromDb(data);
+  },
+  "ocorrencias.delete": async ({ id }: { id: number }) => {
+    const { error } = await (supabase.from("ocorrencias" as any) as any).delete().eq("id", id);
+    if (error) throw error;
+    return { ok: true };
+  },
+  "ocorrencias.addFoto": async (input: any) => {
+    const { data, error } = await (supabase.from("ocorrencia_fotos" as any) as any).insert({
+      ocorrencia_id: input.ocorrenciaId,
+      file_key: input.fileKey,
+      url: input.url,
+      descricao: input.descricao ?? null,
+      etapa: input.etapa ?? "cena",
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
+  "ocorrencias.removeFoto": async ({ id }: { id: number }) => {
+    const { data: foto } = await (supabase.from("ocorrencia_fotos" as any) as any).select("file_key").eq("id", id).maybeSingle();
+    if ((foto as any)?.file_key) {
+      await supabase.storage.from("evidencias").remove([(foto as any).file_key]);
+    }
+    const { error } = await (supabase.from("ocorrencia_fotos" as any) as any).delete().eq("id", id);
+    if (error) throw error;
+    return { ok: true };
+  },
+  "ocorrencias.addDocumento": async (input: any) => {
+    const { data, error } = await (supabase.from("ocorrencia_documentos" as any) as any).insert({
+      ocorrencia_id: input.ocorrenciaId,
+      file_key: input.fileKey,
+      url: input.url,
+      tipo: input.tipo ?? "outro",
+      descricao: input.descricao ?? null,
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
+  "ocorrencias.removeDocumento": async ({ id }: { id: number }) => {
+    const { data: doc } = await (supabase.from("ocorrencia_documentos" as any) as any).select("file_key").eq("id", id).maybeSingle();
+    if ((doc as any)?.file_key) {
+      await supabase.storage.from("evidencias").remove([(doc as any).file_key]);
+    }
+    const { error } = await (supabase.from("ocorrencia_documentos" as any) as any).delete().eq("id", id);
+    if (error) throw error;
+    return { ok: true };
+  },
+  "ocorrencias.addComissao": async (input: any) => {
+    const { data, error } = await (supabase.from("ocorrencia_comissao" as any) as any).insert({
+      ocorrencia_id: input.ocorrenciaId,
+      nome: input.nome,
+      papel: input.papel ?? null,
+      is_coordenador: input.isCoordenador ? 1 : 0,
+      contato: input.contato ?? null,
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
+  "ocorrencias.removeComissao": async ({ id }: { id: number }) => {
+    const { error } = await (supabase.from("ocorrencia_comissao" as any) as any).delete().eq("id", id);
+    if (error) throw error;
+    return { ok: true };
+  },
+  "ocorrencias.addTestemunha": async (input: any) => {
+    const { data, error } = await (supabase.from("ocorrencia_testemunhas" as any) as any).insert({
+      ocorrencia_id: input.ocorrenciaId,
+      nome: input.nome,
+      identidade: input.identidade ?? null,
+      contato: input.contato ?? null,
+      depoimento: input.depoimento ?? null,
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
+  "ocorrencias.removeTestemunha": async ({ id }: { id: number }) => {
+    const { error } = await (supabase.from("ocorrencia_testemunhas" as any) as any).delete().eq("id", id);
+    if (error) throw error;
+    return { ok: true };
+  },
+  "ocorrencias.addCronologia": async (input: any) => {
+    const { data, error } = await (supabase.from("ocorrencia_cronologia" as any) as any).insert({
+      ocorrencia_id: input.ocorrenciaId,
+      etapa: input.etapa,
+      momento: input.momento ?? null,
+      descricao: input.descricao,
+      ordem: input.ordem ?? 0,
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
+  "ocorrencias.removeCronologia": async ({ id }: { id: number }) => {
+    const { error } = await (supabase.from("ocorrencia_cronologia" as any) as any).delete().eq("id", id);
+    if (error) throw error;
+    return { ok: true };
+  },
+  "ocorrencias.addCausa": async (input: any) => {
+    const { data, error } = await (supabase.from("ocorrencia_causas" as any) as any).insert({
+      ocorrencia_id: input.ocorrenciaId,
+      tipo: input.tipo,
+      categoria: input.categoria ?? null,
+      descricao: input.descricao,
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
+  "ocorrencias.removeCausa": async ({ id }: { id: number }) => {
+    const { error } = await (supabase.from("ocorrencia_causas" as any) as any).delete().eq("id", id);
+    if (error) throw error;
+    return { ok: true };
+  },
 };
 
 // ---------- Helpers ----------
