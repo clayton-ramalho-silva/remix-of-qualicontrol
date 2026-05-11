@@ -1,17 +1,28 @@
-Adicionar hiperlinks do índice de desvios para o card correspondente no PDF gerado por `handlePrint` em `src/pages/Relatorio.tsx`.
+# Zoom e Pan na marcação de PIN da planta
 
-### Mudanças
+Permitir que o usuário aproxime (zoom) e arraste (pan) a imagem da planta no `PlantaPinSelector` para marcar o PIN com mais precisão — útil em plantas grandes onde o ponto exato é difícil de clicar.
 
-1. **Card de detalhamento** — adicionar atributo `id="desvio-${d.id}"` ao `<div>` raiz de cada desvio no `detailHtml`.
-2. **Índice de desvios** — substituir o `#id` simples em cada linha por:
-   ```html
-   <a href="#desvio-${d.id}" style="color:#0d9488;text-decoration:none;font-weight:600">#${d.id}</a>
-   ```
-3. **Estilo de impressão** — incluir regra `@media print` para garantir que o link fique legível (cor mantida, sem sublinhado azul do navegador).
+## Comportamento
 
-### Onde
-- `src/pages/Relatorio.tsx`, seções `indexHtml` e `detailHtml` dentro da função `handlePrint`.
+- **Controles de zoom**: botões `+`, `−` e "Resetar" sobrepostos no canto da imagem.
+- **Zoom por scroll**: roda do mouse aproxima/afasta centrado no cursor.
+- **Pan**: arrastar com o mouse (quando há zoom > 1) move a imagem. Cursor vira `grab`/`grabbing`.
+- **Clique para marcar PIN**: continua funcionando. As coordenadas do PIN (`pinX`/`pinY` em %) são calculadas em relação à imagem original, não à viewport com zoom — então o PIN fica correto independente do nível de zoom.
+- **Distinguir clique de drag**: só registra PIN se o mouse não se moveu (ou moveu < 5px) entre mousedown e mouseup.
+- **Touch**: suporte básico a pinch-zoom e arrastar em mobile/tablet.
+- **PIN visual**: continua posicionado em `%` relativo à imagem, então acompanha o zoom/pan naturalmente.
+- **Limites**: zoom entre 1x e 5x; pan limitado para não arrastar a imagem para fora do container.
 
-### Resultado esperado
-- Clicar no número do desvio no índice leva diretamente ao card detalhado, tanto na pré-visualização (tela) quanto no PDF salvo/gerado pelo Chrome/Edge.
-- Nenhuma mudança na edge function, no Excel, nem na pré-visualização React on-screen.
+## Onde mexer
+
+- `src/components/PlantaPinSelector.tsx` — único arquivo alterado. O bloco da imagem (linhas ~241-280) ganha:
+  - Estado `zoom`, `offsetX`, `offsetY`, `isDragging`, `dragStart`.
+  - Handlers `onWheel`, `onMouseDown`/`Move`/`Up`, `onTouchStart`/`Move`/`End`.
+  - Wrapper interno aplicando `transform: translate(...) scale(...)` na imagem + PIN juntos.
+  - Toolbar flutuante com botões shadcn.
+  - Cálculo de `pinX`/`pinY` ajustado: converter coordenadas do clique de volta para % da imagem original considerando `zoom` e `offset`.
+
+## Fora de escopo
+
+- Não altera `PlantaView.tsx` (visualização). Pode ser feito depois se quiser.
+- Não altera o schema nem a forma como `pinX`/`pinY` são armazenados.

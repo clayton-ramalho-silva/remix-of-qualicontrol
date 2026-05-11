@@ -3,7 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
-import { MapPin, X, Info, Building2, Layers } from "lucide-react";
+import { MapPin, X, Info, Building2, Layers, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PlantaPinSelectorProps {
@@ -27,6 +27,17 @@ export default function PlantaPinSelector({ obraId, plantaId, pinX, pinY, onChan
 
   const [showPlanta, setShowPlanta] = useState(!!plantaId);
   const imgRef = useRef<HTMLImageElement>(null);
+  const transformRef = useRef<HTMLDivElement>(null);
+  const [zoom, setZoom] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const dragStateRef = useRef<{ startX: number; startY: number; offX: number; offY: number; moved: boolean } | null>(null);
+  const pinchRef = useRef<{ dist: number; zoom: number } | null>(null);
+
+  // Reset zoom/pan ao trocar de planta
+  useEffect(() => {
+    setZoom(1);
+    setOffset({ x: 0, y: 0 });
+  }, [plantaId]);
 
   const selectedPlanta = plantas?.find(p => p.id === plantaId);
 
@@ -93,17 +104,132 @@ export default function PlantaPinSelector({ obraId, plantaId, pinX, pinY, onChan
     return [];
   }, [plantas, andarId, edificioId]);
 
-  const handleImageClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (readOnly) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    onChange({
-      plantaId: plantaId,
-      pinX: x.toFixed(4),
-      pinY: y.toFixed(4),
-    });
+  const setPinFromClient = useCallback((clientX: number, clientY: number) => {
+    if (readOnly || !transformRef.current) return;
+    const rect = transformRef.current.getBoundingClientRect();
+    const x = ((clientX - rect.left) / rect.width) * 100;
+    const y = ((clientY - rect.top) / rect.height) * 100;
+    if (x < 0 || x > 100 || y < 0 || y > 100) return;
+    onChange({ plantaId, pinX: x.toFixed(4), pinY: y.toFixed(4) });
   }, [plantaId, onChange, readOnly]);
+
+  const clampOffset = useCallback((x: number, y: number, z: number, containerW: number, containerH: number) => {
+    // Limita pan para imagem não sair completamente do container
+    const maxX = (containerW * (z - 1)) / 2;
+    const maxY = (containerH * (z - 1)) / 2;
+    return {
+      x: Math.max(-maxX, Math.min(maxX, x)),
+      y: Math.max(-maxY, Math.min(maxY, y)),
+    };
+  }, []);
+
+  const zoomAt = useCallback((newZoom: number, clientX?: number, clientY?: number) => {
+    const container = transformRef.current?.parentElement;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    const z = Math.max(1, Math.min(5, newZoom));
+    setZoom((prevZ) => {
+      setOffset((prev) => {
+        // Mantém o ponto sob o cursor fixo
+        const cx = clientX !== undefined ? clientX - rect.left - rect.width / 2 : 0;
+        const cy = clientY !== undefined ? clientY - rect.top - rect.height / 2 : 0;
+        const ratio = z / prevZ;
+        const nx = cx - (cx - prev.x) * ratio;
+        const ny = cy - (cy - prev.y) * ratio;
+        return clampOffset(z === 1 ? 0 : nx, z === 1 ? 0 : ny, z, rect.width, rect.height);
+      });
+      return z;
+    });
+  }, [clampOffset]);
+
+  const handleWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
+    if (readOnly) return;
+    e.preventDefault();
+    const delta = e.deltaY < 0 ? 1.2 : 1 / 1.2;
+    zoomAt(zoom * delta, e.clientX, e.clientY);
+  }, [zoom, zoomAt, readOnly]);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (readOnly) return;
+    dragStateRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      offX: offset.x,
+      offY: offset.y,
+      moved: false,
+    };
+  }, [offset, readOnly]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const s = dragStateRef.current;
+    if (!s) return;
+    const dx = e.clientX - s.startX;
+    const dy = e.clientY - s.startY;
+    if (!s.moved && Math.hypot(dx, dy) < 5) return;
+    s.moved = true;
+    if (zoom <= 1) return;
+    const container = transformRef.current?.parentElement;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    setOffset(clampOffset(s.offX + dx, s.offY + dy, zoom, rect.width, rect.height));
+  }, [zoom, clampOffset]);
+
+  const handleMouseUp = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const s = dragStateRef.current;
+    dragStateRef.current = null;
+    if (!s || s.moved) return;
+    setPinFromClient(e.clientX, e.clientY);
+  }, [setPinFromClient]);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    if (readOnly) return;
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      pinchRef.current = { dist: Math.hypot(dx, dy), zoom };
+      dragStateRef.current = null;
+    } else if (e.touches.length === 1) {
+      const t = e.touches[0];
+      dragStateRef.current = { startX: t.clientX, startY: t.clientY, offX: offset.x, offY: offset.y, moved: false };
+    }
+  }, [zoom, offset, readOnly]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches.length === 2 && pinchRef.current) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const newDist = Math.hypot(dx, dy);
+      const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+      zoomAt((pinchRef.current.zoom * newDist) / pinchRef.current.dist, cx, cy);
+    } else if (e.touches.length === 1 && dragStateRef.current) {
+      const s = dragStateRef.current;
+      const t = e.touches[0];
+      const dx = t.clientX - s.startX;
+      const dy = t.clientY - s.startY;
+      if (!s.moved && Math.hypot(dx, dy) < 5) return;
+      s.moved = true;
+      if (zoom <= 1) return;
+      const container = transformRef.current?.parentElement;
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      setOffset(clampOffset(s.offX + dx, s.offY + dy, zoom, rect.width, rect.height));
+    }
+  }, [zoom, zoomAt, clampOffset]);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    pinchRef.current = null;
+    const s = dragStateRef.current;
+    dragStateRef.current = null;
+    if (!s || s.moved) return;
+    const t = e.changedTouches[0];
+    if (t) setPinFromClient(t.clientX, t.clientY);
+  }, [setPinFromClient]);
+
+  const resetView = useCallback(() => {
+    setZoom(1);
+    setOffset({ x: 0, y: 0 });
+  }, []);
 
   if (!obraId) return null;
   const semEdificios = !edificios || edificios.length === 0;
@@ -238,35 +364,53 @@ export default function PlantaPinSelector({ obraId, plantaId, pinX, pinY, onChan
                 <p className="text-xs text-muted-foreground mb-1 font-medium">{selectedPlanta.nome}</p>
               )}
               <div
-                className={`relative rounded-lg overflow-hidden border bg-slate-50 ${readOnly ? '' : 'cursor-crosshair'}`}
-                onClick={handleImageClick}
+                className={`relative rounded-lg overflow-hidden border bg-slate-50 select-none ${
+                  readOnly ? '' : zoom > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-crosshair'
+                }`}
+                onWheel={handleWheel}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={() => { dragStateRef.current = null; }}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                style={{ touchAction: 'none' }}
               >
-                <img
-                  ref={imgRef}
-                  src={selectedPlanta?.url || ""}
-                  alt={selectedPlanta?.nome || "Planta"}
-                  className="w-full object-contain max-h-[300px]"
-                  draggable={false}
-                />
-                {/* PIN */}
-                {pinX && pinY && (
-                  <div
-                    className="absolute pointer-events-none"
-                    style={{
-                      left: `${Number(pinX)}%`,
-                      top: `${Number(pinY)}%`,
-                      transform: "translate(-50%, -50%)",
-                    }}
-                  >
-                    {/* Outer ring */}
-                    <div className="w-8 h-8 rounded-full border-3 border-red-500 bg-red-500/20 flex items-center justify-center animate-pulse">
-                      <div className="w-3 h-3 rounded-full bg-red-500" />
+                <div
+                  ref={transformRef}
+                  className="relative origin-center"
+                  style={{
+                    transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
+                    transition: dragStateRef.current ? 'none' : 'transform 0.1s ease-out',
+                  }}
+                >
+                  <img
+                    ref={imgRef}
+                    src={selectedPlanta?.url || ""}
+                    alt={selectedPlanta?.nome || "Planta"}
+                    className="w-full object-contain max-h-[300px] pointer-events-none"
+                    draggable={false}
+                  />
+                  {/* PIN */}
+                  {pinX && pinY && (
+                    <div
+                      className="absolute pointer-events-none"
+                      style={{
+                        left: `${Number(pinX)}%`,
+                        top: `${Number(pinY)}%`,
+                        transform: `translate(-50%, -50%) scale(${1 / zoom})`,
+                      }}
+                    >
+                      <div className="w-8 h-8 rounded-full border-3 border-red-500 bg-red-500/20 flex items-center justify-center animate-pulse">
+                        <div className="w-3 h-3 rounded-full bg-red-500" />
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
                 {/* Instruction overlay */}
-                {!readOnly && !pinX && !pinY && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                {!readOnly && !pinX && !pinY && zoom === 1 && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/10 pointer-events-none">
                     <div className="bg-white/90 rounded-lg px-3 py-2 shadow-sm">
                       <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                         <MapPin className="h-3.5 w-3.5 text-red-500" />
@@ -275,10 +419,40 @@ export default function PlantaPinSelector({ obraId, plantaId, pinX, pinY, onChan
                     </div>
                   </div>
                 )}
+                {/* Toolbar de zoom */}
+                {!readOnly && (
+                  <div className="absolute top-2 right-2 flex flex-col gap-1 bg-white/95 rounded-md shadow-md border p-1 z-10">
+                    <Button
+                      type="button" variant="ghost" size="icon" className="h-7 w-7"
+                      onClick={(e) => { e.stopPropagation(); zoomAt(zoom * 1.3); }}
+                      title="Aproximar"
+                    >
+                      <ZoomIn className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      type="button" variant="ghost" size="icon" className="h-7 w-7"
+                      onClick={(e) => { e.stopPropagation(); zoomAt(zoom / 1.3); }}
+                      title="Afastar"
+                    >
+                      <ZoomOut className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      type="button" variant="ghost" size="icon" className="h-7 w-7"
+                      onClick={(e) => { e.stopPropagation(); resetView(); }}
+                      title="Resetar"
+                      disabled={zoom === 1 && offset.x === 0 && offset.y === 0}
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" />
+                    </Button>
+                    <div className="text-[9px] text-center text-muted-foreground font-mono">
+                      {Math.round(zoom * 100)}%
+                    </div>
+                  </div>
+                )}
               </div>
               {pinX && pinY && !readOnly && (
                 <p className="text-[10px] text-muted-foreground mt-1">
-                  PIN marcado. Clique novamente para reposicionar.
+                  PIN marcado. Use zoom para precisão; clique novamente para reposicionar.
                 </p>
               )}
             </div>
