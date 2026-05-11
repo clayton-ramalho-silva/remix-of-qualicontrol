@@ -50,9 +50,12 @@ Deno.serve(async (req) => {
     if (dataFinal) q = q.lte("data_identificacao", dataFinal);
     if (origens && origens.length > 0) q = q.in("origem", origens);
     if (fornecedorNome) q = q.eq("fornecedor_nome", fornecedorNome);
-    if (tagCritico) q = q.eq("tag_critico", 1);
-    if (tagSegurancaTrabalho) q = q.eq("tag_seguranca_trabalho", 1);
-    if (tagSolicitadoCliente) q = q.eq("tag_solicitado_cliente", 1);
+    if (tagCritico === "sim") q = q.eq("tag_critico", 1);
+    else if (tagCritico === "nao") q = q.eq("tag_critico", 0);
+    if (tagSegurancaTrabalho === "sim") q = q.eq("tag_seguranca_trabalho", 1);
+    else if (tagSegurancaTrabalho === "nao") q = q.eq("tag_seguranca_trabalho", 0);
+    if (tagSolicitadoCliente === "sim") q = q.eq("tag_solicitado_cliente", 1);
+    else if (tagSolicitadoCliente === "nao") q = q.eq("tag_solicitado_cliente", 0);
     const { data: desviosRaw, error } = await q;
     if (error) throw error;
     const desvios = desviosRaw || [];
