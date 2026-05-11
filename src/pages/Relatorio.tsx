@@ -304,6 +304,7 @@ export default function Relatorio() {
     let loaded = 0;
     const total = imgs.length;
     let printed = false;
+    let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
     const doPrint = () => {
       if (printed) return;
       printed = true;
@@ -311,7 +312,7 @@ export default function Relatorio() {
       setTimeout(() => printWindow.print(), 300);
     };
     if (total === 0) { doPrint(); return; }
-    const fallbackTimer = setTimeout(doPrint, 5000);
+    fallbackTimer = setTimeout(doPrint, 5000);
     imgs.forEach((img) => {
       if (img.complete) { loaded++; if (loaded >= total) doPrint(); }
       else {
