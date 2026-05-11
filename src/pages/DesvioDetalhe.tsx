@@ -598,14 +598,24 @@ export default function DesvioDetalhe() {
                         <img src={foto.url} alt={foto.descricao || "Evidência de abertura"} className="w-full h-full object-cover" />
                       </a>
                       {data.status !== "fechado" && (
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteFoto(foto.id, "abertura")}
-                          className="absolute top-1.5 right-1.5 bg-black/70 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                          title="Remover foto"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setAnnotatingFoto({ id: foto.id, url: foto.url, fileKey: foto.fileKey })}
+                            className="absolute bottom-1.5 left-1.5 bg-black/70 text-white rounded px-2 py-0.5 text-[11px] flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-teal-600"
+                            title="Anotar foto"
+                          >
+                            <Pencil className="h-3 w-3" /> Anotar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteFoto(foto.id, "abertura")}
+                            className="absolute top-1.5 right-1.5 bg-black/70 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                            title="Remover foto"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </>
                       )}
                     </div>
                   ))}
@@ -680,14 +690,24 @@ export default function DesvioDetalhe() {
                         <img src={foto.url} alt={foto.descricao || "Evidência de fechamento"} className="w-full h-full object-cover" />
                       </a>
                       {data.status !== "fechado" && (
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteFoto(foto.id, "fechamento")}
-                          className="absolute top-1.5 right-1.5 bg-black/70 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                          title="Remover foto"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setAnnotatingFoto({ id: foto.id, url: foto.url, fileKey: foto.fileKey })}
+                            className="absolute bottom-1.5 left-1.5 bg-black/70 text-white rounded px-2 py-0.5 text-[11px] flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-emerald-600"
+                            title="Anotar foto"
+                          >
+                            <Pencil className="h-3 w-3" /> Anotar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteFoto(foto.id, "fechamento")}
+                            className="absolute top-1.5 right-1.5 bg-black/70 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                            title="Remover foto"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </>
                       )}
                     </div>
                   ))}
