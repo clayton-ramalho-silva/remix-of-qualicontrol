@@ -279,12 +279,14 @@ export default function Relatorio() {
 </head>
 <body>
   <!-- Capa -->
-  <div style="text-align:center;border-bottom:3px solid #0d9488;padding-bottom:20px;margin-bottom:28px">
-    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663403343148/3awzRPTf7NtQjpo8LEDXgX/Logo%20athie%20l%20wohnrath_Black_c476567f.png" alt="athie|wohnrath" style="height:38px;object-fit:contain;margin-bottom:10px" crossorigin="anonymous" />
-    <div style="font-size:28px;font-weight:800;color:#0f172a;letter-spacing:-0.5px">AW Engenharia</div>
-    <div style="font-size:16px;color:#475569;margin-top:6px">Relatório de Desvios${obraInfo ? ` — ${obraInfo.codigo} ${obraInfo.nome}` : " — Todas as Obras"}</div>
-    ${origens && origens.length > 0 && origens.length < 3 ? `<div style="font-size:11px;color:#64748b;margin-top:4px">Verticais: ${origens.map((o: string) => oLabels[o] || o).join(", ")}</div>` : ""}
-    <div style="font-size:10px;color:#94a3b8;margin-top:6px">Gerado em ${new Date(data.dataGeracao || Date.now()).toLocaleDateString("pt-BR")} às ${new Date(data.dataGeracao || Date.now()).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</div>
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;border-bottom:3px solid #0d9488;padding-bottom:20px;margin-bottom:28px">
+    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663403343148/3awzRPTf7NtQjpo8LEDXgX/Logo%20athie%20l%20wohnrath_Black_c476567f.png" alt="athie|wohnrath" style="height:52px;object-fit:contain" crossorigin="anonymous" />
+    <div style="text-align:right">
+      <div style="font-size:28px;font-weight:800;color:#0f172a;letter-spacing:-0.5px">AW Engenharia</div>
+      <div style="font-size:16px;color:#475569;margin-top:6px">Relatório de Desvios${obraInfo ? ` — ${obraInfo.codigo} ${obraInfo.nome}` : " — Todas as Obras"}</div>
+      ${origens && origens.length > 0 && origens.length < 3 ? `<div style="font-size:11px;color:#64748b;margin-top:4px">Verticais: ${origens.map((o: string) => oLabels[o] || o).join(", ")}</div>` : ""}
+      <div style="font-size:10px;color:#94a3b8;margin-top:6px">Gerado em ${new Date(data.dataGeracao || Date.now()).toLocaleDateString("pt-BR")} às ${new Date(data.dataGeracao || Date.now()).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</div>
+    </div>
   </div>
 
   <!-- KPIs -->
