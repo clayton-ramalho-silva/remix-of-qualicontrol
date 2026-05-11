@@ -138,6 +138,7 @@ export default function Administracao() {
           {[
             { id: "qualidade", label: "Qualidade" },
             { id: "vistoria", label: "Vistoria de Recebimento" },
+            { id: "qsms", label: "QSMS" },
           ].map(opt => (
             <button
               key={opt.id}
