@@ -209,6 +209,52 @@ export default function DesvioDetalhe() {
     }
   };
 
+  const handleAberturaFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    const newFotos = Array.from(files).map((file) => ({ file, preview: URL.createObjectURL(file) }));
+    setAberturaFotos((prev) => [...prev, ...newFotos]);
+    e.target.value = "";
+  };
+  const removeAberturaFoto = (index: number) => {
+    setAberturaFotos((prev) => {
+      URL.revokeObjectURL(prev[index].preview);
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+  const handleUploadAbertura = async () => {
+    if (aberturaFotos.length === 0) {
+      toast.error("Selecione pelo menos uma foto.");
+      return;
+    }
+    setUploadingAbertura(true);
+    try {
+      for (const foto of aberturaFotos) {
+        const reader = new FileReader();
+        const base64 = await new Promise<string>((resolve) => {
+          reader.onload = () => resolve((reader.result as string).split(",")[1]);
+          reader.readAsDataURL(foto.file);
+        });
+        await uploadFoto.mutateAsync({
+          desvioId,
+          fileBase64: base64,
+          fileName: foto.file.name,
+          contentType: foto.file.type,
+          tipo: "abertura",
+        });
+      }
+      toast.success("Fotos de abertura enviadas!");
+    } catch (err) {
+      toast.error("Erro ao enviar fotos.");
+    } finally {
+      setUploadingAbertura(false);
+    }
+  };
+  const handleDeleteFoto = async (id: number, label: string) => {
+    if (!confirm(`Remover esta foto de ${label}?`)) return;
+    await deleteFoto.mutateAsync({ id });
+  };
+
   if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
