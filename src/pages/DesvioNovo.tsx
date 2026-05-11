@@ -481,15 +481,16 @@ export default function DesvioNovo() {
           )}
 
           {/* Ações */}
-          <div className="flex justify-between gap-3">
-            <Button variant="outline" onClick={() => setLocation("/desvios")}>
+          <div className="flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-3">
+            <Button variant="outline" onClick={() => setLocation("/desvios")} className="w-full sm:w-auto">
               Cancelar
             </Button>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <Button
                 variant="outline"
                 disabled={submitting || registrados.length === 0}
                 onClick={() => setLocation("/desvios")}
+                className="w-full sm:w-auto"
               >
                 <CheckCircle2 className="h-4 w-4 mr-2" />
                 Concluir Inspeção
@@ -497,7 +498,7 @@ export default function DesvioNovo() {
               <Button
                 disabled={submitting}
                 onClick={() => salvarDesvio(true)}
-                className="bg-teal-600 hover:bg-teal-700 text-white"
+                className="w-full sm:w-auto bg-teal-600 hover:bg-teal-700 text-white"
               >
                 {submitting ? (
                   <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Salvando...</>
