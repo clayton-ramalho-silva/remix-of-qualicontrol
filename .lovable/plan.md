@@ -1,21 +1,17 @@
-## Problema
+Adicionar hiperlinks do índice de desvios para o card correspondente no PDF gerado por `handlePrint` em `src/pages/Relatorio.tsx`.
 
-O 3º select da "Localização na Planta" exibe o nome do arquivo da planta (ex: `PHOTO 2026 05 11 09 17 49.jpg`). Quando o nome é longo, ele estoura a largura do trigger e dos itens do dropdown.
+### Mudanças
 
-## Solução
+1. **Card de detalhamento** — adicionar atributo `id="desvio-${d.id}"` ao `<div>` raiz de cada desvio no `detailHtml`.
+2. **Índice de desvios** — substituir o `#id` simples em cada linha por:
+   ```html
+   <a href="#desvio-${d.id}" style="color:#0d9488;text-decoration:none;font-weight:600">#${d.id}</a>
+   ```
+3. **Estilo de impressão** — incluir regra `@media print` para garantir que o link fique legível (cor mantida, sem sublinhado azul do navegador).
 
-Manter o nome real (não renomear nem esconder), apenas garantir que o texto seja truncado com `…` dentro dos limites do componente, com tooltip para ver o nome completo no hover.
+### Onde
+- `src/pages/Relatorio.tsx`, seções `indexHtml` e `detailHtml` dentro da função `handlePrint`.
 
-## Mudanças
-
-**Arquivo:** `src/components/PlantaPinSelector.tsx`
-
-1. No `SelectTrigger` da Planta (linha ~208): adicionar classes para evitar overflow — `min-w-0` no trigger e `truncate` no `SelectValue` (envolto num `<span className="truncate">`).
-2. Nos `SelectItem` da lista de plantas (linha ~213-215): envolver `{p.nome}` em `<span className="truncate block max-w-[260px]" title={p.nome}>` para limitar largura visível e mostrar tooltip nativo com nome completo.
-3. Mesmo tratamento (defensivo) nos selects de Edifício e Andar caso nomes longos apareçam: adicionar `min-w-0` no trigger e `truncate` no value.
-
-Sem mudanças de backend, schema, ou em outros arquivos.
-
-## Resultado esperado
-
-O dropdown sempre cabe dentro do grid de 3 colunas, mostrando `PHOTO 2026 05 11 09 17 49…` ou similar, e o usuário pode passar o mouse para ver o nome completo.
+### Resultado esperado
+- Clicar no número do desvio no índice leva diretamente ao card detalhado, tanto na pré-visualização (tela) quanto no PDF salvo/gerado pelo Chrome/Edge.
+- Nenhuma mudança na edge function, no Excel, nem na pré-visualização React on-screen.
