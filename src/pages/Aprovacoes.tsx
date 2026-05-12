@@ -86,6 +86,7 @@ export default function Aprovacoes({ tipo }: { tipo: TipoAprovacao }) {
         .select("*")
         .eq("status", "aguardando_aceite")
         .eq(tagCol, 1)
+        .is("deleted_at", null)
         .order("data_identificacao", { ascending: false }),
       supabase.from("desvio_aprovacoes").select("*").eq("tipo", tipo),
       supabase.from("obras").select("id, codigo, nome"),
