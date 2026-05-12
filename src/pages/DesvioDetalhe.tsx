@@ -31,7 +31,7 @@ import { RotateCcw } from "lucide-react";
 const STATUS_MAP: Record<string, { label: string; icon: React.ReactNode; className: string }> = {
   aberto: { label: "Aberto", icon: <FileWarning className="h-4 w-4" />, className: "bg-amber-100 text-amber-700" },
   em_andamento: { label: "Em Andamento", icon: <Clock className="h-4 w-4" />, className: "bg-blue-100 text-blue-700" },
-  aguardando_aceite: { label: "Aguardando Aceite", icon: <UserCheck className="h-4 w-4" />, className: "bg-purple-100 text-purple-700" },
+  aguardando_aceite: { label: "Aguardando Aceite do Cliente", icon: <UserCheck className="h-4 w-4" />, className: "bg-purple-100 text-purple-700" },
   fechado: { label: "Fechado", icon: <CheckCircle2 className="h-4 w-4" />, className: "bg-emerald-100 text-emerald-700" },
 };
 
@@ -340,7 +340,7 @@ export default function DesvioDetalhe() {
       { value: "em_andamento", label: "Em Andamento", icon: STATUS_MAP.em_andamento.icon },
     ];
     if (isPunchList) {
-      statuses.push({ value: "aguardando_aceite", label: "Aguardando Aceite", icon: STATUS_MAP.aguardando_aceite.icon });
+      statuses.push({ value: "aguardando_aceite", label: "Aguardando Aceite do Cliente", icon: STATUS_MAP.aguardando_aceite.icon });
     }
     statuses.push({ value: "fechado", label: "Fechado", icon: STATUS_MAP.fechado.icon });
     return statuses;
