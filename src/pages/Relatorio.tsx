@@ -116,7 +116,7 @@ function RelatorioDesvios() {
   const [mostrarLocalizacaoPlanta, setMostrarLocalizacaoPlanta] = useState(true);
   const [mostrarTagsClassificacao, setMostrarTagsClassificacao] = useState(true);
   const [mostrarSeveridade, setMostrarSeveridade] = useState(true);
-  const [incluirAnalise, setIncluirAnalise] = useState(true);
+  const [incluirAnalise, setIncluirAnalise] = useState(false);
   const [agruparPorAmbiente, setAgruparPorAmbiente] = useState(false);
   const [mostrarAprovacoes, setMostrarAprovacoes] = useState(true);
   const [mostrarDetalhamento, setMostrarDetalhamento] = useState(true);
