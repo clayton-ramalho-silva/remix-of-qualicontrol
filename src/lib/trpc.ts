@@ -1519,6 +1519,9 @@ function mapDesvioFromDb(d: any) {
     pinY: d.pin_y,
     createdById: d.created_by_id,
     createdByName: d.created_by_name,
+    deletedAt: d.deleted_at ? new Date(d.deleted_at).getTime() : null,
+    deletedById: d.deleted_by_id ?? null,
+    deletedByName: d.deleted_by_name ?? null,
   };
 }
 
