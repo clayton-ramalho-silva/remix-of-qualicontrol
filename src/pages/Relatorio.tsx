@@ -426,7 +426,7 @@ function RelatorioDesvios() {
   </div>
 
   <!-- KPIs -->
-  ${kpis ? `<div style="margin-bottom:20px"><h2 style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #0d9488">Indicadores</h2><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px">${kpiHtml}</div></div>` : ""}
+  ${kpis && cfg.mostrarIndicadores !== false ? `<div style="margin-bottom:20px"><h2 style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #0d9488">Indicadores</h2><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px">${kpiHtml}</div></div>` : ""}
 
   ${atrasoHtml}
   ${discHtml}
