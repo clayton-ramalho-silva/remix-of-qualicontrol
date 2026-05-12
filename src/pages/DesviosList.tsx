@@ -27,7 +27,7 @@ const SEV_BADGE: Record<string, { label: string; variant: "default" | "secondary
 const STATUS_BADGE: Record<string, { label: string; icon: React.ReactNode; className: string }> = {
   aberto: { label: "Aberto", icon: <FileWarning className="h-3 w-3" />, className: "bg-amber-100 text-amber-700 border-amber-200" },
   em_andamento: { label: "Em Andamento", icon: <Clock className="h-3 w-3" />, className: "bg-blue-100 text-blue-700 border-blue-200" },
-  aguardando_aceite: { label: "Aguardando Aceite", icon: <UserCheck className="h-3 w-3" />, className: "bg-purple-100 text-purple-700 border-purple-200" },
+  aguardando_aceite: { label: "Aguardando Aceite do Cliente", icon: <UserCheck className="h-3 w-3" />, className: "bg-purple-100 text-purple-700 border-purple-200" },
   fechado: { label: "Fechado", icon: <CheckCircle2 className="h-3 w-3" />, className: "bg-emerald-100 text-emerald-700 border-emerald-200" },
 };
 
@@ -142,7 +142,7 @@ export default function DesviosList() {
                 <SelectItem value="all">Todos os status</SelectItem>
                 <SelectItem value="aberto">Aberto</SelectItem>
                 <SelectItem value="em_andamento">Em Andamento</SelectItem>
-                <SelectItem value="aguardando_aceite">Ag. Aceite</SelectItem>
+                <SelectItem value="aguardando_aceite">Aguardando Aceite do Cliente</SelectItem>
                 <SelectItem value="fechado">Fechado</SelectItem>
               </SelectContent>
             </Select>

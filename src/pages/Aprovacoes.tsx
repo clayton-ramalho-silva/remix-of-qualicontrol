@@ -254,7 +254,7 @@ export default function Aprovacoes({ tipo }: { tipo: TipoAprovacao }) {
             Aprovações — {tipoLabels[tipo]}
           </h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Desvios em "Aguardando Aceite" que solicitaram aprovação da {tipoLabels[tipo]}.
+            Desvios em "Aguardando Aceite do Cliente" que solicitaram aprovação da {tipoLabels[tipo]}.
           </p>
         </div>
         <div className="flex items-center gap-2">
