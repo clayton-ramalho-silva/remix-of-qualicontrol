@@ -647,6 +647,26 @@ const mutationResolvers: Record<string, Resolver> = {
   },
   "desvios.update": async (input: any) => {
     const { id, ...rest } = input;
+    // Trava: não permite fechar enquanto aprovações exigidas estiverem pendentes
+    if (rest.status === "fechado") {
+      const { data: cur } = await supabase
+        .from("desvios")
+        .select("tag_solicitado_gerenciadora, tag_solicitado_arquitetura")
+        .eq("id", id)
+        .maybeSingle();
+      const needGer = (cur?.tag_solicitado_gerenciadora ?? 0) === 1;
+      const needArq = (cur?.tag_solicitado_arquitetura ?? 0) === 1;
+      if (needGer || needArq) {
+        const { data: aprov } = await supabase
+          .from("desvio_aprovacoes")
+          .select("tipo, decisao")
+          .eq("desvio_id", id);
+        const okGer = (aprov || []).some((a: any) => a.tipo === "gerenciadora" && a.decisao === "aprovado");
+        const okArq = (aprov || []).some((a: any) => a.tipo === "arquitetura" && a.decisao === "aprovado");
+        if (needGer && !okGer) throw new Error("Aprovação da Gerenciadora pendente — não é possível fechar este desvio.");
+        if (needArq && !okArq) throw new Error("Aprovação da Arquitetura Externa pendente — não é possível fechar este desvio.");
+      }
+    }
     const patch: any = {};
     const map: Record<string, string> = {
       disciplina: "disciplina", grupoId: "grupo_id",
