@@ -92,6 +92,9 @@ export default function PlantaView() {
                 {desviosNaPlanta?.map((desvio) => {
                   const x = Number(desvio.pinX);
                   const y = Number(desvio.pinY);
+                  if (desvio.pinX == null || desvio.pinY == null || !Number.isFinite(x) || !Number.isFinite(y)) {
+                    return null;
+                  }
                   const isHovered = hoveredDesvio === desvio.id;
                   const isSelected = selectedDesvio === desvio.id;
                   const color = SEVERITY_COLORS[desvio.severidade] || "#6366f1";

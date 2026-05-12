@@ -1,20 +1,34 @@
-## Opção de limpar fornecedor no desvio
+## Problema
 
-### Contexto
-Atualmente os selects de fornecedor em criação e edição de desvio usam o componente Radix `Select` do shadcn/ui. Esse componente não permite "desselecionar" um valor depois de escolhido — não há forma nativa de voltar a deixar o campo em branco.
+A "marca laranja" no canto superior esquerdo do mapa da planta 18 são, na verdade, **dois pins de desvios sobrepostos** (#34 "Melhorar calafetação da grelha" e #37 "Painel riscado e manchado por abrasão"), ambos com `pin_x` e `pin_y` nulos no banco.
 
-### O que será feito
-Em ambos os formulários de desvio, adicionar um item **"Nenhum"** no topo da lista de fornecedores:
+No `PlantaView.tsx`, o código faz `Number(desvio.pinX)` em valores nulos, resultando em `NaN`/`0`, e renderiza o pin em `left: 0%, top: 0%` com `translate(-50%, -50%)` — empilhando-os no canto.
 
-1. **DesvioNovo.tsx** (criação de desvio)
-   - No `<Select>` de fornecedor (linha 449), trocar `value` e `onValueChange` para mapear `"__none__"` → `""`.
-   - Inserir `<SelectItem value="__none__">Nenhum</SelectItem>` como primeiro item do `SelectContent`.
+## Solução
 
-2. **DesvioDetalhe.tsx** (edição de desvio)
-   - No `<Select>` de fornecedor em modo de edição (linha 507), mesma alteração: mapear `"__none__"` → `""`.
-   - Inserir `<SelectItem value="__none__">Nenhum</SelectItem>` como primeiro item do `SelectContent`.
+Em `src/pages/PlantaView.tsx`, dentro do `.map()` que renderiza os pins (linhas ~92-152):
 
-### Resultado esperado
-O usuário poderá:
-- Criar um desvio sem preencher fornecedor (placeholder "Selecione..." ou "Nenhum").
-- Escolher um fornecedor e, se quiser, voltar a selecionar **Nenhum**, limpando o campo antes de salvar.
+- Antes de renderizar o pin, validar se `pinX` e `pinY` são números válidos (não nulos, não `NaN`).
+- Se forem inválidos, retornar `null` (não renderizar o pin no mapa).
+- Manter o desvio aparecendo na lista lateral normalmente (são desvios válidos, só não foram posicionados na planta).
+
+Trecho de mudança:
+
+```tsx
+{desviosNaPlanta?.map((desvio) => {
+  const x = Number(desvio.pinX);
+  const y = Number(desvio.pinY);
+  if (desvio.pinX == null || desvio.pinY == null || !Number.isFinite(x) || !Number.isFinite(y)) {
+    return null;
+  }
+  // ... resto igual
+})}
+```
+
+## Observação opcional
+
+Posso, se quiser, ajustar também o contador "144 desvio(s) marcado(s) nesta planta" para refletir só os que têm coordenadas válidas — mas isso é opcional.
+
+## Arquivos afetados
+
+- `src/pages/PlantaView.tsx` (apenas frontend, sem mudanças no banco nem nos desvios #34/#37)
