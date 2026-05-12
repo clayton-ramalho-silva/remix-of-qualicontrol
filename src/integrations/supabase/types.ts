@@ -231,7 +231,9 @@ export type Database = {
           status: Database["public"]["Enums"]["status_desvio"]
           tag_critico: number
           tag_seguranca_trabalho: number
+          tag_solicitado_arquitetura: number
           tag_solicitado_cliente: number
+          tag_solicitado_gerenciadora: number
           updated_at: string
         }
         Insert: {
@@ -257,7 +259,9 @@ export type Database = {
           status?: Database["public"]["Enums"]["status_desvio"]
           tag_critico?: number
           tag_seguranca_trabalho?: number
+          tag_solicitado_arquitetura?: number
           tag_solicitado_cliente?: number
+          tag_solicitado_gerenciadora?: number
           updated_at?: string
         }
         Update: {
@@ -283,7 +287,9 @@ export type Database = {
           status?: Database["public"]["Enums"]["status_desvio"]
           tag_critico?: number
           tag_seguranca_trabalho?: number
+          tag_solicitado_arquitetura?: number
           tag_solicitado_cliente?: number
+          tag_solicitado_gerenciadora?: number
           updated_at?: string
         }
         Relationships: [

@@ -55,6 +55,8 @@ export default function DesviosList() {
   if (tagFilter === "critico") filters.tagCritico = true;
   if (tagFilter === "seguranca") filters.tagSegurancaTrabalho = true;
   if (tagFilter === "cliente") filters.tagSolicitadoCliente = true;
+  if (tagFilter === "gerenciadora") filters.tagSolicitadoGerenciadora = true;
+  if (tagFilter === "arquitetura") filters.tagSolicitadoArquitetura = true;
 
   const { data: desvios, isLoading } = trpc.desvios.list.useQuery(
     Object.keys(filters).length > 0 ? filters : undefined
@@ -170,6 +172,8 @@ export default function DesviosList() {
                 <SelectItem value="critico">Chamado Crítico</SelectItem>
                 <SelectItem value="seguranca">Seg. Trabalho</SelectItem>
                 <SelectItem value="cliente">Solic. Cliente</SelectItem>
+                <SelectItem value="gerenciadora">Solic. Gerenciadora</SelectItem>
+                <SelectItem value="arquitetura">Solic. Arquitetura</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -236,6 +240,16 @@ export default function DesviosList() {
                         {desvio.tagSolicitadoCliente === 1 && (
                           <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200">
                             <Tag className="h-2.5 w-2.5" /> Cliente
+                          </span>
+                        )}
+                        {desvio.tagSolicitadoGerenciadora === 1 && (
+                          <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-purple-50 text-purple-600 border border-purple-200">
+                            <Tag className="h-2.5 w-2.5" /> Gerenciadora
+                          </span>
+                        )}
+                        {desvio.tagSolicitadoArquitetura === 1 && (
+                          <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                            <Tag className="h-2.5 w-2.5" /> Arquitetura
                           </span>
                         )}
                       </div>

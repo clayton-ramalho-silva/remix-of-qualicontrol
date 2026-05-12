@@ -113,6 +113,8 @@ export default function DesvioDetalhe() {
   const [editTagCritico, setEditTagCritico] = useState(false);
   const [editTagSegurancaTrabalho, setEditTagSegurancaTrabalho] = useState(false);
   const [editTagSolicitadoCliente, setEditTagSolicitadoCliente] = useState(false);
+  const [editTagSolicitadoGerenciadora, setEditTagSolicitadoGerenciadora] = useState(false);
+  const [editTagSolicitadoArquitetura, setEditTagSolicitadoArquitetura] = useState(false);
   const [editPrazoSugerido, setEditPrazoSugerido] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
   const [editGrupoSearch, setEditGrupoSearch] = useState("");
@@ -131,6 +133,8 @@ export default function DesvioDetalhe() {
     setEditTagCritico((data as any).tagCritico === 1);
     setEditTagSegurancaTrabalho((data as any).tagSegurancaTrabalho === 1);
     setEditTagSolicitadoCliente((data as any).tagSolicitadoCliente === 1);
+    setEditTagSolicitadoGerenciadora((data as any).tagSolicitadoGerenciadora === 1);
+    setEditTagSolicitadoArquitetura((data as any).tagSolicitadoArquitetura === 1);
     setEditPrazoSugerido(data.prazoSugerido ? new Date(data.prazoSugerido).toISOString().split("T")[0] : "");
     setEditPlantaId((data as any).plantaId || null);
     setEditPinX((data as any).pinX || null);
@@ -156,6 +160,8 @@ export default function DesvioDetalhe() {
         tagCritico: editTagCritico ? 1 : 0,
         tagSegurancaTrabalho: editTagSegurancaTrabalho ? 1 : 0,
         tagSolicitadoCliente: editTagSolicitadoCliente ? 1 : 0,
+        tagSolicitadoGerenciadora: editTagSolicitadoGerenciadora ? 1 : 0,
+        tagSolicitadoArquitetura: editTagSolicitadoArquitetura ? 1 : 0,
         prazoSugerido: editPrazoSugerido ? new Date(editPrazoSugerido).getTime() : undefined,
         plantaId: editPlantaId,
         pinX: editPinX,
@@ -381,6 +387,16 @@ export default function DesvioDetalhe() {
                 <Tag className="h-3 w-3" /> Solicitado pelo Cliente
               </span>
             )}
+            {(data as any).tagSolicitadoGerenciadora === 1 && (
+              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-purple-50 text-purple-600 border border-purple-200">
+                <Tag className="h-3 w-3" /> Solicitado pela Gerenciadora
+              </span>
+            )}
+            {(data as any).tagSolicitadoArquitetura === 1 && (
+              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                <Tag className="h-3 w-3" /> Solicitado pela Arquitetura Externa
+              </span>
+            )}
           </div>
           <p className="text-muted-foreground text-sm mt-1">{data.descricao}</p>
         </div>
@@ -539,6 +555,20 @@ export default function DesvioDetalhe() {
                         <span className="text-sm flex items-center gap-1.5">
                           <span className="inline-block w-2 h-2 rounded-full bg-blue-500" />
                           Solicitado pelo Cliente
+                        </span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <Checkbox checked={editTagSolicitadoGerenciadora} onCheckedChange={(c) => setEditTagSolicitadoGerenciadora(!!c)} />
+                        <span className="text-sm flex items-center gap-1.5">
+                          <span className="inline-block w-2 h-2 rounded-full bg-purple-500" />
+                          Solicitado pela Gerenciadora
+                        </span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <Checkbox checked={editTagSolicitadoArquitetura} onCheckedChange={(c) => setEditTagSolicitadoArquitetura(!!c)} />
+                        <span className="text-sm flex items-center gap-1.5">
+                          <span className="inline-block w-2 h-2 rounded-full bg-amber-500" />
+                          Solicitado pela Arquitetura Externa
                         </span>
                       </label>
                     </div>

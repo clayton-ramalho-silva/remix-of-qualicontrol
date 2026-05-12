@@ -1,45 +1,50 @@
-# Editor de anotações em fotos
+# Adicionar tags "Solicitado pela Gerenciadora" e "Solicitado pela Arquitetura Externa"
 
-Permitir que o usuário desenhe **setas, círculos, retângulos e texto** sobre as fotos de evidência do desvio — útil para destacar exatamente o problema na imagem.
+Replicar o padrão da tag existente `Solicitado pelo Cliente` em duas novas tags independentes: **Gerenciadora** e **Arquitetura Externa**. Elas aparecem nos mesmos lugares (formulário de novo desvio, edição no detalhe, badges na listagem/detalhe, filtros de relatório e badges/colunas no PDF).
 
-## UX
+## 1. Banco de dados (migration)
 
-Em cada foto (na tela de novo desvio e no detalhe do desvio) aparece um botão **"Anotar"** sobre a miniatura. Ao clicar, abre um dialog em tela cheia com:
+Em `desvios`, adicionar:
+- `tag_solicitado_gerenciadora integer NOT NULL DEFAULT 0`
+- `tag_solicitado_arquitetura integer NOT NULL DEFAULT 0`
 
-- **Canvas** com a foto carregada.
-- **Toolbar superior** com ferramentas: Seta, Retângulo, Círculo, Texto, Borracha (apagar última), Limpar tudo.
-- **Seletor de cor** (vermelho, amarelo, verde, azul, preto, branco) e **espessura** (fina/média/grossa).
-- Botões **Cancelar** e **Salvar**.
+(mesmo formato 0/1 usado nas outras tags — sem mudança de RLS).
 
-Ao salvar:
-- O canvas é exportado como JPEG (qualidade 0.85) — as marcações ficam "queimadas" na imagem.
-- A imagem anotada **substitui** a original no storage (mesmo `file_key`, sobrescrevendo). A original "limpa" é descartada.
-- A miniatura na tela atualiza.
+## 2. Backend / camada de dados (`src/lib/trpc.ts`)
 
-Em mobile o dialog é fullscreen e os controles ficam no rodapé para caber bem com toque.
+Espelhar o tratamento de `tagSolicitadoCliente` para as duas novas:
+- `filters` em `desvios.list` → `tagSolicitadoGerenciadora`, `tagSolicitadoArquitetura`.
+- `select` e KPIs em `desvios.stats` (incluir as colunas e contagem se quiser, mínimo: `select`).
+- `create` (insert) → ler do input.
+- Map de update (chave camelCase → snake_case).
+- Mapper de retorno (`d.tag_solicitado_gerenciadora` → `tagSolicitadoGerenciadora`, idem arquitetura).
 
-## Ferramentas — detalhes
+## 3. UI — Desvio
 
-- **Seta**: clique no início, arraste até o fim, solta → desenha linha + ponta de seta.
-- **Retângulo/Círculo**: clique e arraste para definir as dimensões.
-- **Texto**: clique no ponto → abre input → digita → ENTER fixa o texto.
-- Cada forma adicionada vira um "objeto" na lista interna (permite desfazer a última).
-- Sem multi-toque/edição posterior por enquanto — depois de fixar, só "Desfazer" última ou "Limpar tudo".
+- **`src/pages/DesvioNovo.tsx`**: dois novos checkboxes ao lado do "Solicitado pelo Cliente" (com labels "Solicitado pela Gerenciadora" e "Solicitado pela Arquitetura Externa") + envio no insert.
+- **`src/pages/DesvioDetalhe.tsx`**: dois states `editTagSolicitadoGerenciadora`/`editTagSolicitadoArquitetura`, dois checkboxes na edição, dois badges na visualização (cores distintas — ex.: roxo para Gerenciadora, âmbar para Arquitetura) e envio no update.
+- **`src/pages/DesviosList.tsx`**: dois novos itens no `Select` de filtro por tag (`gerenciadora`, `arquitetura`) + dois novos badges na lista de cards.
 
-## Onde mexer
+## 4. UI — Relatório (`src/pages/Relatorio.tsx`)
 
-- **Novo** `src/components/PhotoAnnotator.tsx` — componente do editor (dialog + canvas + toolbar). Implementação em canvas 2D puro (sem libs novas), com estado de "shapes" para suportar undo.
-- **Novo** `src/lib/photo-annotate.ts` — utilitários: desenhar seta, retângulo, círculo, texto, exportar canvas para Blob.
-- `src/components/RespostaFotosUploader.tsx` — adicionar botão "Anotar" em cada thumbnail; ao salvar, substitui o `File`/preview local antes do upload.
-- `src/pages/DesvioNovo.tsx` — adicionar botão "Anotar" em cada foto antes do upload (atualiza o `File` local e re-faz o upload se já subiu).
-- `src/pages/DesvioDetalhe.tsx` — adicionar botão "Anotar" sobre cada foto já enviada. Ao salvar, faz upload do blob para o mesmo `file_key` no bucket (sobrescreve), depois invalida a query para recarregar.
+- Dois novos states `tagGerenciadora` e `tagArquitetura` (sim/não/todos), dois novos `Select` na seção de filtros (logo abaixo de "Solic. Cliente").
+- Enviar no `payload` para a edge function (`tagSolicitadoGerenciadora`, `tagSolicitadoArquitetura`).
+- Renderização: incluir nos badges inline e nas colunas/listagens do PDF (com cores próprias).
 
-## Storage
+## 5. Edge function `supabase/functions/gerar-relatorio/index.ts`
 
-- Mesmo bucket atual de `fotos_evidencia`. Reusa `supabase.storage.from(bucket).upload(file_key, blob, { upsert: true })` para sobrescrever. Sem mudança de schema, sem nova migration.
+- Aceitar `tagSolicitadoGerenciadora` e `tagSolicitadoArquitetura` no body e aplicar `q.eq("tag_solicitado_gerenciadora", 1/0)` quando "sim"/"não".
+- Incluir os dois campos no select (já é `select("*")`, então só repassar no `desviosOut` como `tagSolicitadoGerenciadora` / `tagSolicitadoArquitetura`).
+- Adicionar duas colunas nas planilhas Excel (Sim/Não) na aba "Desvios".
+
+## Cores sugeridas (badges)
+
+- **Gerenciadora** → roxo (`bg-purple-100 text-purple-700`)
+- **Arquitetura Externa** → âmbar (`bg-amber-100 text-amber-700`)
+
+(mantendo Cliente em azul, Crítico em vermelho, Segurança em laranja já existente).
 
 ## Fora de escopo
 
-- Edição posterior de uma anotação individual (mover/redimensionar). Só "desfazer última" e "limpar tudo".
-- Camadas / persistir anotações como JSON separado (poderíamos fazer depois se quiser manter a original intacta).
-- Anotação em fotos da Verificação/Ocorrência. Foco inicial: fotos do Desvio. Posso estender depois.
+- Não mexer em `assistente-ia` nem em filtros de outras telas além das listadas.
+- Sem migração de dados antiga (campos novos começam todos em 0).
