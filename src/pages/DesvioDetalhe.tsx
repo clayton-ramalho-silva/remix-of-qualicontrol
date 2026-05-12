@@ -326,6 +326,7 @@ export default function DesvioDetalhe() {
   const isOverdue = data.status !== "fechado" && data.status !== "aguardando_aceite" && data.prazoSugerido && data.prazoSugerido < Date.now();
   const origemInfo = ORIGEM_MAP[(data as any).origem] || ORIGEM_MAP.qualidade;
   const isPunchList = (data as any).origem === "checklist";
+  const isDeleted = !!(data as any).deletedAt;
 
   // Separate fotos by type
   const fotosAbertura = data.fotos?.filter((f: any) => !f.tipo || f.tipo === "abertura") || [];
@@ -425,6 +426,33 @@ export default function DesvioDetalhe() {
           <p className="text-muted-foreground text-sm mt-1">{data.descricao}</p>
         </div>
       </div>
+
+      {isDeleted && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 flex items-center justify-between gap-3">
+          <div className="flex items-start gap-2 text-sm text-amber-800">
+            <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+            <div>
+              <p className="font-medium">Este desvio foi excluído</p>
+              <p className="text-xs text-amber-700 mt-0.5">
+                Excluído em {new Date((data as any).deletedAt).toLocaleString("pt-BR")}
+                {(data as any).deletedByName ? ` por ${(data as any).deletedByName}` : ""}.
+                Edição e mudança de status estão bloqueadas.
+              </p>
+            </div>
+          </div>
+          {isAdmin && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => restoreDesvio.mutate({ id: data.id })}
+              disabled={restoreDesvio.isPending}
+            >
+              <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+              Restaurar
+            </Button>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content */}
