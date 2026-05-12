@@ -849,7 +849,7 @@ export default function Relatorio() {
                             <th className="text-left py-2 px-2 font-semibold">Grupo</th>
                             {data.config?.mostrarFornecedores && <th className="text-left py-2 px-2 font-semibold">Fornecedor</th>}
                             <th className="text-left py-2 px-2 font-semibold">Descrição</th>
-                            <th className="text-center py-2 px-2 font-semibold">Prazo</th>
+                            <th className="text-center py-2 px-2 font-semibold">Data Prevista</th>
                             <th className="text-center py-2 px-2 font-semibold">Dias em atraso</th>
                           </tr>
                         </thead>
@@ -1121,7 +1121,7 @@ export default function Relatorio() {
                             {data.config?.mostrarVertical && <div><span className="font-medium text-foreground">Vertical:</span> {origemLabels[d.origem] || d.origem}</div>}
                             <div><span className="font-medium text-foreground">Local:</span> {d.localizacao || "—"}</div>
                             <div><span className="font-medium text-foreground">Identificação:</span> {d.dataIdentificacao ? new Date(d.dataIdentificacao).toLocaleDateString("pt-BR") : "—"}</div>
-                            {data.config?.mostrarDataPrevista && <div><span className="font-medium text-foreground">Prazo:</span> {d.prazoSugerido ? new Date(d.prazoSugerido).toLocaleDateString("pt-BR") : "—"}</div>}
+                            {data.config?.mostrarDataPrevista && <div><span className="font-medium text-foreground">Data Prevista:</span> {d.prazoSugerido ? new Date(d.prazoSugerido).toLocaleDateString("pt-BR") : "—"}</div>}
                             {data.config?.mostrarDataFinalizacao && <div><span className="font-medium text-foreground">Fechamento:</span> {d.dataFechamento ? new Date(d.dataFechamento).toLocaleDateString("pt-BR") : "—"}</div>}
                             {data.config?.mostrarTagsClassificacao !== false && (d.tagCritico || d.tagSegurancaTrabalho || d.tagSolicitadoCliente || d.tagSolicitadoGerenciadora || d.tagSolicitadoArquitetura) && (
                               <div className="flex gap-1 items-center flex-wrap">
