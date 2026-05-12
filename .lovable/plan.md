@@ -1,27 +1,58 @@
 ## Objetivo
-Adicionar uma opção `mostrarDetalhamento` no relatório para que o usuário possa escolher se quer incluir ou não a seção completa de detalhamento dos desvios (cards com descrição, fotos, planos de ação, localização na planta, etc.).
+Tornar os itens em atraso imediatamente identificáveis no relatório, tanto no PDF quanto no preview, sem poluir o documento.
 
-## Problema de UX atual
-- O relatório sempre inclui o detalhamento completo após o índice, o que pode gerar documentos muito extensos.
-- Usuários que só precisam da visão consolidada (KPIs + índice + resumos) não têm como suprimir os cards de detalhe.
+## Definição de "em atraso"
+Um desvio está em atraso quando:
+- `prazoSugerido` existe e já passou (`< Date.now()`)
+- `status !== "fechado"` (itens já encerrados não contam)
 
-## Mudanças propostas
+Cálculo de dias: `Math.floor((now - prazoSugerido) / 86400000)`
 
-### 1. Front-end — Configuração do relatório (`src/pages/Relatorio.tsx`)
-- **Novo estado:** `mostrarDetalhamento` (padrão: `true`, para manter compatibilidade).
-- **Novo checkbox** na seção "Conteúdo do Relatório", ao lado do "Agrupar por ambiente", com ícone `FileText`.
-- **Envio para API:** incluir `mostrarDetalhamento` no payload do `handleGenerate`.
+## Mudanças (apenas `src/pages/Relatorio.tsx`)
 
-### 2. Front-end — PDF (`handlePrint`)
-- Envolver o bloco `detailHtml` (linhas ~234-321) com condicional `cfg.mostrarDetalhamento !== false`.
-- Quando desabilitado, o PDF omite completamente a seção "Detalhamento dos Desvios" ou "Detalhamento dos Desvios por Ambiente".
+### 1. Helper compartilhado
+Criar `isAtrasado(d)` e `diasAtraso(d)` reutilizados por PDF e preview.
 
-### 3. Front-end — Preview UI (React)
-- Envolver o bloco "Detalhe de cada desvio" (linhas ~964-1100+) com condicional `data.config?.mostrarDetalhamento !== false`.
-- Índice, KPIs, Performance de Fornecedores e Análise IA continuam aparecendo normalmente.
+### 2. Badge "EM ATRASO • X dias"
+Selo vermelho (`bg:#fef2f2`, `color:#dc2626`, borda `#fecaca`) usado:
+- Ao lado do prazo na coluna "Prazo" do índice
+- No header do card de detalhamento de cada desvio (quando a seção de detalhamento está ativa)
 
-## Nenhuma mudança de backend
-- Não é necessário alterar a edge function `gerar-relatorio`, pois ela já devolve todos os dados necessários (`desvios`, `config`). O front-end apenas decide renderizar ou não a seção de detalhamento baseado na flag.
+No preview React: usar `<Badge variant="destructive">` + ícone `AlertTriangle`.
 
-## Arquivos afetados
-- `src/pages/Relatorio.tsx` — único arquivo modificado.
+### 3. Linhas vermelhas no índice
+Em `buildRow`, quando `isAtrasado(d)`:
+- `<tr>` recebe `background:#fef2f2`
+- Borda esquerda 3px vermelha (`box-shadow:inset 3px 0 0 #dc2626` na primeira `<td>`)
+
+Mesmo tratamento aplicado ao agrupamento por ambiente.
+
+### 4. KPI "Atrasados" já existe — torná-lo clicável visualmente
+O KPI já está no array (linha 172). Apenas reforçar o destaque:
+- Borda `#fecaca` quando valor > 0
+- Mantém cor vermelha que já tem
+
+### 5. Nova seção "⚠️ Itens em Atraso" (logo após os KPIs)
+Bloco dedicado renderizado quando há ≥1 desvio atrasado e a flag `mostrarAtrasados` (default `true`) estiver ativa.
+
+Conteúdo:
+- Título com ícone de alerta + contagem total
+- Tabela compacta ordenada por **maior atraso primeiro**, com colunas: `#`, Grupo, Descrição (truncada), Responsável/Fornecedor, Prazo, **Dias em atraso** (badge vermelho)
+- Link `#desvio-{id}` para o card de detalhamento
+
+Aplicado tanto no PDF (`atrasoHtml` injetado entre KPIs e Resumo por Grupo) quanto no preview React.
+
+### 6. Novo toggle de configuração
+Checkbox **"Itens em atraso"** (ícone `AlertTriangle`) na seção "Conteúdo do Relatório", ao lado dos toggles existentes (`mostrarDetalhamento`, `mostrarAprovacoes`, etc.). Default: `true`.
+
+Controla:
+- A seção dedicada (item 5)
+- O badge "EM ATRASO" no índice e nos cards (itens 2 e 3)
+
+Quando desabilitado, o relatório fica idêntico ao atual.
+
+## Sem mudanças no backend
+A edge function `gerar-relatorio` já retorna `prazoSugerido`, `status` e `dataIdentificacao`. Todo o tratamento é puramente front-end/apresentação.
+
+## Arquivo afetado
+- `src/pages/Relatorio.tsx`
