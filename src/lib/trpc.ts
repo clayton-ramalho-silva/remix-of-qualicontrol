@@ -42,7 +42,7 @@ const queryResolvers: Record<string, Resolver> = {
   "obras.listWithUltimoDesvio": async () => {
     const { data: obras, error } = await supabase.from("obras").select("*").order("codigo");
     if (error) throw error;
-    const { data: desvios } = await supabase.from("desvios").select("obra_id, data_identificacao");
+    const { data: desvios } = await supabase.from("desvios").select("obra_id, data_identificacao").is("deleted_at", null);
     const lastByObra = new Map<number, number>();
     (desvios || []).forEach((d: any) => {
       const cur = lastByObra.get(d.obra_id) ?? 0;
@@ -83,7 +83,7 @@ const queryResolvers: Record<string, Resolver> = {
 
   // --- DESVIOS ---
   "desvios.list": async (filters: any = {}) => {
-    let q = supabase.from("desvios").select("*").order("data_identificacao", { ascending: false });
+    let q = supabase.from("desvios").select("*").is("deleted_at", null).order("data_identificacao", { ascending: false });
     if (filters?.obraId) q = q.eq("obra_id", filters.obraId);
     if (filters?.status) q = q.eq("status", filters.status);
     if (filters?.severidade) q = q.eq("severidade", filters.severidade);
@@ -209,6 +209,7 @@ const queryResolvers: Record<string, Resolver> = {
       .from("desvios")
       .select("*")
       .eq("planta_id", plantaId)
+      .is("deleted_at", null)
       .order("data_identificacao", { ascending: false });
     if (error) throw error;
     return (data || []).map(mapDesvioFromDb);
@@ -292,7 +293,7 @@ const queryResolvers: Record<string, Resolver> = {
 
   // --- KPIs ---
   "kpis.get": async (filters: any = {}) => {
-    let q = supabase.from("desvios").select("status, severidade, origem, tag_critico, tag_seguranca_trabalho, tag_solicitado_cliente, prazo_sugerido, data_fechamento, data_identificacao, obra_id, disciplina, grupo_id, fornecedor_nome");
+    let q = supabase.from("desvios").select("status, severidade, origem, tag_critico, tag_seguranca_trabalho, tag_solicitado_cliente, prazo_sugerido, data_fechamento, data_identificacao, obra_id, disciplina, grupo_id, fornecedor_nome").is("deleted_at", null);
     if (filters?.obraId) q = q.eq("obra_id", filters.obraId);
     if (filters?.origem) q = q.eq("origem", filters.origem);
     const { data, error } = await q;
@@ -362,7 +363,7 @@ const queryResolvers: Record<string, Resolver> = {
     };
   },
   "kpis.fornecedorPerformance": async (filters: any = {}) => {
-    let q = supabase.from("desvios").select("fornecedor_nome, status, severidade, data_identificacao, data_fechamento, obra_id");
+    let q = supabase.from("desvios").select("fornecedor_nome, status, severidade, data_identificacao, data_fechamento, obra_id").is("deleted_at", null);
     if (filters?.obraId) q = q.eq("obra_id", filters.obraId);
     const { data, error } = await q;
     if (error) throw error;
@@ -469,7 +470,7 @@ const queryResolvers: Record<string, Resolver> = {
       vinculos = vincData || [];
       const desvioIds = Array.from(new Set(vinculos.map((v: any) => v.desvio_id)));
       if (desvioIds.length > 0) {
-        const { data: desviosData } = await supabase.from("desvios").select("id, descricao, obra_id, origem, severidade, status").in("id", desvioIds);
+        const { data: desviosData } = await supabase.from("desvios").select("id, descricao, obra_id, origem, severidade, status, deleted_at").in("id", desvioIds);
         (desviosData || []).forEach((d: any) => desviosMap.set(d.id, d));
       }
     }
@@ -708,14 +709,46 @@ const mutationResolvers: Record<string, Resolver> = {
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
     const isAdmin = (roles ?? []).some((r: any) => r.role === "admin");
     if (!isAdmin) throw new Error("Apenas administradores podem excluir desvios");
-    // Cascata manual (não há FKs com ON DELETE CASCADE)
-    await supabase.from("plano_desvios" as any).delete().eq("desvio_id", id);
-    await supabase.from("fotos_evidencia").delete().eq("desvio_id", id);
-    await supabase.from("desvio_aprovacoes").delete().eq("desvio_id", id);
-    await supabase.from("historico").delete().eq("desvio_id", id);
-    await supabase.from("planos_acao").delete().eq("desvio_id", id);
-    const { error } = await supabase.from("desvios").delete().eq("id", id);
+    // Soft delete — preserva fotos, aprovações, histórico e planos para auditoria.
+    const { data: profile } = await supabase.from("profiles").select("name, email").eq("id", user.id).maybeSingle();
+    const nome = (profile as any)?.name || (profile as any)?.email || user.email || null;
+    const { error } = await supabase
+      .from("desvios")
+      .update({
+        deleted_at: new Date().toISOString(),
+        deleted_by_id: user.id,
+        deleted_by_name: nome,
+      } as any)
+      .eq("id", id);
+    if (!error) {
+      await supabase.from("historico").insert({
+        desvio_id: id, tipo: "status",
+        descricao: "Desvio excluído (soft delete)",
+        user_id: user.id, user_name: nome,
+      });
+    }
     if (error) throw error;
+    return { id };
+  },
+
+  "desvios.restore": async ({ id }: { id: number }) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Não autenticado");
+    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
+    const isAdmin = (roles ?? []).some((r: any) => r.role === "admin");
+    if (!isAdmin) throw new Error("Apenas administradores podem restaurar desvios");
+    const { data: profile } = await supabase.from("profiles").select("name, email").eq("id", user.id).maybeSingle();
+    const nome = (profile as any)?.name || (profile as any)?.email || user.email || null;
+    const { error } = await supabase
+      .from("desvios")
+      .update({ deleted_at: null, deleted_by_id: null, deleted_by_name: null } as any)
+      .eq("id", id);
+    if (error) throw error;
+    await supabase.from("historico").insert({
+      desvio_id: id, tipo: "status",
+      descricao: "Desvio restaurado",
+      user_id: user.id, user_name: nome,
+    });
     return { id };
   },
 
