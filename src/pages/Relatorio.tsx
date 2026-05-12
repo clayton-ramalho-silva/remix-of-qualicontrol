@@ -71,6 +71,7 @@ export default function Relatorio() {
   const [mostrarTabelaGrupos, setMostrarTabelaGrupos] = useState(true);
   const [mostrarFotos, setMostrarFotos] = useState(true);
   const [mostrarLocalizacaoPlanta, setMostrarLocalizacaoPlanta] = useState(true);
+  const [mostrarTagsClassificacao, setMostrarTagsClassificacao] = useState(true);
   const [incluirAnalise, setIncluirAnalise] = useState(true);
 
   // Seção 5 — Formato
@@ -108,6 +109,7 @@ export default function Relatorio() {
       mostrarTabelaDisciplinas: mostrarTabelaGrupos,
       mostrarFotos,
       mostrarLocalizacaoPlanta,
+      mostrarTagsClassificacao,
       incluirAnalise,
       formato,
     });
@@ -271,7 +273,7 @@ export default function Relatorio() {
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Relatório de Desvios — AW Engenharia</title>
+  <title>Relatório de Desvios</title>
   <style>
     @page { size: A4; margin: 18mm 15mm 18mm 15mm; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -288,8 +290,7 @@ export default function Relatorio() {
   <div style="display:flex;align-items:flex-start;justify-content:space-between;border-bottom:3px solid #0d9488;padding-bottom:20px;margin-bottom:28px">
     <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663403343148/3awzRPTf7NtQjpo8LEDXgX/Logo%20athie%20l%20wohnrath_Black_c476567f.png" alt="athie|wohnrath" style="height:52px;object-fit:contain" crossorigin="anonymous" />
     <div style="text-align:right">
-      <div style="font-size:28px;font-weight:800;color:#0f172a;letter-spacing:-0.5px">AW Engenharia</div>
-      <div style="font-size:16px;color:#475569;margin-top:6px">Relatório de Desvios${obraInfo ? ` — ${obraInfo.codigo} ${obraInfo.nome}` : " — Todas as Obras"}</div>
+      <div style="font-size:22px;font-weight:800;color:#0f172a;letter-spacing:-0.5px">Relatório de Desvios${obraInfo ? ` — ${obraInfo.codigo} ${obraInfo.nome}` : " — Todas as Obras"}</div>
       ${origens && origens.length > 0 && origens.length < 3 ? `<div style="font-size:11px;color:#64748b;margin-top:4px">Verticais: ${origens.map((o: string) => oLabels[o] || o).join(", ")}</div>` : ""}
       <div style="font-size:10px;color:#94a3b8;margin-top:6px">Gerado em ${new Date(data.dataGeracao || Date.now()).toLocaleDateString("pt-BR")} às ${new Date(data.dataGeracao || Date.now()).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</div>
     </div>
@@ -306,7 +307,7 @@ export default function Relatorio() {
 
   <!-- Rodapé -->
   <div style="text-align:center;color:#94a3b8;font-size:9px;margin-top:40px;padding-top:14px;border-top:1px solid #e2e8f0">
-    Relatório gerado automaticamente — AW Engenharia — ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+    Relatório gerado automaticamente em ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
   </div>
 </body>
 </html>`;
@@ -660,11 +661,10 @@ export default function Relatorio() {
                   className="h-14 object-contain"
                 />
                 <div className="text-right">
-                  <h1 className="text-2xl font-bold text-foreground">AW Engenharia</h1>
-                  <p className="text-base text-muted-foreground mt-1">
+                  <h1 className="text-xl font-bold text-foreground">
                     Relatório de Desvios
                     {data.obraInfo ? ` — ${data.obraInfo.codigo} ${data.obraInfo.nome}` : " — Todas as Obras"}
-                  </p>
+                  </h1>
                   {data.config?.origens && data.config.origens.length > 0 && data.config.origens.length < 3 && (
                     <p className="text-xs text-muted-foreground mt-1">
                       Verticais: {data.config.origens.map((o: string) => origemLabels[o] || o).join(", ")}
