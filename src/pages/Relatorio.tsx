@@ -315,7 +315,7 @@ export default function Relatorio() {
         return `<div id="desvio-${d.id}" style="border:1px solid #e2e8f0;border-radius:8px;padding:14px;margin-bottom:14px;page-break-inside:avoid">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
             <div style="font-size:13px;font-weight:600"><span style="color:#94a3b8;margin-right:6px">#${d.id}</span>Desvio</div>
-            <div style="display:flex;gap:6px">${cfg.mostrarSeveridade !== false ? sevBadge(d.severidade) : ""} ${stBadge(d.status)}</div>
+            <div style="display:flex;gap:6px;align-items:center">${atrasoBadgePdf(d)} ${cfg.mostrarSeveridade !== false ? sevBadge(d.severidade) : ""} ${stBadge(d.status)}</div>
           </div>
           <div style="font-size:11px;color:#1e293b;background:#f8fafc;border-left:3px solid #0d9488;padding:6px 10px;border-radius:4px;margin-bottom:8px;white-space:pre-wrap;word-break:break-word"><strong style="color:#0f172a">Descrição:</strong> ${d.descricao}</div>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px 12px;font-size:10px;color:#475569;margin-bottom:6px">${metaItems.join("")}</div>
