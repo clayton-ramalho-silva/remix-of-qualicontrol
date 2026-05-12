@@ -712,7 +712,19 @@ function RelatorioDesvios() {
               </label>
               <label className="flex items-center gap-2 cursor-pointer text-sm">
                 <Checkbox checked={mostrarTabelaGrupos} onCheckedChange={(v) => setMostrarTabelaGrupos(!!v)} />
-                <BarChart3 className="h-3.5 w-3.5 text-muted-foreground" /> Tabela de grupos
+                <BarChart3 className="h-3.5 w-3.5 text-muted-foreground" /> Resumo por Grupo
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm">
+                <Checkbox checked={mostrarIndicadores} onCheckedChange={(v) => setMostrarIndicadores(!!v)} />
+                <BarChart3 className="h-3.5 w-3.5 text-primary" /> Indicadores
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm">
+                <Checkbox checked={mostrarPerformanceFornecedores} onCheckedChange={(v) => setMostrarPerformanceFornecedores(!!v)} />
+                <TrendingUp className="h-3.5 w-3.5 text-primary" /> Performance de Fornecedores
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm">
+                <Checkbox checked={mostrarIndiceDesvios} onCheckedChange={(v) => setMostrarIndiceDesvios(!!v)} />
+                <FileText className="h-3.5 w-3.5 text-muted-foreground" /> Índice de Desvios
               </label>
               <label className="flex items-center gap-2 cursor-pointer text-sm">
                 <Checkbox checked={mostrarFotos} onCheckedChange={(v) => setMostrarFotos(!!v)} />
