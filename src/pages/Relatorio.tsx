@@ -84,6 +84,7 @@ export default function Relatorio() {
   const [mostrarResponsaveis, setMostrarResponsaveis] = useState(true);
   const [mostrarVertical, setMostrarVertical] = useState(true);
   const [mostrarDataPrevista, setMostrarDataPrevista] = useState(true);
+  const [mostrarDataCriacao, setMostrarDataCriacao] = useState(true);
   const [mostrarDataFinalizacao, setMostrarDataFinalizacao] = useState(true);
   const [mostrarAbertos, setMostrarAbertos] = useState(true);
   const [mostrarEmAndamento, setMostrarEmAndamento] = useState(true);
