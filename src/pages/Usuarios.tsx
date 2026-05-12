@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -13,8 +13,17 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { toast } from "sonner";
 import {
   Users, Plus, Search, Pencil, Phone, Mail, Building2,
-  HelpCircle, UserCheck, Briefcase, Shield, Layers, KeyRound
+  HelpCircle, UserCheck, Briefcase, Shield, Layers, KeyRound, ShieldCheck
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+
+type AppRole = "admin" | "user" | "aprovador_gerenciadora" | "aprovador_arquitetura";
+
+const ROLE_OPTIONS: { value: AppRole; label: string; desc: string }[] = [
+  { value: "admin", label: "Administrador", desc: "Acesso total ao sistema" },
+  { value: "aprovador_gerenciadora", label: "Aprovador de Desvios — Gerenciadora", desc: "Pode aprovar/reprovar desvios na fila Gerenciadora" },
+  { value: "aprovador_arquitetura", label: "Aprovador de Desvios — Arquitetura Externa", desc: "Pode aprovar/reprovar desvios na fila Arquitetura Externa" },
+];
 
 const CARGOS = [
   { value: "avaliador", label: "Avaliador", icon: UserCheck, color: "bg-blue-100 text-blue-700", desc: "Realiza verificações de qualidade em campo" },
@@ -56,6 +65,69 @@ export default function Usuarios() {
   const [pwNova, setPwNova] = useState("");
   const [pwConf, setPwConf] = useState("");
   const [pwLoading, setPwLoading] = useState(false);
+
+  // Roles dialog
+  const [rolesDialogOpen, setRolesDialogOpen] = useState(false);
+  const [rolesMembro, setRolesMembro] = useState<any>(null);
+  const [rolesSelected, setRolesSelected] = useState<Set<AppRole>>(new Set());
+  const [rolesInitial, setRolesInitial] = useState<Set<AppRole>>(new Set());
+  const [rolesLoading, setRolesLoading] = useState(false);
+
+  async function openRoles(membro: any) {
+    if (!membro.user_id) {
+      toast.error("Este membro ainda não tem conta de login. Defina uma senha primeiro.");
+      return;
+    }
+    setRolesMembro(membro);
+    setRolesDialogOpen(true);
+    setRolesLoading(true);
+    const { data, error } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", membro.user_id);
+    setRolesLoading(false);
+    if (error) { toast.error("Erro ao carregar permissões"); return; }
+    const set = new Set<AppRole>((data || []).map((r: any) => r.role as AppRole));
+    setRolesSelected(new Set(set));
+    setRolesInitial(new Set(set));
+  }
+
+  function toggleRole(role: AppRole) {
+    setRolesSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(role)) next.delete(role); else next.add(role);
+      return next;
+    });
+  }
+
+  async function saveRoles() {
+    if (!rolesMembro?.user_id) return;
+    setRolesLoading(true);
+    const toAdd = [...rolesSelected].filter(r => !rolesInitial.has(r));
+    const toRemove = [...rolesInitial].filter(r => !rolesSelected.has(r));
+    try {
+      if (toAdd.length > 0) {
+        const { error } = await supabase.from("user_roles").insert(
+          toAdd.map(role => ({ user_id: rolesMembro.user_id, role }))
+        );
+        if (error) throw error;
+      }
+      for (const role of toRemove) {
+        const { error } = await supabase
+          .from("user_roles")
+          .delete()
+          .eq("user_id", rolesMembro.user_id)
+          .eq("role", role);
+        if (error) throw error;
+      }
+      toast.success("Permissões atualizadas");
+      setRolesDialogOpen(false);
+    } catch (e: any) {
+      toast.error("Erro ao salvar permissões: " + (e.message || ""));
+    } finally {
+      setRolesLoading(false);
+    }
+  }
 
   const utils = trpc.useUtils();
   const { data: membros = [], isLoading } = trpc.membros.list.useQuery();
@@ -467,6 +539,11 @@ export default function Usuarios() {
                         <KeyRound className="h-4 w-4" />
                       </Button>
                     )}
+                    {isAdmin && (
+                      <Button variant="ghost" size="icon" onClick={() => openRoles(membro)} title="Permissões de acesso">
+                        <ShieldCheck className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 );
               })}
@@ -514,6 +591,48 @@ export default function Usuarios() {
             <Button variant="outline" onClick={() => setPwDialogOpen(false)}>Cancelar</Button>
             <Button onClick={submitResetSenha} disabled={pwLoading}>
               {pwLoading ? "A guardar..." : "Definir senha"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de permissões/roles */}
+      <Dialog open={rolesDialogOpen} onOpenChange={setRolesDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Permissões — {rolesMembro?.nome}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Marque os perfis de acesso especiais que este utilizador deve ter.
+            </p>
+            {rolesLoading ? (
+              <div className="text-sm text-muted-foreground py-4 text-center">Carregando...</div>
+            ) : (
+              <div className="space-y-2">
+                {ROLE_OPTIONS.map(r => (
+                  <label
+                    key={r.value}
+                    className="flex items-start gap-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/30"
+                  >
+                    <Checkbox
+                      checked={rolesSelected.has(r.value)}
+                      onCheckedChange={() => toggleRole(r.value)}
+                      className="mt-0.5"
+                    />
+                    <div className="flex-1">
+                      <div className="text-sm font-medium">{r.label}</div>
+                      <div className="text-xs text-muted-foreground">{r.desc}</div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setRolesDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={saveRoles} disabled={rolesLoading}>
+              {rolesLoading ? "A guardar..." : "Guardar"}
             </Button>
           </div>
         </DialogContent>
