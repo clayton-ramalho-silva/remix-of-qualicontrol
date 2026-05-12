@@ -994,8 +994,8 @@ export default function Relatorio() {
                             {data.config?.mostrarSeveridade !== false && <th className="text-center py-2 px-2 font-semibold">Severidade</th>}
                             <th className="text-center py-2 px-2 font-semibold">Status</th>
                             {data.config?.mostrarVertical && <th className="text-center py-2 px-2 font-semibold">Vertical</th>}
-                            <th className="text-center py-2 px-2 font-semibold">Data</th>
-                            {data.config?.mostrarDataPrevista && <th className="text-center py-2 px-2 font-semibold">Prazo</th>}
+                            {data.config?.mostrarDataCriacao !== false && <th className="text-center py-2 px-2 font-semibold">Data</th>}
+                            {data.config?.mostrarDataPrevista && <th className="text-center py-2 px-2 font-semibold">Data Prevista</th>}
                             {data.config?.mostrarAprovacoes !== false && <th className="text-center py-2 px-2 font-semibold">Aprovações</th>}
                           </tr>
                         </thead>
