@@ -672,6 +672,22 @@ const mutationResolvers: Record<string, Resolver> = {
     }
     return mapDesvioFromDb(data);
   },
+  "desvios.delete": async ({ id }: { id: number }) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Não autenticado");
+    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
+    const isAdmin = (roles ?? []).some((r: any) => r.role === "admin");
+    if (!isAdmin) throw new Error("Apenas administradores podem excluir desvios");
+    // Cascata manual (não há FKs com ON DELETE CASCADE)
+    await supabase.from("plano_desvios" as any).delete().eq("desvio_id", id);
+    await supabase.from("fotos_evidencia").delete().eq("desvio_id", id);
+    await supabase.from("desvio_aprovacoes").delete().eq("desvio_id", id);
+    await supabase.from("historico").delete().eq("desvio_id", id);
+    await supabase.from("planos_acao").delete().eq("desvio_id", id);
+    const { error } = await supabase.from("desvios").delete().eq("id", id);
+    if (error) throw error;
+    return { id };
+  },
 
   // --- PLANOS ---
   "planos.create": async (input: any) => {
