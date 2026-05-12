@@ -72,6 +72,7 @@ export default function Relatorio() {
   const [mostrarFotos, setMostrarFotos] = useState(true);
   const [mostrarLocalizacaoPlanta, setMostrarLocalizacaoPlanta] = useState(true);
   const [mostrarTagsClassificacao, setMostrarTagsClassificacao] = useState(true);
+  const [mostrarSeveridade, setMostrarSeveridade] = useState(true);
   const [incluirAnalise, setIncluirAnalise] = useState(true);
 
   // Seção 5 — Formato
@@ -110,6 +111,7 @@ export default function Relatorio() {
       mostrarFotos,
       mostrarLocalizacaoPlanta,
       mostrarTagsClassificacao,
+      mostrarSeveridade,
       incluirAnalise,
       formato,
     });
@@ -177,13 +179,15 @@ export default function Relatorio() {
       const thForn = cfg.mostrarFornecedores ? `<th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Fornecedor</th>` : "";
       const thPrazo = cfg.mostrarDataPrevista ? `<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Prazo</th>` : "";
       const thVert = cfg.mostrarVertical ? `<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Vertical</th>` : "";
+      const thSev = cfg.mostrarSeveridade !== false ? `<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Severidade</th>` : "";
       const rows = desvios.map((d: any) => {
         const tdForn = cfg.mostrarFornecedores ? `<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9">${d.fornecedor || "—"}</td>` : "";
         const tdPrazo = cfg.mostrarDataPrevista ? `<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${fmtDate(d.prazoSugerido)}</td>` : "";
         const tdVert = cfg.mostrarVertical ? `<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;vertical-align:top">${oLabels[d.origem] || d.origem}</td>` : "";
-        return `<tr><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;font-family:monospace;vertical-align:top"><a href="#desvio-${d.id}" style="color:#0d9488;text-decoration:none;font-weight:600">#${d.id}</a></td><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;vertical-align:top">${d.disciplina}</td>${tdForn}<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;white-space:normal;word-break:break-word;vertical-align:top">${d.descricao}</td><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;vertical-align:top">${sevBadge(d.severidade)}</td><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;vertical-align:top">${stBadge(d.status)}</td>${tdVert}<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;color:#64748b;vertical-align:top">${fmtDate(d.dataIdentificacao)}</td>${tdPrazo}</tr>`;
+        const tdSev = cfg.mostrarSeveridade !== false ? `<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;vertical-align:top">${sevBadge(d.severidade)}</td>` : "";
+        return `<tr><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;font-family:monospace;vertical-align:top"><a href="#desvio-${d.id}" style="color:#0d9488;text-decoration:none;font-weight:600">#${d.id}</a></td><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;vertical-align:top">${d.disciplina}</td>${tdForn}<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;white-space:normal;word-break:break-word;vertical-align:top">${d.descricao}</td>${tdSev}<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;vertical-align:top">${stBadge(d.status)}</td>${tdVert}<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;color:#64748b;vertical-align:top">${fmtDate(d.dataIdentificacao)}</td>${tdPrazo}</tr>`;
       }).join("");
-      indexHtml = `<div style="margin-top:28px;page-break-before:always"><h2 style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #0d9488">Índice de Desvios (${desvios.length})</h2><table style="width:100%;border-collapse:collapse;font-size:10px"><thead><tr style="background:#f1f5f9"><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">#</th><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Grupo</th>${thForn}<th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Descrição</th><th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Severidade</th><th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Status</th>${thVert}<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Data</th>${thPrazo}</tr></thead><tbody>${rows}</tbody></table></div>`;
+      indexHtml = `<div style="margin-top:28px;page-break-before:always"><h2 style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #0d9488">Índice de Desvios (${desvios.length})</h2><table style="width:100%;border-collapse:collapse;font-size:10px"><thead><tr style="background:#f1f5f9"><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">#</th><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Grupo</th>${thForn}<th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Descrição</th>${thSev}<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Status</th>${thVert}<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Data</th>${thPrazo}</tr></thead><tbody>${rows}</tbody></table></div>`;
     }
 
     // Detalhamento dos Desvios
@@ -251,7 +255,7 @@ export default function Relatorio() {
         return `<div id="desvio-${d.id}" style="border:1px solid #e2e8f0;border-radius:8px;padding:14px;margin-bottom:14px;page-break-inside:avoid">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
             <div style="font-size:13px;font-weight:600"><span style="color:#94a3b8;margin-right:6px">#${d.id}</span>Desvio</div>
-            <div style="display:flex;gap:6px">${sevBadge(d.severidade)} ${stBadge(d.status)}</div>
+            <div style="display:flex;gap:6px">${cfg.mostrarSeveridade !== false ? sevBadge(d.severidade) : ""} ${stBadge(d.status)}</div>
           </div>
           <div style="font-size:11px;color:#1e293b;background:#f8fafc;border-left:3px solid #0d9488;padding:6px 10px;border-radius:4px;margin-bottom:8px;white-space:pre-wrap;word-break:break-word"><strong style="color:#0f172a">Descrição:</strong> ${d.descricao}</div>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px 12px;font-size:10px;color:#475569;margin-bottom:6px">${metaItems.join("")}</div>
