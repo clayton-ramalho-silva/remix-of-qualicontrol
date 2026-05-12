@@ -346,6 +346,27 @@ export default function Relatorio() {
       analiseHtml = `<div style="margin-top:28px;page-break-before:always"><h2 style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid #0d9488">Análise Executiva (IA)</h2><div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;font-size:11px;line-height:1.7;color:#334155">${formatted}</div></div>`;
     }
 
+    // Itens em Atraso (seção dedicada)
+    let atrasoHtml = "";
+    if (destaqueAtrasos) {
+      const atrasados = (desvios as any[]).filter(isAtrasado).sort((a, b) => a.prazoSugerido - b.prazoSugerido);
+      if (atrasados.length > 0) {
+        const rows = atrasados.map((d) => {
+          const dias = diasAtraso(d);
+          const fornCol = cfg.mostrarFornecedores ? `<td style="padding:6px 8px;border-bottom:1px solid #fecaca">${d.fornecedor || "—"}</td>` : "";
+          return `<tr style="background:#fff5f5"><td style="padding:6px 8px;border-bottom:1px solid #fecaca;font-family:monospace;font-weight:600"><a href="#desvio-${d.id}" style="color:#dc2626;text-decoration:none">#${d.id}</a></td><td style="padding:6px 8px;border-bottom:1px solid #fecaca">${d.disciplina}</td>${fornCol}<td style="padding:6px 8px;border-bottom:1px solid #fecaca;word-break:break-word">${d.descricao}</td><td style="padding:6px 8px;border-bottom:1px solid #fecaca;text-align:center;color:#64748b;white-space:nowrap">${fmtDate(d.prazoSugerido)}</td><td style="padding:6px 8px;border-bottom:1px solid #fecaca;text-align:center"><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:#dc2626;color:#fff">${dias}d</span></td></tr>`;
+        }).join("");
+        const fornHead = cfg.mostrarFornecedores ? `<th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">Fornecedor</th>` : "";
+        atrasoHtml = `<div style="margin-top:20px;page-break-inside:avoid;border:1px solid #fecaca;border-radius:8px;padding:14px;background:#fff;border-left:4px solid #dc2626">
+          <h2 style="font-size:14px;font-weight:700;color:#dc2626;margin-bottom:10px;display:flex;align-items:center;gap:6px">⚠ Itens em Atraso (${atrasados.length})</h2>
+          <table style="width:100%;border-collapse:collapse;font-size:10px">
+            <thead><tr style="background:#fef2f2"><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">#</th><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">Grupo</th>${fornHead}<th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">Descrição</th><th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">Prazo</th><th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">Dias em atraso</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+      }
+    }
+
     const html = `<!DOCTYPE html>
 <html>
 <head>
@@ -376,6 +397,7 @@ export default function Relatorio() {
   <!-- KPIs -->
   ${kpis ? `<div style="margin-bottom:20px"><h2 style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #0d9488">Indicadores</h2><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px">${kpiHtml}</div></div>` : ""}
 
+  ${atrasoHtml}
   ${discHtml}
   ${perfHtml}
   ${indexHtml}
