@@ -228,7 +228,7 @@ function RelatorioDesvios() {
 
     // Performance Fornecedores
     let perfHtml = "";
-    if (cfg.mostrarFornecedores && performance.length > 0) {
+    if (cfg.mostrarPerformanceFornecedores !== false && performance.length > 0) {
       const rows = performance.map((f: any) =>
         `<tr><td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;font-weight:500">${f.nome}</td><td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${f.total}</td><td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${f.abertos}</td><td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${f.fechados}</td><td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${f.graves}</td><td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center;font-weight:600">${f.taxaFechamento}%</td></tr>`
       ).join("");
