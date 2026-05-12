@@ -898,6 +898,7 @@ export default function Relatorio() {
                             {data.config?.mostrarVertical && <th className="text-center py-2 px-2 font-semibold">Vertical</th>}
                             <th className="text-center py-2 px-2 font-semibold">Data</th>
                             {data.config?.mostrarDataPrevista && <th className="text-center py-2 px-2 font-semibold">Prazo</th>}
+                            {data.config?.mostrarAprovacoes !== false && <th className="text-center py-2 px-2 font-semibold">Aprovações</th>}
                           </tr>
                         </thead>
                         <tbody>
@@ -926,6 +927,25 @@ export default function Relatorio() {
                               {data.config?.mostrarDataPrevista && (
                                 <td className="py-1.5 px-2 text-center text-muted-foreground">
                                   {d.prazoSugerido ? new Date(d.prazoSugerido).toLocaleDateString("pt-BR") : "—"}
+                                </td>
+                              )}
+                              {data.config?.mostrarAprovacoes !== false && (
+                                <td className="py-1.5 px-2 text-center">
+                                  {(d.aprovacoes && d.aprovacoes.length > 0) ? (
+                                    <span className="inline-flex flex-wrap gap-1 justify-center">
+                                      {d.aprovacoes.map((a: any, i: number) => (
+                                        <span
+                                          key={i}
+                                          className={`badge inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold border ${a.decisao === "aprovado" ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200"}`}
+                                          title={`${a.tipo === "gerenciadora" ? "Gerenciadora" : "Arquitetura"} ${a.decisao}${a.aprovador_nome ? " — " + a.aprovador_nome : ""}${a.comentario ? " (" + a.comentario + ")" : ""}`}
+                                        >
+                                          {a.tipo === "gerenciadora" ? "G" : "A"}{a.decisao === "aprovado" ? "✓" : "✗"}
+                                        </span>
+                                      ))}
+                                    </span>
+                                  ) : (
+                                    <span className="text-muted-foreground">—</span>
+                                  )}
                                 </td>
                               )}
                             </tr>
