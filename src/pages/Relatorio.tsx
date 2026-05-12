@@ -128,6 +128,7 @@ export default function Relatorio() {
       mostrarResponsaveis,
       mostrarVertical,
       mostrarDataPrevista,
+      mostrarDataCriacao,
       mostrarDataFinalizacao,
       mostrarAbertos,
       mostrarEmAndamento,
