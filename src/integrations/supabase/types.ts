@@ -434,6 +434,9 @@ export type Database = {
           created_by_name: string | null
           data_fechamento: number | null
           data_identificacao: number
+          deleted_at: string | null
+          deleted_by_id: string | null
+          deleted_by_name: string | null
           descricao: string
           disciplina: string | null
           fornecedor_id: number | null
@@ -462,6 +465,9 @@ export type Database = {
           created_by_name?: string | null
           data_fechamento?: number | null
           data_identificacao: number
+          deleted_at?: string | null
+          deleted_by_id?: string | null
+          deleted_by_name?: string | null
           descricao: string
           disciplina?: string | null
           fornecedor_id?: number | null
@@ -490,6 +496,9 @@ export type Database = {
           created_by_name?: string | null
           data_fechamento?: number | null
           data_identificacao?: number
+          deleted_at?: string | null
+          deleted_by_id?: string | null
+          deleted_by_name?: string | null
           descricao?: string
           disciplina?: string | null
           fornecedor_id?: number | null
