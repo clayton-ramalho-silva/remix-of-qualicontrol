@@ -237,7 +237,7 @@ function RelatorioDesvios() {
 
     // Índice de Desvios
     let indexHtml = "";
-    if (desvios.length > 0) {
+    if (cfg.mostrarIndiceDesvios !== false && desvios.length > 0) {
       const thForn = cfg.mostrarFornecedores ? `<th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Fornecedor</th>` : "";
       const thPrazo = cfg.mostrarDataPrevista ? `<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Data Prevista</th>` : "";
       const thData = cfg.mostrarDataCriacao !== false ? `<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Data</th>` : "";
