@@ -24,7 +24,7 @@ import PlantaPinSelector from "@/components/PlantaPinSelector";
 import PhotoAnnotator from "@/components/PhotoAnnotator";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { RotateCcw, Trash2 } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 
 // Grupos carregados do banco de dados (substitui disciplinas fixas)
 
