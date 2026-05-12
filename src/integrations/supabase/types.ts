@@ -207,6 +207,39 @@ export type Database = {
         }
         Relationships: []
       }
+      desvio_aprovacoes: {
+        Row: {
+          aprovador_id: string
+          aprovador_nome: string | null
+          comentario: string | null
+          created_at: string
+          decisao: Database["public"]["Enums"]["decisao_aprovacao"]
+          desvio_id: number
+          id: number
+          tipo: Database["public"]["Enums"]["tipo_aprovacao"]
+        }
+        Insert: {
+          aprovador_id: string
+          aprovador_nome?: string | null
+          comentario?: string | null
+          created_at?: string
+          decisao: Database["public"]["Enums"]["decisao_aprovacao"]
+          desvio_id: number
+          id?: number
+          tipo: Database["public"]["Enums"]["tipo_aprovacao"]
+        }
+        Update: {
+          aprovador_id?: string
+          aprovador_nome?: string | null
+          comentario?: string | null
+          created_at?: string
+          decisao?: Database["public"]["Enums"]["decisao_aprovacao"]
+          desvio_id?: number
+          id?: number
+          tipo?: Database["public"]["Enums"]["tipo_aprovacao"]
+        }
+        Relationships: []
+      }
       desvios: {
         Row: {
           created_at: string
@@ -1482,6 +1515,7 @@ export type Database = {
         | "asa"
         | "af"
         | "at"
+      decisao_aprovacao: "aprovado" | "reprovado"
       etapa_foto_ocorrencia: "cena" | "simulacao" | "evidencia" | "plano"
       origem_desvio: "qualidade" | "checklist" | "qsms"
       prioridade_plano: "urgente" | "normal" | "baixa"
@@ -1498,6 +1532,7 @@ export type Database = {
         | "acao_em_andamento"
         | "encerrado"
       status_plano: "pendente" | "em_andamento" | "concluido"
+      tipo_aprovacao: "gerenciadora" | "arquitetura"
       tipo_causa_ocorrencia: "imediata" | "basica"
       tipo_doc_ocorrencia:
         | "cat"
@@ -1678,6 +1713,7 @@ export const Constants = {
         "af",
         "at",
       ],
+      decisao_aprovacao: ["aprovado", "reprovado"],
       etapa_foto_ocorrencia: ["cena", "simulacao", "evidencia", "plano"],
       origem_desvio: ["qualidade", "checklist", "qsms"],
       prioridade_plano: ["urgente", "normal", "baixa"],
@@ -1695,6 +1731,7 @@ export const Constants = {
         "encerrado",
       ],
       status_plano: ["pendente", "em_andamento", "concluido"],
+      tipo_aprovacao: ["gerenciadora", "arquitetura"],
       tipo_causa_ocorrencia: ["imediata", "basica"],
       tipo_doc_ocorrencia: [
         "cat",
