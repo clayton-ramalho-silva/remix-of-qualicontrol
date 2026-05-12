@@ -141,7 +141,6 @@ export default function Relatorio() {
       incluirAnalise,
       mostrarAprovacoes,
       mostrarDetalhamento,
-      destaqueAtrasos,
       formato,
     });
   };
