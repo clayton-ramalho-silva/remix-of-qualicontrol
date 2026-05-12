@@ -1457,7 +1457,11 @@ export type Database = {
     }
     Enums: {
       alocacao_status: "pendente" | "cumprido" | "cancelado"
-      app_role: "admin" | "user"
+      app_role:
+        | "admin"
+        | "user"
+        | "aprovador_gerenciadora"
+        | "aprovador_arquitetura"
       cargo_membro:
         | "avaliador"
         | "gerente_obra"
@@ -1645,7 +1649,12 @@ export const Constants = {
   public: {
     Enums: {
       alocacao_status: ["pendente", "cumprido", "cancelado"],
-      app_role: ["admin", "user"],
+      app_role: [
+        "admin",
+        "user",
+        "aprovador_gerenciadora",
+        "aprovador_arquitetura",
+      ],
       cargo_membro: [
         "avaliador",
         "gerente_obra",
