@@ -48,6 +48,14 @@ function groupByAmbiente(desvios: any[]): { nome: string; items: any[] }[] {
   return result;
 }
 
+function isAtrasado(d: any): boolean {
+  return !!d?.prazoSugerido && d.status !== "fechado" && d.prazoSugerido < Date.now();
+}
+function diasAtraso(d: any): number {
+  if (!isAtrasado(d)) return 0;
+  return Math.floor((Date.now() - d.prazoSugerido) / 86400000);
+}
+
 export default function Relatorio() {
   const { data: obras } = trpc.obras.list.useQuery();
   const { data: fornecedores } = trpc.fornecedores.list.useQuery();
@@ -91,6 +99,7 @@ export default function Relatorio() {
   const [agruparPorAmbiente, setAgruparPorAmbiente] = useState(false);
   const [mostrarAprovacoes, setMostrarAprovacoes] = useState(true);
   const [mostrarDetalhamento, setMostrarDetalhamento] = useState(true);
+  const [destaqueAtrasos, setDestaqueAtrasos] = useState(true);
 
   // Seção 5 — Formato
   const [formato, setFormato] = useState<"pdf" | "excel">("pdf");
@@ -154,6 +163,11 @@ export default function Relatorio() {
       const m: Record<string, string> = { grave: "background:#fef2f2;color:#dc2626;border:1px solid #fecaca", moderado: "background:#fffbeb;color:#d97706;border:1px solid #fde68a", leve: "background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0" };
       return `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:600;${m[s] || ''}">${s}</span>`;
     };
+    const atrasoBadgePdf = (d: any) => {
+      if (!destaqueAtrasos || !isAtrasado(d)) return "";
+      const dias = diasAtraso(d);
+      return `<span style="display:inline-block;padding:2px 6px;border-radius:10px;font-size:9px;font-weight:700;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;margin-left:4px">⚠ ATRASO ${dias}d</span>`;
+    };
     const stBadge = (s: string) => {
       const m: Record<string, string> = { aberto: "background:#fffbeb;color:#d97706;border:1px solid #fde68a", em_andamento: "background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe", fechado: "background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0", aguardando_aceite: "background:#faf5ff;color:#9333ea;border:1px solid #e9d5ff" };
       const labels: Record<string, string> = { aberto: "Aberto", em_andamento: "Em Andamento", fechado: "Fechado", aguardando_aceite: "Ag. Aceite" };
@@ -202,7 +216,7 @@ export default function Relatorio() {
       const thAprov = cfg.mostrarAprovacoes !== false ? `<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Aprovações</th>` : "";
       const buildRow = (d: any) => {
         const tdForn = cfg.mostrarFornecedores ? `<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9">${d.fornecedor || "—"}</td>` : "";
-        const tdPrazo = cfg.mostrarDataPrevista ? `<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${fmtDate(d.prazoSugerido)}</td>` : "";
+        const tdPrazo = cfg.mostrarDataPrevista ? `<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;white-space:nowrap">${fmtDate(d.prazoSugerido)}${atrasoBadgePdf(d)}</td>` : "";
         const tdVert = cfg.mostrarVertical ? `<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;vertical-align:top">${oLabels[d.origem] || d.origem}</td>` : "";
         const tdSev = cfg.mostrarSeveridade !== false ? `<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;vertical-align:top">${sevBadge(d.severidade)}</td>` : "";
         let tdAprov = "";
@@ -217,7 +231,10 @@ export default function Relatorio() {
           }).join("");
           tdAprov = `<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;vertical-align:top">${badges || '<span style="color:#cbd5e1">—</span>'}</td>`;
         }
-        return `<tr><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;font-family:monospace;vertical-align:top"><a href="#desvio-${d.id}" style="color:#0d9488;text-decoration:none;font-weight:600">#${d.id}</a></td><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;vertical-align:top">${d.disciplina}</td>${tdForn}<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;white-space:normal;word-break:break-word;vertical-align:top">${d.descricao}</td>${tdSev}<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;vertical-align:top">${stBadge(d.status)}</td>${tdVert}<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;color:#64748b;vertical-align:top">${fmtDate(d.dataIdentificacao)}</td>${tdPrazo}${tdAprov}</tr>`;
+        const atrasado = destaqueAtrasos && isAtrasado(d);
+        const rowBg = atrasado ? "background:#fef2f2;" : "";
+        const firstCellShadow = atrasado ? "box-shadow:inset 3px 0 0 #dc2626;" : "";
+        return `<tr style="${rowBg}"><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;font-family:monospace;vertical-align:top;${firstCellShadow}"><a href="#desvio-${d.id}" style="color:#0d9488;text-decoration:none;font-weight:600">#${d.id}</a></td><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;vertical-align:top">${d.disciplina}</td>${tdForn}<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;white-space:normal;word-break:break-word;vertical-align:top">${d.descricao}</td>${tdSev}<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;vertical-align:top">${stBadge(d.status)}</td>${tdVert}<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;color:#64748b;vertical-align:top">${fmtDate(d.dataIdentificacao)}</td>${tdPrazo}${tdAprov}</tr>`;
       };
       const tableHead = `<thead><tr style="background:#f1f5f9"><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">#</th><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Grupo</th>${thForn}<th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Descrição</th>${thSev}<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Status</th>${thVert}<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Data</th>${thPrazo}${thAprov}</tr></thead>`;
       if (agruparPorAmbiente) {
@@ -298,7 +315,7 @@ export default function Relatorio() {
         return `<div id="desvio-${d.id}" style="border:1px solid #e2e8f0;border-radius:8px;padding:14px;margin-bottom:14px;page-break-inside:avoid">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
             <div style="font-size:13px;font-weight:600"><span style="color:#94a3b8;margin-right:6px">#${d.id}</span>Desvio</div>
-            <div style="display:flex;gap:6px">${cfg.mostrarSeveridade !== false ? sevBadge(d.severidade) : ""} ${stBadge(d.status)}</div>
+            <div style="display:flex;gap:6px;align-items:center">${atrasoBadgePdf(d)} ${cfg.mostrarSeveridade !== false ? sevBadge(d.severidade) : ""} ${stBadge(d.status)}</div>
           </div>
           <div style="font-size:11px;color:#1e293b;background:#f8fafc;border-left:3px solid #0d9488;padding:6px 10px;border-radius:4px;margin-bottom:8px;white-space:pre-wrap;word-break:break-word"><strong style="color:#0f172a">Descrição:</strong> ${d.descricao}</div>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px 12px;font-size:10px;color:#475569;margin-bottom:6px">${metaItems.join("")}</div>
@@ -327,6 +344,27 @@ export default function Relatorio() {
     if (analise) {
       const formatted = analise.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n- /g, '<br/>• ').replace(/\n\n/g, '<br/><br/>').replace(/\n/g, '<br/>');
       analiseHtml = `<div style="margin-top:28px;page-break-before:always"><h2 style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid #0d9488">Análise Executiva (IA)</h2><div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;font-size:11px;line-height:1.7;color:#334155">${formatted}</div></div>`;
+    }
+
+    // Itens em Atraso (seção dedicada)
+    let atrasoHtml = "";
+    if (destaqueAtrasos) {
+      const atrasados = (desvios as any[]).filter(isAtrasado).sort((a, b) => a.prazoSugerido - b.prazoSugerido);
+      if (atrasados.length > 0) {
+        const rows = atrasados.map((d) => {
+          const dias = diasAtraso(d);
+          const fornCol = cfg.mostrarFornecedores ? `<td style="padding:6px 8px;border-bottom:1px solid #fecaca">${d.fornecedor || "—"}</td>` : "";
+          return `<tr style="background:#fff5f5"><td style="padding:6px 8px;border-bottom:1px solid #fecaca;font-family:monospace;font-weight:600"><a href="#desvio-${d.id}" style="color:#dc2626;text-decoration:none">#${d.id}</a></td><td style="padding:6px 8px;border-bottom:1px solid #fecaca">${d.disciplina}</td>${fornCol}<td style="padding:6px 8px;border-bottom:1px solid #fecaca;word-break:break-word">${d.descricao}</td><td style="padding:6px 8px;border-bottom:1px solid #fecaca;text-align:center;color:#64748b;white-space:nowrap">${fmtDate(d.prazoSugerido)}</td><td style="padding:6px 8px;border-bottom:1px solid #fecaca;text-align:center"><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:#dc2626;color:#fff">${dias}d</span></td></tr>`;
+        }).join("");
+        const fornHead = cfg.mostrarFornecedores ? `<th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">Fornecedor</th>` : "";
+        atrasoHtml = `<div style="margin-top:20px;page-break-inside:avoid;border:1px solid #fecaca;border-radius:8px;padding:14px;background:#fff;border-left:4px solid #dc2626">
+          <h2 style="font-size:14px;font-weight:700;color:#dc2626;margin-bottom:10px;display:flex;align-items:center;gap:6px">⚠ Itens em Atraso (${atrasados.length})</h2>
+          <table style="width:100%;border-collapse:collapse;font-size:10px">
+            <thead><tr style="background:#fef2f2"><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">#</th><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">Grupo</th>${fornHead}<th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">Descrição</th><th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">Prazo</th><th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">Dias em atraso</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+      }
     }
 
     const html = `<!DOCTYPE html>
@@ -359,6 +397,7 @@ export default function Relatorio() {
   <!-- KPIs -->
   ${kpis ? `<div style="margin-bottom:20px"><h2 style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #0d9488">Indicadores</h2><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px">${kpiHtml}</div></div>` : ""}
 
+  ${atrasoHtml}
   ${discHtml}
   ${perfHtml}
   ${indexHtml}
@@ -664,6 +703,10 @@ export default function Relatorio() {
                 <FileText className="h-3.5 w-3.5 text-muted-foreground" /> Detalhamento dos desvios
               </label>
               <label className="flex items-center gap-2 cursor-pointer text-sm">
+                <Checkbox checked={destaqueAtrasos} onCheckedChange={(v) => setDestaqueAtrasos(!!v)} />
+                <AlertTriangle className="h-3.5 w-3.5 text-red-600" /> Destacar itens em atraso
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm">
                 <Checkbox checked={incluirAnalise} onCheckedChange={(v) => setIncluirAnalise(!!v)} />
                 <BrainCircuit className="h-3.5 w-3.5 text-primary" /> Incluir análise IA
               </label>
@@ -780,6 +823,47 @@ export default function Relatorio() {
                   </div>
                 </div>
               )}
+
+              {/* Itens em Atraso */}
+              {destaqueAtrasos && data.desvios && (() => {
+                const atrasados = (data.desvios as any[]).filter(isAtrasado).sort((a, b) => a.prazoSugerido - b.prazoSugerido);
+                if (atrasados.length === 0) return null;
+                return (
+                  <div className="section mb-6 border border-red-200 border-l-4 border-l-red-600 rounded-lg p-4 bg-red-50/40">
+                    <h2 className="text-base font-bold text-red-700 mb-3 flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4" /> Itens em Atraso ({atrasados.length})
+                    </h2>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="bg-red-100/60">
+                            <th className="text-left py-2 px-2 font-semibold">#</th>
+                            <th className="text-left py-2 px-2 font-semibold">Grupo</th>
+                            {data.config?.mostrarFornecedores && <th className="text-left py-2 px-2 font-semibold">Fornecedor</th>}
+                            <th className="text-left py-2 px-2 font-semibold">Descrição</th>
+                            <th className="text-center py-2 px-2 font-semibold">Prazo</th>
+                            <th className="text-center py-2 px-2 font-semibold">Dias em atraso</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {atrasados.map((d: any) => (
+                            <tr key={d.id} className="border-b border-red-100">
+                              <td className="py-1.5 px-2 font-mono font-semibold text-red-700">#{d.id}</td>
+                              <td className="py-1.5 px-2">{d.disciplina}</td>
+                              {data.config?.mostrarFornecedores && <td className="py-1.5 px-2">{d.fornecedor || "—"}</td>}
+                              <td className="py-1.5 px-2 whitespace-normal break-words min-w-[200px]">{d.descricao}</td>
+                              <td className="py-1.5 px-2 text-center text-muted-foreground whitespace-nowrap">{new Date(d.prazoSugerido).toLocaleDateString("pt-BR")}</td>
+                              <td className="py-1.5 px-2 text-center">
+                                <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-600 text-white">{diasAtraso(d)}d</span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Tabela por Disciplina */}
               {data.config?.mostrarTabelaDisciplinas && data.porDisciplina && Object.keys(data.porDisciplina).length > 0 && (
@@ -909,8 +993,8 @@ export default function Relatorio() {
                         </thead>
                         <tbody>
                           {g.items.map((d: any) => (
-                            <tr key={d.id} className="border-b border-muted/30">
-                              <td className="py-1.5 px-2 font-mono text-muted-foreground">{d.id}</td>
+                            <tr key={d.id} className={`border-b border-muted/30 ${destaqueAtrasos && isAtrasado(d) ? "bg-red-50" : ""}`}>
+                              <td className={`py-1.5 px-2 font-mono text-muted-foreground ${destaqueAtrasos && isAtrasado(d) ? "border-l-[3px] border-l-red-600" : ""}`}>{d.id}</td>
                               <td className="py-1.5 px-2">{d.disciplina}</td>
                               {data.config?.mostrarFornecedores && <td className="py-1.5 px-2">{d.fornecedor || "—"}</td>}
                               <td className="py-1.5 px-2 whitespace-normal break-words min-w-[200px]">{d.descricao}</td>
@@ -931,8 +1015,13 @@ export default function Relatorio() {
                                 {d.dataIdentificacao ? new Date(d.dataIdentificacao).toLocaleDateString("pt-BR") : "—"}
                               </td>
                               {data.config?.mostrarDataPrevista && (
-                                <td className="py-1.5 px-2 text-center text-muted-foreground">
+                                <td className="py-1.5 px-2 text-center text-muted-foreground whitespace-nowrap">
                                   {d.prazoSugerido ? new Date(d.prazoSugerido).toLocaleDateString("pt-BR") : "—"}
+                                  {destaqueAtrasos && isAtrasado(d) && (
+                                    <span className="ml-1 inline-block px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-600 text-white align-middle">
+                                      {diasAtraso(d)}d
+                                    </span>
+                                  )}
                                 </td>
                               )}
                               {data.config?.mostrarAprovacoes !== false && (
@@ -996,7 +1085,12 @@ export default function Relatorio() {
                               <span className="text-muted-foreground">#{d.id}</span>
                               Desvio
                             </h3>
-                            <div className="flex gap-1.5">
+                            <div className="flex gap-1.5 items-center">
+                              {destaqueAtrasos && isAtrasado(d) && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-600 text-white">
+                                  <AlertTriangle className="h-3 w-3" /> EM ATRASO • {diasAtraso(d)}d
+                                </span>
+                              )}
                               {data.config?.mostrarSeveridade !== false && (
                                 <span className={`badge inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${sevColors[d.severidade] || ""}`}>
                                   {d.severidade}
