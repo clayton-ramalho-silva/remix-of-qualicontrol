@@ -844,10 +844,29 @@ export default function Relatorio() {
                   <Separator className="my-6" />
                   <div className="section mb-6">
                     <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-primary" /> Índice de Desvios ({data.desvios.length})
+                      <FileText className="h-4 w-4 text-primary" />
+                      {agruparPorAmbiente ? `Índice de Desvios por Ambiente (${data.desvios.length})` : `Índice de Desvios (${data.desvios.length})`}
                     </h2>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-xs">
+                    {(() => {
+                      const groups = agruparPorAmbiente
+                        ? groupByAmbiente(data.desvios)
+                        : [{ nome: "", items: data.desvios as any[] }];
+                      const colCount = 6
+                        + (data.config?.mostrarFornecedores ? 1 : 0)
+                        + (data.config?.mostrarSeveridade !== false ? 1 : 0)
+                        + (data.config?.mostrarVertical ? 1 : 0)
+                        + (data.config?.mostrarDataPrevista ? 1 : 0);
+                      void colCount;
+                      return (
+                        <div className="overflow-x-auto space-y-4">
+                          {groups.map((g, gi) => (
+                            <div key={gi}>
+                              {agruparPorAmbiente && (
+                                <div className="text-xs font-semibold text-foreground bg-primary/5 border-l-4 border-primary px-3 py-1.5 mb-2 rounded">
+                                  {g.nome} <span className="text-muted-foreground font-normal">— {g.items.length} desvio{g.items.length > 1 ? "s" : ""}</span>
+                                </div>
+                              )}
+                              <table className="w-full text-xs">
                         <thead>
                           <tr className="bg-muted/50">
                             <th className="text-left py-2 px-2 font-semibold">#</th>
@@ -861,7 +880,7 @@ export default function Relatorio() {
                           </tr>
                         </thead>
                         <tbody>
-                          {data.desvios.map((d: any) => (
+                          {g.items.map((d: any) => (
                             <tr key={d.id} className="border-b border-muted/30">
                               <td className="py-1.5 px-2 font-mono text-muted-foreground">{d.id}</td>
                               <td className="py-1.5 px-2">{d.disciplina}</td>
@@ -891,8 +910,12 @@ export default function Relatorio() {
                             </tr>
                           ))}
                         </tbody>
-                      </table>
-                    </div>
+                              </table>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </>
               )}
