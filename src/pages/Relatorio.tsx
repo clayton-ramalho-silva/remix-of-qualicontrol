@@ -34,6 +34,19 @@ const statusColors: Record<string, string> = {
   aguardando_aceite: "bg-purple-100 text-purple-700",
 };
 
+function groupByAmbiente(desvios: any[]): { nome: string; items: any[] }[] {
+  const map = new Map<string, any[]>();
+  for (const d of desvios) {
+    const key = (d.localizacao && String(d.localizacao).trim()) || "__sem__";
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(d);
+  }
+  const namedKeys = Array.from(map.keys()).filter(k => k !== "__sem__").sort((a, b) => a.localeCompare(b, "pt-BR"));
+  const result = namedKeys.map(k => ({ nome: k, items: map.get(k)! }));
+  if (map.has("__sem__")) result.push({ nome: "Sem ambiente definido", items: map.get("__sem__")! });
+  return result;
+}
+
 export default function Relatorio() {
   const { data: obras } = trpc.obras.list.useQuery();
   const { data: fornecedores } = trpc.fornecedores.list.useQuery();
