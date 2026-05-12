@@ -875,21 +875,56 @@ export default function DesvioDetalhe() {
                 const info = STATUS_MAP[s.value];
                 const isActive = data.status === s.value;
                 const needsFoto = (s.value === "fechado" || s.value === "aguardando_aceite") && !hasFotosFechamento;
+                const aprov = (data.aprovacoes || []) as any[];
+                const okGer = aprov.some((a: any) => a.tipo === "gerenciadora" && a.decisao === "aprovado");
+                const okArq = aprov.some((a: any) => a.tipo === "arquitetura" && a.decisao === "aprovado");
+                const needsAprovGer = s.value === "fechado" && data.tagSolicitadoGerenciadora === 1 && !okGer;
+                const needsAprovArq = s.value === "fechado" && data.tagSolicitadoArquitetura === 1 && !okArq;
+                const blockedAprov = needsAprovGer || needsAprovArq;
+                const tooltipParts: string[] = [];
+                if (needsFoto) tooltipParts.push("Envie fotos de fechamento");
+                if (needsAprovGer) tooltipParts.push("Aprovação da Gerenciadora pendente");
+                if (needsAprovArq) tooltipParts.push("Aprovação da Arquitetura pendente");
                 return (
                   <Button
                     key={s.value}
                     variant={isActive ? "default" : "outline"}
                     className={`w-full justify-start gap-2 ${isActive ? "" : "bg-transparent"}`}
                     size="sm"
-                    disabled={isActive || updateDesvio.isPending}
+                    disabled={isActive || updateDesvio.isPending || (s.value === "fechado" && blockedAprov)}
                     onClick={() => handleStatusChange(s.value)}
-                    title={needsFoto ? "Envie fotos de fechamento antes de alterar para este status" : ""}
+                    title={tooltipParts.join(" • ")}
                   >
                     {info.icon} {s.label}
                     {needsFoto && <Camera className="h-3 w-3 ml-auto text-muted-foreground" />}
                   </Button>
                 );
               })}
+              {data.status !== "fechado" && (data.tagSolicitadoGerenciadora === 1 || data.tagSolicitadoArquitetura === 1) && (
+                <div className="mt-3 pt-3 border-t space-y-1.5">
+                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Aprovações exigidas</p>
+                  {[
+                    { req: data.tagSolicitadoGerenciadora === 1, label: "Gerenciadora", tipo: "gerenciadora" },
+                    { req: data.tagSolicitadoArquitetura === 1, label: "Arquitetura Externa", tipo: "arquitetura" },
+                  ].filter((x) => x.req).map((x) => {
+                    const aprov = (data.aprovacoes || []) as any[];
+                    const last = [...aprov].reverse().find((a: any) => a.tipo === x.tipo);
+                    const status = last?.decisao === "aprovado"
+                      ? { txt: "Aprovado", cls: "bg-emerald-50 text-emerald-700 border-emerald-200" }
+                      : last?.decisao === "reprovado"
+                      ? { txt: "Reprovado", cls: "bg-red-50 text-red-700 border-red-200" }
+                      : { txt: "Aguardando", cls: "bg-amber-50 text-amber-700 border-amber-200" };
+                    return (
+                      <div key={x.tipo} className="flex items-center justify-between text-xs">
+                        <span className="text-foreground">{x.label}</span>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full border text-[10px] font-medium ${status.cls}`}>
+                          {status.txt}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
               {!hasFotosFechamento && data.status !== "fechado" && (
                 <p className="text-[11px] text-muted-foreground mt-2 flex items-center gap-1">
                   <Camera className="h-3 w-3" />
