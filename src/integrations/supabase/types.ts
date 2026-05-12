@@ -94,6 +94,193 @@ export type Database = {
           },
         ]
       }
+      checklist_disciplinas: {
+        Row: {
+          ativo: number
+          created_at: string
+          id: number
+          nome: string
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: number
+          created_at?: string
+          id?: number
+          nome: string
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: number
+          created_at?: string
+          id?: number
+          nome?: string
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      checklist_entrega_fotos: {
+        Row: {
+          created_at: string
+          foto_evidencia_id: number | null
+          id: number
+          item_id: number
+          legenda: string | null
+          ordem: number
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          foto_evidencia_id?: number | null
+          id?: number
+          item_id: number
+          legenda?: string | null
+          ordem?: number
+          url: string
+        }
+        Update: {
+          created_at?: string
+          foto_evidencia_id?: number | null
+          id?: number
+          item_id?: number
+          legenda?: string | null
+          ordem?: number
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_entrega_fotos_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_entrega_itens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklist_entrega_itens: {
+        Row: {
+          avaliacao: Database["public"]["Enums"]["checklist_avaliacao"]
+          comentarios: string | null
+          created_at: string
+          disciplina_id: number | null
+          disciplina_nome: string
+          entrega_id: number
+          equipe_nome: string | null
+          fornecedor_id: number | null
+          fornecedor_nome: string | null
+          id: number
+          ordem: number
+        }
+        Insert: {
+          avaliacao?: Database["public"]["Enums"]["checklist_avaliacao"]
+          comentarios?: string | null
+          created_at?: string
+          disciplina_id?: number | null
+          disciplina_nome: string
+          entrega_id: number
+          equipe_nome?: string | null
+          fornecedor_id?: number | null
+          fornecedor_nome?: string | null
+          id?: number
+          ordem?: number
+        }
+        Update: {
+          avaliacao?: Database["public"]["Enums"]["checklist_avaliacao"]
+          comentarios?: string | null
+          created_at?: string
+          disciplina_id?: number | null
+          disciplina_nome?: string
+          entrega_id?: number
+          equipe_nome?: string | null
+          fornecedor_id?: number | null
+          fornecedor_nome?: string | null
+          id?: number
+          ordem?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_entrega_itens_entrega_id_fkey"
+            columns: ["entrega_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_entregas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklist_entregas: {
+        Row: {
+          condicao: Database["public"]["Enums"]["checklist_condicao"]
+          created_at: string
+          created_by_id: string | null
+          created_by_name: string | null
+          data_vistoria: number
+          gc: string | null
+          go: string | null
+          id: number
+          metragem_m2: number | null
+          obra_id: number
+          total_itens: number
+          updated_at: string
+        }
+        Insert: {
+          condicao?: Database["public"]["Enums"]["checklist_condicao"]
+          created_at?: string
+          created_by_id?: string | null
+          created_by_name?: string | null
+          data_vistoria: number
+          gc?: string | null
+          go?: string | null
+          id?: number
+          metragem_m2?: number | null
+          obra_id: number
+          total_itens?: number
+          updated_at?: string
+        }
+        Update: {
+          condicao?: Database["public"]["Enums"]["checklist_condicao"]
+          created_at?: string
+          created_by_id?: string | null
+          created_by_name?: string | null
+          data_vistoria?: number
+          gc?: string | null
+          go?: string | null
+          id?: number
+          metragem_m2?: number | null
+          obra_id?: number
+          total_itens?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      checklist_fornecedor_equipe: {
+        Row: {
+          created_at: string
+          disciplina: string | null
+          fornecedor_id: number | null
+          fornecedor_nome: string
+          id: number
+          nome_equipe: string
+        }
+        Insert: {
+          created_at?: string
+          disciplina?: string | null
+          fornecedor_id?: number | null
+          fornecedor_nome: string
+          id?: number
+          nome_equipe: string
+        }
+        Update: {
+          created_at?: string
+          disciplina?: string | null
+          fornecedor_id?: number | null
+          fornecedor_nome?: string
+          id?: number
+          nome_equipe?: string
+        }
+        Relationships: []
+      }
       checklist_itens: {
         Row: {
           ativo: number
@@ -1508,6 +1695,8 @@ export type Database = {
         | "condicao_abaixo_padrao"
         | "fator_pessoal"
         | "fator_trabalho"
+      checklist_avaliacao: "ok" | "atencao" | "critico"
+      checklist_condicao: "ruim" | "regular" | "otima"
       classificacao_ocorrencia:
         | "incidente"
         | "incidente_ambiental"
@@ -1705,6 +1894,8 @@ export const Constants = {
         "fator_pessoal",
         "fator_trabalho",
       ],
+      checklist_avaliacao: ["ok", "atencao", "critico"],
+      checklist_condicao: ["ruim", "regular", "otima"],
       classificacao_ocorrencia: [
         "incidente",
         "incidente_ambiental",

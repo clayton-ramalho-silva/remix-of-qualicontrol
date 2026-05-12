@@ -36,6 +36,8 @@ import PlanoAcaoDetalhe from "./pages/PlanoAcaoDetalhe";
 import ObraDetalhe from "./pages/ObraDetalhe";
 import AndarDetalhe from "./pages/AndarDetalhe";
 import Aprovacoes from "./pages/Aprovacoes";
+import ChecklistList from "./pages/ChecklistList";
+import ChecklistEditor from "./pages/ChecklistEditor";
 
 function ProtectedShell() {
   const { user, loading } = useAuth();
@@ -65,6 +67,9 @@ function ProtectedShell() {
         <Route path="/planos-acao/:id" component={PlanoAcaoDetalhe} />
         <Route path="/aprovacoes/gerenciadora">{() => <Aprovacoes tipo="gerenciadora" />}</Route>
         <Route path="/aprovacoes/arquitetura">{() => <Aprovacoes tipo="arquitetura" />}</Route>
+        <Route path="/checklists" component={ChecklistList} />
+        <Route path="/checklists/novo" component={ChecklistEditor} />
+        <Route path="/checklists/:id" component={ChecklistEditor} />
         <Route path="/fornecedores" component={Fornecedores} />
         <Route path="/obras" component={Obras} />
         <Route path="/obras/:obraId/edificios/:edId/andares/:anId" component={AndarDetalhe} />
