@@ -274,7 +274,7 @@ export default function Relatorio() {
         ];
         if (cfg.mostrarVertical) metaItems.splice(1, 0, `<div><strong>Vertical:</strong> ${oLabels[d.origem] || d.origem}</div>`);
         if (cfg.mostrarFornecedores) metaItems.splice(1, 0, `<div><strong>Fornecedor:</strong> ${d.fornecedor || "—"}</div>`);
-        if (cfg.mostrarDataPrevista) metaItems.push(`<div><strong>Prazo:</strong> ${fmtDate(d.prazoSugerido)}</div>`);
+        if (cfg.mostrarDataPrevista) metaItems.push(`<div><strong>Data Prevista:</strong> ${fmtDate(d.prazoSugerido)}</div>`);
         if (cfg.mostrarDataFinalizacao) metaItems.push(`<div><strong>Fechamento:</strong> ${fmtDate(d.dataFechamento)}</div>`);
 
         // Planos de ação
@@ -364,7 +364,7 @@ export default function Relatorio() {
         atrasoHtml = `<div style="margin-top:20px;page-break-inside:avoid;border:1px solid #fecaca;border-radius:8px;padding:14px;background:#fff;border-left:4px solid #dc2626">
           <h2 style="font-size:14px;font-weight:700;color:#dc2626;margin-bottom:10px;display:flex;align-items:center;gap:6px">⚠ Itens em Atraso (${atrasados.length})</h2>
           <table style="width:100%;border-collapse:collapse;font-size:10px">
-            <thead><tr style="background:#fef2f2"><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">#</th><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">Grupo</th>${fornHead}<th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">Descrição</th><th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">Prazo</th><th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">Dias em atraso</th></tr></thead>
+            <thead><tr style="background:#fef2f2"><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">#</th><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">Grupo</th>${fornHead}<th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">Descrição</th><th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">Data Prevista</th><th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">Dias em atraso</th></tr></thead>
             <tbody>${rows}</tbody>
           </table>
         </div>`;
