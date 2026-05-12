@@ -191,11 +191,13 @@ export default function Relatorio() {
     if (desvios.length > 0) {
       const items = desvios.map((d: any) => {
         const tags: string[] = [];
-        if (d.tagCritico === 1) tags.push(`<span style="display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:600;background:#fef2f2;color:#dc2626;border:1px solid #fecaca">Crítico</span>`);
-        if (d.tagSegurancaTrabalho === 1) tags.push(`<span style="display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:600;background:#fffbeb;color:#d97706;border:1px solid #fde68a">Segurança</span>`);
-        if (d.tagSolicitadoCliente === 1) tags.push(`<span style="display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:600;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe">Solic. Cliente</span>`);
-        if (d.tagSolicitadoGerenciadora === 1) tags.push(`<span style="display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:600;background:#faf5ff;color:#7e22ce;border:1px solid #e9d5ff">Solic. Gerenciadora</span>`);
-        if (d.tagSolicitadoArquitetura === 1) tags.push(`<span style="display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:600;background:#fffbeb;color:#b45309;border:1px solid #fde68a">Solic. Arquitetura</span>`);
+        if (cfg.mostrarTagsClassificacao !== false) {
+          if (d.tagCritico === 1) tags.push(`<span style="display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:600;background:#fef2f2;color:#dc2626;border:1px solid #fecaca">Crítico</span>`);
+          if (d.tagSegurancaTrabalho === 1) tags.push(`<span style="display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:600;background:#fffbeb;color:#d97706;border:1px solid #fde68a">Segurança</span>`);
+          if (d.tagSolicitadoCliente === 1) tags.push(`<span style="display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:600;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe">Solic. Cliente</span>`);
+          if (d.tagSolicitadoGerenciadora === 1) tags.push(`<span style="display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:600;background:#faf5ff;color:#7e22ce;border:1px solid #e9d5ff">Solic. Gerenciadora</span>`);
+          if (d.tagSolicitadoArquitetura === 1) tags.push(`<span style="display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:600;background:#fffbeb;color:#b45309;border:1px solid #fde68a">Solic. Arquitetura</span>`);
+        }
 
         let metaItems = [
           `<div><strong>Grupo:</strong> ${d.disciplina}</div>`,
@@ -879,7 +881,7 @@ export default function Relatorio() {
                             <div><span className="font-medium text-foreground">Identificação:</span> {d.dataIdentificacao ? new Date(d.dataIdentificacao).toLocaleDateString("pt-BR") : "—"}</div>
                             {data.config?.mostrarDataPrevista && <div><span className="font-medium text-foreground">Prazo:</span> {d.prazoSugerido ? new Date(d.prazoSugerido).toLocaleDateString("pt-BR") : "—"}</div>}
                             {data.config?.mostrarDataFinalizacao && <div><span className="font-medium text-foreground">Fechamento:</span> {d.dataFechamento ? new Date(d.dataFechamento).toLocaleDateString("pt-BR") : "—"}</div>}
-                            {(d.tagCritico || d.tagSegurancaTrabalho || d.tagSolicitadoCliente || d.tagSolicitadoGerenciadora || d.tagSolicitadoArquitetura) && (
+                            {data.config?.mostrarTagsClassificacao !== false && (d.tagCritico || d.tagSegurancaTrabalho || d.tagSolicitadoCliente || d.tagSolicitadoGerenciadora || d.tagSolicitadoArquitetura) && (
                               <div className="flex gap-1 items-center flex-wrap">
                                 {d.tagCritico === 1 && <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold bg-red-100 text-red-700">Crítico</span>}
                                 {d.tagSegurancaTrabalho === 1 && <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold bg-amber-100 text-amber-700">Segurança</span>}
