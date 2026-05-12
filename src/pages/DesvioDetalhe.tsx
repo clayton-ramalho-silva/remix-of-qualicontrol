@@ -341,6 +341,19 @@ export default function DesvioDetalhe() {
         return;
       }
     }
+    if (newStatus === "fechado") {
+      const aprov = (data.aprovacoes || []) as any[];
+      const okGer = aprov.some((a) => a.tipo === "gerenciadora" && a.decisao === "aprovado");
+      const okArq = aprov.some((a) => a.tipo === "arquitetura" && a.decisao === "aprovado");
+      if (data.tagSolicitadoGerenciadora === 1 && !okGer) {
+        toast.error("Aprovação da Gerenciadora pendente — não é possível fechar este desvio.");
+        return;
+      }
+      if (data.tagSolicitadoArquitetura === 1 && !okArq) {
+        toast.error("Aprovação da Arquitetura Externa pendente — não é possível fechar este desvio.");
+        return;
+      }
+    }
     updateDesvio.mutate({ id: data.id, status: newStatus as any });
   };
 
