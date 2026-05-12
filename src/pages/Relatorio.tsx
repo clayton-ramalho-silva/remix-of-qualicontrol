@@ -993,8 +993,8 @@ export default function Relatorio() {
                         </thead>
                         <tbody>
                           {g.items.map((d: any) => (
-                            <tr key={d.id} className="border-b border-muted/30">
-                              <td className="py-1.5 px-2 font-mono text-muted-foreground">{d.id}</td>
+                            <tr key={d.id} className={`border-b border-muted/30 ${destaqueAtrasos && isAtrasado(d) ? "bg-red-50" : ""}`}>
+                              <td className={`py-1.5 px-2 font-mono text-muted-foreground ${destaqueAtrasos && isAtrasado(d) ? "border-l-[3px] border-l-red-600" : ""}`}>{d.id}</td>
                               <td className="py-1.5 px-2">{d.disciplina}</td>
                               {data.config?.mostrarFornecedores && <td className="py-1.5 px-2">{d.fornecedor || "—"}</td>}
                               <td className="py-1.5 px-2 whitespace-normal break-words min-w-[200px]">{d.descricao}</td>
@@ -1015,8 +1015,13 @@ export default function Relatorio() {
                                 {d.dataIdentificacao ? new Date(d.dataIdentificacao).toLocaleDateString("pt-BR") : "—"}
                               </td>
                               {data.config?.mostrarDataPrevista && (
-                                <td className="py-1.5 px-2 text-center text-muted-foreground">
+                                <td className="py-1.5 px-2 text-center text-muted-foreground whitespace-nowrap">
                                   {d.prazoSugerido ? new Date(d.prazoSugerido).toLocaleDateString("pt-BR") : "—"}
+                                  {destaqueAtrasos && isAtrasado(d) && (
+                                    <span className="ml-1 inline-block px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-600 text-white align-middle">
+                                      {diasAtraso(d)}d
+                                    </span>
+                                  )}
                                 </td>
                               )}
                               {data.config?.mostrarAprovacoes !== false && (
