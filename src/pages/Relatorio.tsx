@@ -1019,9 +1019,11 @@ export default function Relatorio() {
                                 </span>
                               </td>
                               {data.config?.mostrarVertical && <td className="py-1.5 px-2 text-center text-xs">{origemLabels[d.origem] || d.origem}</td>}
-                              <td className="py-1.5 px-2 text-center text-muted-foreground">
-                                {d.dataIdentificacao ? new Date(d.dataIdentificacao).toLocaleDateString("pt-BR") : "—"}
-                              </td>
+                              {data.config?.mostrarDataCriacao !== false && (
+                                <td className="py-1.5 px-2 text-center text-muted-foreground">
+                                  {d.dataIdentificacao ? new Date(d.dataIdentificacao).toLocaleDateString("pt-BR") : "—"}
+                                </td>
+                              )}
                               {data.config?.mostrarDataPrevista && (
                                 <td className="py-1.5 px-2 text-center text-muted-foreground whitespace-nowrap">
                                   {d.prazoSugerido ? new Date(d.prazoSugerido).toLocaleDateString("pt-BR") : "—"}
