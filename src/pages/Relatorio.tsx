@@ -48,6 +48,14 @@ function groupByAmbiente(desvios: any[]): { nome: string; items: any[] }[] {
   return result;
 }
 
+function isAtrasado(d: any): boolean {
+  return !!d?.prazoSugerido && d.status !== "fechado" && d.prazoSugerido < Date.now();
+}
+function diasAtraso(d: any): number {
+  if (!isAtrasado(d)) return 0;
+  return Math.floor((Date.now() - d.prazoSugerido) / 86400000);
+}
+
 export default function Relatorio() {
   const { data: obras } = trpc.obras.list.useQuery();
   const { data: fornecedores } = trpc.fornecedores.list.useQuery();
@@ -91,6 +99,7 @@ export default function Relatorio() {
   const [agruparPorAmbiente, setAgruparPorAmbiente] = useState(false);
   const [mostrarAprovacoes, setMostrarAprovacoes] = useState(true);
   const [mostrarDetalhamento, setMostrarDetalhamento] = useState(true);
+  const [destaqueAtrasos, setDestaqueAtrasos] = useState(true);
 
   // Seção 5 — Formato
   const [formato, setFormato] = useState<"pdf" | "excel">("pdf");
@@ -132,6 +141,7 @@ export default function Relatorio() {
       incluirAnalise,
       mostrarAprovacoes,
       mostrarDetalhamento,
+      destaqueAtrasos,
       formato,
     });
   };
