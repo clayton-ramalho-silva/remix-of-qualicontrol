@@ -1,108 +1,32 @@
-## Menu "Aprovações" + perfis de aprovador + registro no relatório
+## 1. Menu "Aprovações" agrupado na sidebar
 
-Criar fluxo completo de aprovação para desvios em **Aguardando Aceite** que tenham as tags **Solicitar Aprovação Gerenciadora** ou **Solicitar Aprovação Arquitetura Externa**, com dois novos itens de menu, dois novos perfis de usuário e exibição das aprovações no relatório.
+Em `src/components/DashboardLayout.tsx`, transformar os dois itens soltos:
+- `Aprov. Gerenciadora` → `/aprovacoes/gerenciadora`
+- `Aprov. Arquitetura` → `/aprovacoes/arquitetura`
 
----
+…em **um único grupo expansível "Aprovações"** (ícone `ShieldCheck`), seguindo o mesmo padrão dos outros grupos colapsáveis já existentes na sidebar. Itens filhos: "Gerenciadora" e "Arquitetura Externa". O grupo abre automaticamente quando a rota ativa for uma das duas. Quando a sidebar estiver no modo `collapsed` (icon-only), o grupo continua acessível via ícone.
 
-### 1. Banco de dados (migration)
+## 2. Coluna "Aprovações" no Índice do Relatório
 
-**Novos roles** — adicionar ao enum `app_role`:
-- `aprovador_gerenciadora`
-- `aprovador_arquitetura`
+Em `src/pages/Relatorio.tsx`, a coluna no índice ainda não existe — só o bloco no detalhamento. Adicionar:
 
-**Nova tabela `desvio_aprovacoes`** para registrar cada decisão (permite histórico e múltiplas aprovações por desvio):
-- `desvio_id` (bigint)
-- `tipo` enum novo `tipo_aprovacao`: `gerenciadora` | `arquitetura`
-- `decisao` enum novo `decisao_aprovacao`: `aprovado` | `reprovado`
-- `aprovador_id` (uuid), `aprovador_nome` (text)
-- `comentario` (text, obrigatório quando reprovado — validado no client)
-- `created_at`
+**PDF (HTML gerado, ~linha 196-217):**
+- Novo `thAprov` condicional a `cfg.mostrarAprovacoes !== false`, posicionado após Status.
+- Em cada linha (`rows`), nova `<td>` com badges compactos por aprovação registrada:
+  - `G✓` / `G✗` (Gerenciadora aprovado/reprovado)
+  - `A✓` / `A✗` (Arquitetura aprovado/reprovado)
+  - Verde para aprovado, vermelho para reprovado, cinza/traço quando não há aprovação
+- Tooltip não funciona em PDF, então o detalhamento (já existente) continua mostrando nome do aprovador e comentário.
 
-**RLS:**
-- `SELECT`: qualquer authenticated (read-only para todos no menu).
-- `INSERT`: apenas usuários com role correspondente (`has_role(auth.uid(),'aprovador_gerenciadora')` para `tipo='gerenciadora'`, idem arquitetura) **ou** `admin`. Validação via trigger `BEFORE INSERT` que confere role vs tipo.
+**Preview UI (~linha 878-887 + linhas do tbody):**
+- Espelhar a mesma coluna condicional na tabela React, com `Badge` do shadcn (variantes verde/vermelho).
+- Usar mesma lógica: iterar `d.aprovacoes` e exibir 1 badge por registro.
 
-**Atualização do enum existente** não é necessária — usaremos a tabela `desvio_aprovacoes` + a coluna `status` atual de `desvios` para refletir o resultado.
+**Quando agrupado por ambiente:** a coluna entra no mesmo `tableHead` reutilizado, então cobre os dois modos automaticamente.
 
----
+## Arquivos afetados
 
-### 2. Regras de negócio (no client / hook compartilhado)
+- `src/components/DashboardLayout.tsx` — agrupar menu Aprovações
+- `src/pages/Relatorio.tsx` — adicionar coluna Aprovações no índice (PDF + preview)
 
-Um desvio é "**pendente de aprovação**" quando:
-- `status = 'aguardando_aceite'`, **e**
-- `tag_solicitado_gerenciadora = 1` ou `tag_solicitado_arquitetura = 1`, **e**
-- ainda não há registro em `desvio_aprovacoes` para a(s) tag(s) ativa(s).
-
-**Ao aprovar** (ação de um aprovador na sua fila):
-1. Inserir linha em `desvio_aprovacoes` (`decisao='aprovado'`).
-2. Se ainda houver outra tag de aprovação pendente → manter `aguardando_aceite`.
-3. Se for a última pendência → atualizar `desvios.status = 'fechado'` + `data_fechamento = now`.
-4. Inserir linha em `historico` ("Aprovado por X — Gerenciadora/Arquitetura").
-
-**Ao reprovar** (comentário obrigatório):
-1. Inserir linha em `desvio_aprovacoes` (`decisao='reprovado'`, `comentario`).
-2. `desvios.status = 'em_andamento'`.
-3. Histórico + (futuro) notificação ao responsável.
-
----
-
-### 3. Navegação (`src/components/DashboardLayout.tsx`)
-
-Dois novos itens, agrupados sob ícone `ShieldCheck`, posicionados **logo após "Planos de Ação"**:
-
-```
-Aprovações Gerenciadora     /aprovacoes/gerenciadora
-Aprovações Arquitetura      /aprovacoes/arquitetura
-```
-
-- **Visibilidade:** todos os usuários autenticados veem.
-- **Badge de contagem:** só aparece quando o usuário tem o role correspondente (ou é admin). Reusa o padrão do `badgeKey` existente (`planosPendentes`) — adicionar `aprovacoesGerenciadoraPendentes` e `aprovacoesArquiteturaPendentes` no `trpc.notificacoes.contagens` (ou query equivalente).
-
----
-
-### 4. Páginas novas
-
-**`src/pages/AprovacoesGerenciadora.tsx`** e **`src/pages/AprovacoesArquitetura.tsx`** (componente compartilhado `AprovacoesList` com prop `tipo`):
-
-Layout:
-- Header com contador ("3 desvios aguardando sua aprovação").
-- Filtros: obra, fornecedor, severidade, busca.
-- Lista em cards (mobile-friendly): foto miniatura, descrição, obra/local, severidade, data, badges de tags.
-- Click no card → drawer/dialog com detalhe completo (fotos, planos de ação, histórico) + dois botões grandes: **Aprovar** (verde) e **Reprovar** (vermelho, abre textarea obrigatória).
-- Para usuários **sem o role**: mesma tela, mas botões desabilitados com tooltip "Você não tem permissão de Aprovador de [tipo]" (read-only confirmado).
-- Estado vazio amigável ("Nenhuma aprovação pendente 🎉").
-
----
-
-### 5. Relatório (`src/pages/Relatorio.tsx` + `supabase/functions/gerar-relatorio/index.ts`)
-
-**Novo checkbox** em "Conteúdo do Relatório":
-- "Mostrar aprovações" (ícone `ShieldCheck`), default `true`, estado `mostrarAprovacoes`.
-
-**Edge function:** carregar `desvio_aprovacoes` para os `ids` retornados (uma query) e anexar `aprovacoes: [{tipo, decisao, aprovador_nome, comentario, data}]` em cada desvio.
-
-**Renderização (PDF + Preview), quando `mostrarAprovacoes` ativo:**
-- **Índice:** nova coluna compacta "Aprov." com badges: `G✓` / `G✗` / `A✓` / `A✗` (verde/vermelho), só mostra as tags relevantes do desvio.
-- **Detalhamento (card do desvio):** bloco "Aprovações" abaixo de Tags, listando "[Tipo] — [Decisão] por [Nome] em [data]" + comentário se houver.
-
-Quando desativado: comportamento atual.
-
----
-
-### 6. Administração — atribuição de roles
-
-Em `src/pages/Usuarios.tsx` (ou `Administracao.tsx`, conforme onde hoje se gerencia roles): adicionar checkboxes para os dois novos roles ao lado de "Admin". Uso do mesmo fluxo já existente de `user_roles`.
-
----
-
-### Detalhes técnicos
-
-- **Arquivos novos:** `src/pages/AprovacoesGerenciadora.tsx`, `src/pages/AprovacoesArquitetura.tsx`, `src/components/AprovacoesList.tsx` (compartilhado), `src/components/AprovacaoActions.tsx` (botões + dialog reprovar).
-- **Arquivos editados:** `App.tsx` (rotas), `DashboardLayout.tsx` (menu + badges), `Relatorio.tsx` (checkbox + render), `gerar-relatorio/index.ts` (query + payload), `Usuarios.tsx` (atribuir roles), `useAuth.ts` (expor lista de roles, não só `isAdmin`).
-- **Hook utilitário:** `useAprovacoes(tipo)` encapsula query + mutações.
-- **Sem mudança em** `desvios.status` enum — fluxo final continua usando `aguardando_aceite` → `fechado`/`em_andamento`.
-- **Migration única** cria enum extensions + tabela + RLS + trigger.
-
-### Fora deste escopo (sugestões para depois)
-- E-mail/notificação push ao aprovador quando um desvio entra na fila.
-- Reabrir aprovação após nova evidência adicionada (fluxo de re-submissão).
+Nenhuma mudança de DB, edge function ou hooks. Os dados `d.aprovacoes` já chegam do backend.
