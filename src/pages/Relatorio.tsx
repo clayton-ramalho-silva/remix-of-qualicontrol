@@ -586,6 +586,10 @@ export default function Relatorio() {
                 <Search className="h-3.5 w-3.5 text-muted-foreground" /> Localização na planta
               </label>
               <label className="flex items-center gap-2 cursor-pointer text-sm">
+                <Checkbox checked={mostrarTagsClassificacao} onCheckedChange={(v) => setMostrarTagsClassificacao(!!v)} />
+                <Tag className="h-3.5 w-3.5 text-muted-foreground" /> Tags de classificação
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm">
                 <Checkbox checked={incluirAnalise} onCheckedChange={(v) => setIncluirAnalise(!!v)} />
                 <BrainCircuit className="h-3.5 w-3.5 text-primary" /> Incluir análise IA
               </label>
