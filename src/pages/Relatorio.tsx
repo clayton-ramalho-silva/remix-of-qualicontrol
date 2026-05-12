@@ -12,6 +12,7 @@ import {
   TrendingUp, Printer, BrainCircuit, Search, ClipboardCheck,
   Wrench, Filter, Settings2, Image, Users, Calendar, CheckCircle2,
   Clock, Siren, HardHat, UserCheck, Tag, MapPin,
+  ShieldCheck,
 } from "lucide-react";
 import { Streamdown } from "streamdown";
 
@@ -88,6 +89,7 @@ export default function Relatorio() {
   const [mostrarSeveridade, setMostrarSeveridade] = useState(true);
   const [incluirAnalise, setIncluirAnalise] = useState(true);
   const [agruparPorAmbiente, setAgruparPorAmbiente] = useState(false);
+  const [mostrarAprovacoes, setMostrarAprovacoes] = useState(true);
 
   // Seção 5 — Formato
   const [formato, setFormato] = useState<"pdf" | "excel">("pdf");
@@ -127,6 +129,7 @@ export default function Relatorio() {
       mostrarTagsClassificacao,
       mostrarSeveridade,
       incluirAnalise,
+      mostrarAprovacoes,
       formato,
     });
   };
