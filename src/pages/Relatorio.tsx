@@ -594,6 +594,10 @@ export default function Relatorio() {
                 <Tag className="h-3.5 w-3.5 text-muted-foreground" /> Tags de classificação
               </label>
               <label className="flex items-center gap-2 cursor-pointer text-sm">
+                <Checkbox checked={mostrarSeveridade} onCheckedChange={(v) => setMostrarSeveridade(!!v)} />
+                <AlertTriangle className="h-3.5 w-3.5 text-muted-foreground" /> Mostra severidade
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm">
                 <Checkbox checked={incluirAnalise} onCheckedChange={(v) => setIncluirAnalise(!!v)} />
                 <BrainCircuit className="h-3.5 w-3.5 text-primary" /> Incluir análise IA
               </label>
@@ -810,7 +814,7 @@ export default function Relatorio() {
                             <th className="text-left py-2 px-2 font-semibold">#</th>
                             <th className="text-left py-2 px-2 font-semibold">Grupo</th>                        {data.config?.mostrarFornecedores && <th className="text-left py-2 px-2 font-semibold">Fornecedor</th>}
                             <th className="text-left py-2 px-2 font-semibold">Descrição</th>
-                            <th className="text-center py-2 px-2 font-semibold">Severidade</th>
+                            {data.config?.mostrarSeveridade !== false && <th className="text-center py-2 px-2 font-semibold">Severidade</th>}
                             <th className="text-center py-2 px-2 font-semibold">Status</th>
                             {data.config?.mostrarVertical && <th className="text-center py-2 px-2 font-semibold">Vertical</th>}
                             <th className="text-center py-2 px-2 font-semibold">Data</th>
@@ -824,11 +828,13 @@ export default function Relatorio() {
                               <td className="py-1.5 px-2">{d.disciplina}</td>
                               {data.config?.mostrarFornecedores && <td className="py-1.5 px-2">{d.fornecedor || "—"}</td>}
                               <td className="py-1.5 px-2 whitespace-normal break-words min-w-[200px]">{d.descricao}</td>
-                              <td className="py-1.5 px-2 text-center">
-                                <span className={`badge inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${sevColors[d.severidade] || ""}`}>
-                                  {d.severidade}
-                                </span>
-                              </td>
+                              {data.config?.mostrarSeveridade !== false && (
+                                <td className="py-1.5 px-2 text-center">
+                                  <span className={`badge inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${sevColors[d.severidade] || ""}`}>
+                                    {d.severidade}
+                                  </span>
+                                </td>
+                              )}
                               <td className="py-1.5 px-2 text-center">
                                 <span className={`badge inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusColors[d.status] || ""}`}>
                                   {statusLabels[d.status] || d.status}
@@ -869,9 +875,11 @@ export default function Relatorio() {
                               Desvio
                             </h3>
                             <div className="flex gap-1.5">
-                              <span className={`badge inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${sevColors[d.severidade] || ""}`}>
-                                {d.severidade}
-                              </span>
+                              {data.config?.mostrarSeveridade !== false && (
+                                <span className={`badge inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${sevColors[d.severidade] || ""}`}>
+                                  {d.severidade}
+                                </span>
+                              )}
                               <span className={`badge inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusColors[d.status] || ""}`}>
                                 {statusLabels[d.status] || d.status}
                               </span>
