@@ -8,16 +8,17 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Search, Plus, Pencil, Calendar, Loader2, ArrowLeftRight, Bookmark, BookmarkCheck, BookmarkX, ShieldCheck, ListChecks, HardHat, Layers } from "lucide-react";
+import { Building2, Search, Plus, Pencil, Calendar, Loader2, ArrowLeftRight, Bookmark, BookmarkCheck, BookmarkX, ShieldCheck, ListChecks, HardHat, Layers, ClipboardCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 
-type Vertical = "qualidade" | "checklist" | "qsms";
+type Vertical = "qualidade" | "checklist" | "qsms" | "vistoria";
 
-const verticais: { key: Vertical; label: string; icon: any; coverCol: "cobertura_qualidade" | "cobertura_checklist" | "cobertura_qsms"; color: string }[] = [
+const verticais: { key: Vertical; label: string; icon: any; coverCol: "cobertura_qualidade" | "cobertura_checklist" | "cobertura_qsms" | "cobertura_vistoria"; color: string }[] = [
   { key: "qualidade", label: "Qualidade", icon: ShieldCheck, coverCol: "cobertura_qualidade", color: "text-sky-600" },
   { key: "checklist", label: "Checklist", icon: ListChecks, coverCol: "cobertura_checklist", color: "text-amber-600" },
   { key: "qsms",      label: "QSMS",      icon: HardHat,    coverCol: "cobertura_qsms",      color: "text-emerald-600" },
+  { key: "vistoria",  label: "Vistoria",  icon: ClipboardCheck, coverCol: "cobertura_vistoria", color: "text-purple-600" },
 ];
 
 type Obra = {
@@ -31,6 +32,7 @@ type Obra = {
   cobertura_qualidade: number;
   cobertura_checklist: number;
   cobertura_qsms: number;
+  cobertura_vistoria: number;
   marcacao: "na_fila" | "descartada" | null;
   ultimoDesvio?: number | null;
   ultimaVistoria?: number | null;

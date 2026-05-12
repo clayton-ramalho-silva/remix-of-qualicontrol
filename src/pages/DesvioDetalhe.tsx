@@ -474,6 +474,7 @@ export default function DesvioDetalhe() {
                         <SelectItem value="qualidade">Qualidade</SelectItem>
                         <SelectItem value="checklist">Checklist</SelectItem>
                         <SelectItem value="qsms">QSMS</SelectItem>
+                        <SelectItem value="vistoria">Vistoria</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

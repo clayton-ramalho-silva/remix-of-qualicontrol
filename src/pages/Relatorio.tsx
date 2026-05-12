@@ -23,7 +23,7 @@ const statusLabels: Record<string, string> = {
   fechado: "Fechado", aguardando_aceite: "Ag. Aceite",
 };
 const origemLabels: Record<string, string> = {
-  qualidade: "Qualidade", checklist: "Checklist", qsms: "QSMS",
+  qualidade: "Qualidade", checklist: "Checklist", qsms: "QSMS", vistoria: "Vistoria",
 };
 const sevColors: Record<string, string> = {
   grave: "bg-red-100 text-red-700",
@@ -89,6 +89,7 @@ function RelatorioDesvios() {
   const [origemQualidade, setOrigemQualidade] = useState(true);
   const [origemPunchList, setOrigemPunchList] = useState(true);
   const [origemPosObra, setOrigemPosObra] = useState(true);
+  const [origemVistoria, setOrigemVistoria] = useState(true);
 
   // Seção 3 — Filtros adicionais
   const [fornecedorNome, setFornecedorNome] = useState<string>("all");
@@ -127,16 +128,17 @@ function RelatorioDesvios() {
   const generateMutation = trpc.relatorio.generate.useMutation();
 
   const handleGenerate = () => {
-    const origens: ("qualidade" | "checklist" | "qsms")[] = [];
+    const origens: ("qualidade" | "checklist" | "qsms" | "vistoria")[] = [];
     if (origemQualidade) origens.push("qualidade");
     if (origemPunchList) origens.push("checklist");
     if (origemPosObra) origens.push("qsms");
+    if (origemVistoria) origens.push("vistoria");
 
     generateMutation.mutate({
       obraId: obraId === "all" ? undefined : parseInt(obraId),
       dataInicial: dataInicial ? new Date(dataInicial).getTime() : undefined,
       dataFinal: dataFinal ? new Date(dataFinal + "T23:59:59").getTime() : undefined,
-      origens: origens.length === 3 ? undefined : origens,
+      origens: origens.length === 4 ? undefined : origens,
       fornecedorNome: fornecedorNome === "all" ? undefined : fornecedorNome,
       tagCritico,
       tagSegurancaTrabalho: tagSeguranca,
@@ -195,7 +197,7 @@ function RelatorioDesvios() {
       return `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:600;${m[s] || ''}">${labels[s] || s}</span>`;
     };
     const fmtDate = (ts: number | null) => ts ? new Date(ts).toLocaleDateString("pt-BR") : "—";
-    const oLabels: Record<string, string> = { qualidade: "Qualidade", checklist: "Checklist", qsms: "QSMS" };
+    const oLabels: Record<string, string> = { qualidade: "Qualidade", checklist: "Checklist", qsms: "QSMS", vistoria: "Vistoria" };
 
     // Build KPI cards HTML
     const kpiItems = kpis ? [
@@ -541,6 +543,11 @@ function RelatorioDesvios() {
                 <Checkbox checked={origemPosObra} onCheckedChange={(v) => setOrigemPosObra(!!v)} />
                 <Wrench className="h-4 w-4 text-violet-600" />
                 <span className="text-sm">QSMS</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox checked={origemVistoria} onCheckedChange={(v) => setOrigemVistoria(!!v)} />
+                <ClipboardCheck className="h-4 w-4 text-emerald-600" />
+                <span className="text-sm">Vistoria</span>
               </label>
             </div>
           </div>

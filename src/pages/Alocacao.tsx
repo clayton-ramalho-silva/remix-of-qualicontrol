@@ -11,18 +11,18 @@ import { Textarea } from "@/components/ui/textarea";
 import VoiceRecorderButton from "@/components/VoiceRecorderButton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Calendar, ChevronLeft, ChevronRight, Filter, Plus, Check, X, Clock, ShieldCheck, ListChecks, HardHat, Trash2 } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Filter, Plus, Check, X, Clock, ShieldCheck, ListChecks, HardHat, Trash2, ClipboardCheck } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 
-type Vertical = "qualidade" | "checklist" | "qsms";
+type Vertical = "qualidade" | "checklist" | "qsms" | "vistoria";
 type Status = "pendente" | "cumprido" | "cancelado";
 
 const verticais: {
   key: Vertical;
   label: string;
   icon: any;
-  coverCol: "cobertura_qualidade" | "cobertura_checklist" | "cobertura_qsms";
+  coverCol: "cobertura_qualidade" | "cobertura_checklist" | "cobertura_qsms" | "cobertura_vistoria";
   // cores por status (pendente / cumprido / cancelado) específicas da vertical
   styles: { pendente: string; cumprido: string; cancelado: string; dot: string };
 }[] = [
@@ -51,6 +51,15 @@ const verticais: {
       cumprido:  "bg-emerald-600 border-emerald-700 text-white",
       cancelado: "bg-emerald-50 border-emerald-200 text-emerald-700 line-through opacity-60",
       dot: "bg-emerald-500",
+    },
+  },
+  {
+    key: "vistoria", label: "Vistoria", icon: ClipboardCheck, coverCol: "cobertura_vistoria",
+    styles: {
+      pendente:  "bg-purple-50 border-purple-300 text-purple-900",
+      cumprido:  "bg-purple-600 border-purple-700 text-white",
+      cancelado: "bg-purple-50 border-purple-200 text-purple-700 line-through opacity-60",
+      dot: "bg-purple-500",
     },
   },
 ];
