@@ -990,6 +990,21 @@ export default function Relatorio() {
                               </div>
                             )}
                           </div>
+                          {data.config?.mostrarAprovacoes !== false && d.aprovacoes && d.aprovacoes.length > 0 && (
+                            <div className="text-xs mb-3 flex flex-wrap items-center gap-1.5">
+                              <span className="font-semibold text-foreground">Aprovações:</span>
+                              {d.aprovacoes.map((a: any, i: number) => (
+                                <span
+                                  key={i}
+                                  className={`inline-block px-2 py-0.5 rounded border text-[10px] font-medium ${a.decisao === "aprovado" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-red-50 text-red-700 border-red-200"}`}
+                                  title={a.comentario || ""}
+                                >
+                                  {a.tipo === "gerenciadora" ? "Gerenciadora" : "Arquitetura"} {a.decisao === "aprovado" ? "✓" : "✗"}
+                                  {a.aprovador_nome ? ` — ${a.aprovador_nome}` : ""}
+                                </span>
+                              ))}
+                            </div>
+                          )}
 
                           {/* Planos de ação */}
                           {data.config?.mostrarResponsaveis && d.planos && d.planos.length > 0 && (
