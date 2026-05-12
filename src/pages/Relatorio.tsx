@@ -824,6 +824,47 @@ export default function Relatorio() {
                 </div>
               )}
 
+              {/* Itens em Atraso */}
+              {destaqueAtrasos && data.desvios && (() => {
+                const atrasados = (data.desvios as any[]).filter(isAtrasado).sort((a, b) => a.prazoSugerido - b.prazoSugerido);
+                if (atrasados.length === 0) return null;
+                return (
+                  <div className="section mb-6 border border-red-200 border-l-4 border-l-red-600 rounded-lg p-4 bg-red-50/40">
+                    <h2 className="text-base font-bold text-red-700 mb-3 flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4" /> Itens em Atraso ({atrasados.length})
+                    </h2>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="bg-red-100/60">
+                            <th className="text-left py-2 px-2 font-semibold">#</th>
+                            <th className="text-left py-2 px-2 font-semibold">Grupo</th>
+                            {data.config?.mostrarFornecedores && <th className="text-left py-2 px-2 font-semibold">Fornecedor</th>}
+                            <th className="text-left py-2 px-2 font-semibold">Descrição</th>
+                            <th className="text-center py-2 px-2 font-semibold">Prazo</th>
+                            <th className="text-center py-2 px-2 font-semibold">Dias em atraso</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {atrasados.map((d: any) => (
+                            <tr key={d.id} className="border-b border-red-100">
+                              <td className="py-1.5 px-2 font-mono font-semibold text-red-700">#{d.id}</td>
+                              <td className="py-1.5 px-2">{d.disciplina}</td>
+                              {data.config?.mostrarFornecedores && <td className="py-1.5 px-2">{d.fornecedor || "—"}</td>}
+                              <td className="py-1.5 px-2 whitespace-normal break-words min-w-[200px]">{d.descricao}</td>
+                              <td className="py-1.5 px-2 text-center text-muted-foreground whitespace-nowrap">{new Date(d.prazoSugerido).toLocaleDateString("pt-BR")}</td>
+                              <td className="py-1.5 px-2 text-center">
+                                <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-600 text-white">{diasAtraso(d)}d</span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* Tabela por Disciplina */}
               {data.config?.mostrarTabelaDisciplinas && data.porDisciplina && Object.keys(data.porDisciplina).length > 0 && (
                 <>
