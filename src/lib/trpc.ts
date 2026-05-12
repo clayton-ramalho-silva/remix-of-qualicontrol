@@ -91,6 +91,8 @@ const queryResolvers: Record<string, Resolver> = {
     if (filters?.tagCritico) q = q.eq("tag_critico", 1);
     if (filters?.tagSegurancaTrabalho) q = q.eq("tag_seguranca_trabalho", 1);
     if (filters?.tagSolicitadoCliente) q = q.eq("tag_solicitado_cliente", 1);
+    if (filters?.tagSolicitadoGerenciadora) q = q.eq("tag_solicitado_gerenciadora", 1);
+    if (filters?.tagSolicitadoArquitetura) q = q.eq("tag_solicitado_arquitetura", 1);
     const { data, error } = await q;
     if (error) throw error;
     return (data || []).map(mapDesvioFromDb);
@@ -614,6 +616,8 @@ const mutationResolvers: Record<string, Resolver> = {
       tag_critico: input.tagCritico ?? 0,
       tag_seguranca_trabalho: input.tagSegurancaTrabalho ?? 0,
       tag_solicitado_cliente: input.tagSolicitadoCliente ?? 0,
+      tag_solicitado_gerenciadora: input.tagSolicitadoGerenciadora ?? 0,
+      tag_solicitado_arquitetura: input.tagSolicitadoArquitetura ?? 0,
       data_identificacao: input.dataIdentificacao,
       prazo_sugerido: input.prazoSugerido ?? null,
       planta_id: input.plantaId ?? null,
@@ -641,6 +645,8 @@ const mutationResolvers: Record<string, Resolver> = {
       severidade: "severidade", origem: "origem", status: "status",
       tagCritico: "tag_critico", tagSegurancaTrabalho: "tag_seguranca_trabalho",
       tagSolicitadoCliente: "tag_solicitado_cliente",
+      tagSolicitadoGerenciadora: "tag_solicitado_gerenciadora",
+      tagSolicitadoArquitetura: "tag_solicitado_arquitetura",
       prazoSugerido: "prazo_sugerido", dataFechamento: "data_fechamento",
       plantaId: "planta_id", pinX: "pin_x", pinY: "pin_y",
     };
@@ -1424,6 +1430,8 @@ function mapDesvioFromDb(d: any) {
     tagCritico: d.tag_critico,
     tagSegurancaTrabalho: d.tag_seguranca_trabalho,
     tagSolicitadoCliente: d.tag_solicitado_cliente,
+    tagSolicitadoGerenciadora: d.tag_solicitado_gerenciadora,
+    tagSolicitadoArquitetura: d.tag_solicitado_arquitetura,
     dataIdentificacao: d.data_identificacao ? Number(d.data_identificacao) : null,
     prazoSugerido: d.prazo_sugerido ? Number(d.prazo_sugerido) : null,
     dataFechamento: d.data_fechamento ? Number(d.data_fechamento) : null,
