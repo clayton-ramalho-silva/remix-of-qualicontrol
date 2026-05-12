@@ -121,6 +121,9 @@ function RelatorioDesvios() {
   const [mostrarAprovacoes, setMostrarAprovacoes] = useState(true);
   const [mostrarDetalhamento, setMostrarDetalhamento] = useState(true);
   const [destaqueAtrasos, setDestaqueAtrasos] = useState(true);
+  const [mostrarIndicadores, setMostrarIndicadores] = useState(true);
+  const [mostrarPerformanceFornecedores, setMostrarPerformanceFornecedores] = useState(true);
+  const [mostrarIndiceDesvios, setMostrarIndiceDesvios] = useState(true);
 
   // Seção 5 — Formato
   const [formato, setFormato] = useState<"pdf" | "excel">("pdf");
@@ -164,6 +167,9 @@ function RelatorioDesvios() {
       incluirAnalise,
       mostrarAprovacoes,
       mostrarDetalhamento,
+      mostrarIndicadores,
+      mostrarPerformanceFornecedores,
+      mostrarIndiceDesvios,
       formato,
     });
   };
