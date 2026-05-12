@@ -235,7 +235,7 @@ export default function Relatorio() {
 
     // Detalhamento dos Desvios
     let detailHtml = "";
-    if (desvios.length > 0) {
+    if (desvios.length > 0 && cfg.mostrarDetalhamento !== false) {
       const buildCard = (d: any) => {
         const tags: string[] = [];
         if (cfg.mostrarTagsClassificacao !== false) {
