@@ -652,7 +652,7 @@ export default function Relatorio() {
               </label>
               <label className="flex items-center gap-2 cursor-pointer text-sm">
                 <Checkbox checked={mostrarDataCriacao} onCheckedChange={(v) => setMostrarDataCriacao(!!v)} />
-                <Calendar className="h-3.5 w-3.5 text-muted-foreground" /> Mostra data de criação
+                <Calendar className="h-3.5 w-3.5 text-muted-foreground" /> Data de Abertura
               </label>
               <label className="flex items-center gap-2 cursor-pointer text-sm">
                 <Checkbox checked={mostrarDataFinalizacao} onCheckedChange={(v) => setMostrarDataFinalizacao(!!v)} />
