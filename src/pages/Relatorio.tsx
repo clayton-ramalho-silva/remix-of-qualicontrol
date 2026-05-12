@@ -11,7 +11,7 @@ import {
   FileText, Download, Loader2, BarChart3, AlertTriangle,
   TrendingUp, Printer, BrainCircuit, Search, ClipboardCheck,
   Wrench, Filter, Settings2, Image, Users, Calendar, CheckCircle2,
-  Clock, Siren, HardHat, UserCheck, Tag,
+  Clock, Siren, HardHat, UserCheck, Tag, MapPin,
 } from "lucide-react";
 import { Streamdown } from "streamdown";
 
@@ -33,6 +33,19 @@ const statusColors: Record<string, string> = {
   fechado: "bg-emerald-100 text-emerald-700",
   aguardando_aceite: "bg-purple-100 text-purple-700",
 };
+
+function groupByAmbiente(desvios: any[]): { nome: string; items: any[] }[] {
+  const map = new Map<string, any[]>();
+  for (const d of desvios) {
+    const key = (d.localizacao && String(d.localizacao).trim()) || "__sem__";
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(d);
+  }
+  const namedKeys = Array.from(map.keys()).filter(k => k !== "__sem__").sort((a, b) => a.localeCompare(b, "pt-BR"));
+  const result = namedKeys.map(k => ({ nome: k, items: map.get(k)! }));
+  if (map.has("__sem__")) result.push({ nome: "Sem ambiente definido", items: map.get("__sem__")! });
+  return result;
+}
 
 export default function Relatorio() {
   const { data: obras } = trpc.obras.list.useQuery();
@@ -74,6 +87,7 @@ export default function Relatorio() {
   const [mostrarTagsClassificacao, setMostrarTagsClassificacao] = useState(true);
   const [mostrarSeveridade, setMostrarSeveridade] = useState(true);
   const [incluirAnalise, setIncluirAnalise] = useState(true);
+  const [agruparPorAmbiente, setAgruparPorAmbiente] = useState(false);
 
   // Seção 5 — Formato
   const [formato, setFormato] = useState<"pdf" | "excel">("pdf");
@@ -180,20 +194,31 @@ export default function Relatorio() {
       const thPrazo = cfg.mostrarDataPrevista ? `<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Prazo</th>` : "";
       const thVert = cfg.mostrarVertical ? `<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Vertical</th>` : "";
       const thSev = cfg.mostrarSeveridade !== false ? `<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Severidade</th>` : "";
-      const rows = desvios.map((d: any) => {
+      const buildRow = (d: any) => {
         const tdForn = cfg.mostrarFornecedores ? `<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9">${d.fornecedor || "—"}</td>` : "";
         const tdPrazo = cfg.mostrarDataPrevista ? `<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${fmtDate(d.prazoSugerido)}</td>` : "";
         const tdVert = cfg.mostrarVertical ? `<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;vertical-align:top">${oLabels[d.origem] || d.origem}</td>` : "";
         const tdSev = cfg.mostrarSeveridade !== false ? `<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;vertical-align:top">${sevBadge(d.severidade)}</td>` : "";
         return `<tr><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;font-family:monospace;vertical-align:top"><a href="#desvio-${d.id}" style="color:#0d9488;text-decoration:none;font-weight:600">#${d.id}</a></td><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;vertical-align:top">${d.disciplina}</td>${tdForn}<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;white-space:normal;word-break:break-word;vertical-align:top">${d.descricao}</td>${tdSev}<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;vertical-align:top">${stBadge(d.status)}</td>${tdVert}<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;color:#64748b;vertical-align:top">${fmtDate(d.dataIdentificacao)}</td>${tdPrazo}</tr>`;
-      }).join("");
-      indexHtml = `<div style="margin-top:28px;page-break-before:always"><h2 style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #0d9488">Índice de Desvios (${desvios.length})</h2><table style="width:100%;border-collapse:collapse;font-size:10px"><thead><tr style="background:#f1f5f9"><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">#</th><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Grupo</th>${thForn}<th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Descrição</th>${thSev}<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Status</th>${thVert}<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Data</th>${thPrazo}</tr></thead><tbody>${rows}</tbody></table></div>`;
+      };
+      const tableHead = `<thead><tr style="background:#f1f5f9"><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">#</th><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Grupo</th>${thForn}<th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Descrição</th>${thSev}<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Status</th>${thVert}<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Data</th>${thPrazo}</tr></thead>`;
+      if (agruparPorAmbiente) {
+        const groups = groupByAmbiente(desvios);
+        const blocks = groups.map((g, i) => {
+          const rows = g.items.map(buildRow).join("");
+          return `<div style="margin-top:${i === 0 ? 12 : 18}px;page-break-inside:avoid"><h3 style="font-size:12px;font-weight:600;color:#0f172a;background:#ecfeff;border-left:3px solid #0d9488;padding:5px 10px;margin-bottom:6px;border-radius:3px">${g.nome} <span style="color:#64748b;font-weight:500">— ${g.items.length} desvio${g.items.length > 1 ? "s" : ""}</span></h3><table style="width:100%;border-collapse:collapse;font-size:10px">${tableHead}<tbody>${rows}</tbody></table></div>`;
+        }).join("");
+        indexHtml = `<div style="margin-top:28px;page-break-before:always"><h2 style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #0d9488">Índice de Desvios por Ambiente (${desvios.length})</h2>${blocks}</div>`;
+      } else {
+        const rows = desvios.map(buildRow).join("");
+        indexHtml = `<div style="margin-top:28px;page-break-before:always"><h2 style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #0d9488">Índice de Desvios (${desvios.length})</h2><table style="width:100%;border-collapse:collapse;font-size:10px">${tableHead}<tbody>${rows}</tbody></table></div>`;
+      }
     }
 
     // Detalhamento dos Desvios
     let detailHtml = "";
     if (desvios.length > 0) {
-      const items = desvios.map((d: any) => {
+      const buildCard = (d: any) => {
         const tags: string[] = [];
         if (cfg.mostrarTagsClassificacao !== false) {
           if (d.tagCritico === 1) tags.push(`<span style="display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:600;background:#fef2f2;color:#dc2626;border:1px solid #fecaca">Crítico</span>`);
@@ -264,8 +289,18 @@ export default function Relatorio() {
           ${fotosHtml}
           ${plantaHtml}
         </div>`;
-      }).join("");
-      detailHtml = `<div style="margin-top:28px;page-break-before:always"><h2 style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid #0d9488">Detalhamento dos Desvios</h2>${items}</div>`;
+      };
+      if (agruparPorAmbiente) {
+        const groups = groupByAmbiente(desvios);
+        const blocks = groups.map((g, i) => {
+          const cards = g.items.map(buildCard).join("");
+          return `<div style="${i === 0 ? "" : "page-break-before:always;"}margin-top:${i === 0 ? 12 : 0}px"><h3 style="font-size:13px;font-weight:700;color:#0f172a;background:#ecfeff;border-left:4px solid #0d9488;padding:8px 12px;margin-bottom:12px;border-radius:4px">Ambiente: ${g.nome} <span style="color:#64748b;font-weight:500;font-size:11px">— ${g.items.length} desvio${g.items.length > 1 ? "s" : ""}</span></h3>${cards}</div>`;
+        }).join("");
+        detailHtml = `<div style="margin-top:28px;page-break-before:always"><h2 style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid #0d9488">Detalhamento dos Desvios por Ambiente</h2>${blocks}</div>`;
+      } else {
+        const items = desvios.map(buildCard).join("");
+        detailHtml = `<div style="margin-top:28px;page-break-before:always"><h2 style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid #0d9488">Detalhamento dos Desvios</h2>${items}</div>`;
+      }
     }
 
     // Análise IA
@@ -598,6 +633,10 @@ export default function Relatorio() {
                 <AlertTriangle className="h-3.5 w-3.5 text-muted-foreground" /> Mostra severidade
               </label>
               <label className="flex items-center gap-2 cursor-pointer text-sm">
+                <Checkbox checked={agruparPorAmbiente} onCheckedChange={(v) => setAgruparPorAmbiente(!!v)} />
+                <MapPin className="h-3.5 w-3.5 text-muted-foreground" /> Agrupar por ambiente
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm">
                 <Checkbox checked={incluirAnalise} onCheckedChange={(v) => setIncluirAnalise(!!v)} />
                 <BrainCircuit className="h-3.5 w-3.5 text-primary" /> Incluir análise IA
               </label>
@@ -805,10 +844,29 @@ export default function Relatorio() {
                   <Separator className="my-6" />
                   <div className="section mb-6">
                     <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-primary" /> Índice de Desvios ({data.desvios.length})
+                      <FileText className="h-4 w-4 text-primary" />
+                      {agruparPorAmbiente ? `Índice de Desvios por Ambiente (${data.desvios.length})` : `Índice de Desvios (${data.desvios.length})`}
                     </h2>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-xs">
+                    {(() => {
+                      const groups = agruparPorAmbiente
+                        ? groupByAmbiente(data.desvios)
+                        : [{ nome: "", items: data.desvios as any[] }];
+                      const colCount = 6
+                        + (data.config?.mostrarFornecedores ? 1 : 0)
+                        + (data.config?.mostrarSeveridade !== false ? 1 : 0)
+                        + (data.config?.mostrarVertical ? 1 : 0)
+                        + (data.config?.mostrarDataPrevista ? 1 : 0);
+                      void colCount;
+                      return (
+                        <div className="overflow-x-auto space-y-4">
+                          {groups.map((g, gi) => (
+                            <div key={gi}>
+                              {agruparPorAmbiente && (
+                                <div className="text-xs font-semibold text-foreground bg-primary/5 border-l-4 border-primary px-3 py-1.5 mb-2 rounded">
+                                  {g.nome} <span className="text-muted-foreground font-normal">— {g.items.length} desvio{g.items.length > 1 ? "s" : ""}</span>
+                                </div>
+                              )}
+                              <table className="w-full text-xs">
                         <thead>
                           <tr className="bg-muted/50">
                             <th className="text-left py-2 px-2 font-semibold">#</th>
@@ -822,7 +880,7 @@ export default function Relatorio() {
                           </tr>
                         </thead>
                         <tbody>
-                          {data.desvios.map((d: any) => (
+                          {g.items.map((d: any) => (
                             <tr key={d.id} className="border-b border-muted/30">
                               <td className="py-1.5 px-2 font-mono text-muted-foreground">{d.id}</td>
                               <td className="py-1.5 px-2">{d.disciplina}</td>
@@ -852,8 +910,12 @@ export default function Relatorio() {
                             </tr>
                           ))}
                         </tbody>
-                      </table>
-                    </div>
+                              </table>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </>
               )}
@@ -864,10 +926,23 @@ export default function Relatorio() {
                   <Separator className="my-6" />
                   <div className="section">
                     <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4 text-amber-500" /> Detalhamento dos Desvios
+                      <AlertTriangle className="h-4 w-4 text-amber-500" />
+                      {agruparPorAmbiente ? "Detalhamento dos Desvios por Ambiente" : "Detalhamento dos Desvios"}
                     </h2>
-                    <div className="space-y-4">
-                      {data.desvios.map((d: any) => (
+                    {(() => {
+                      const groups = agruparPorAmbiente
+                        ? groupByAmbiente(data.desvios)
+                        : [{ nome: "", items: data.desvios as any[] }];
+                      return (
+                        <div className="space-y-6">
+                          {groups.map((g, gi) => (
+                            <div key={gi} className="space-y-4">
+                              {agruparPorAmbiente && (
+                                <div className="text-sm font-bold text-foreground bg-primary/5 border-l-4 border-primary px-3 py-2 rounded">
+                                  Ambiente: {g.nome} <span className="text-muted-foreground font-normal text-xs">— {g.items.length} desvio{g.items.length > 1 ? "s" : ""}</span>
+                                </div>
+                              )}
+                              {g.items.map((d: any) => (
                         <div key={d.id} className="desvio-detail border rounded-lg p-4">
                           <div className="flex items-center justify-between mb-2">
                             <h3 className="text-sm font-semibold flex items-center gap-2">
@@ -989,7 +1064,11 @@ export default function Relatorio() {
                           )}
                         </div>
                       ))}
-                    </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </>
               )}

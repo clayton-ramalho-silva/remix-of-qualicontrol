@@ -1,24 +1,24 @@
-# Incluir opção "Mostrar Severidade" no Conteúdo do Relatório
+## Agrupar desvios por ambiente no relatório
 
-Adicionar um checkbox na seção "Conteúdo do Relatório" para que o usuário possa escolher se a **Severidade** aparece ou não no relatório gerado (tanto PDF quanto pré-visualização).
+Adicionar uma nova opção no menu "Conteúdo do Relatório" (em `src/pages/Relatorio.tsx`) que permite agrupar os desvios por ambiente/localização tanto no Índice quanto no Detalhamento.
 
-## Onde afeta
+### UI
+- Novo checkbox "Agrupar por ambiente" na seção "Conteúdo do Relatório", com ícone (ex: `MapPin`).
+- Estado `agruparPorAmbiente` (default `false`) incluído no payload do relatório.
 
-A severidade aparece em 4 lugares:
+### Critério de agrupamento
+- Usar o campo `localizacao` do desvio como chave do grupo.
+- Desvios sem `localizacao` ficam num grupo final chamado "Sem ambiente definido".
+- Ordenação dos grupos: alfabética por nome do ambiente; dentro de cada grupo manter a ordenação atual (por data/severidade já aplicada).
 
-1. **Índice de Desvios (PDF)** — coluna "Severidade" no cabeçalho e em cada linha.
-2. **Detalhamento dos Desvios (PDF)** — badge de severidade no topo do card de cada desvio.
-3. **Índice de Desvios (preview HTML)** — coluna "Severidade" no cabeçalho e em cada linha.
-4. **Detalhamento dos Desvios (preview HTML)** — badge de severidade no topo do card de cada desvio.
+### Renderização (PDF + Preview)
+Quando `agruparPorAmbiente` estiver ativo:
 
-## Mudanças técnicas
+- **Índice:** em vez de uma única tabela, renderizar uma tabela por ambiente, precedida por um cabeçalho `<h3>` com o nome do ambiente e a contagem (ex: "Sala 201 — 4 desvios"). Colunas existentes permanecem; a coluna "Local" pode ser ocultada (redundante) — manter por padrão para não quebrar layout, mas avaliar.
+- **Detalhamento:** os cards dos desvios são agrupados sob um título de seção por ambiente (`<h2>` estilizado), mantendo a numeração global dos desvios.
+- Quebras de página: cada novo grupo começa em nova página no PDF (`page-break-before: always`), exceto o primeiro.
 
-- **Novo estado** `mostrarSeveridade` (default `true`) em `src/pages/Relatorio.tsx`.
-- **Payload** do relatório inclui `mostrarSeveridade`.
-- **PDF (print HTML)**:
-  - Índice: condicionar `<th>Severidade</th>` e célula `sevBadge(d.severidade)` com `cfg.mostrarSeveridade !== false`.
-  - Detalhamento: condicionar `sevBadge(d.severidade)` no header do card.
-- **Preview HTML**:
-  - Índice: condicionar `<th className="...">Severidade</th>` e célula do badge.
-  - Detalhamento: condicionar badge de severidade no header do card.
-- **Checkbox** na seção "Conteúdo do Relatório" (ao lado dos demais, usando ícone `Gauge` ou `AlertTriangle`).
+Quando desativado: comportamento atual permanece inalterado.
+
+### Arquivos
+- `src/pages/Relatorio.tsx` — único arquivo alterado (estado, checkbox, lógica de agrupamento no HTML do PDF e na pré-visualização).
