@@ -4,11 +4,18 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { toast } from "sonner";
 import { useState, useMemo } from "react";
 import { useLocation, useSearch } from "wouter";
 import {
   Search, Filter, ArrowRight, AlertTriangle, Clock, CheckCircle2,
-  FileWarning, UserCheck, ShieldAlert, Tag,
+  FileWarning, UserCheck, ShieldAlert, Tag, Trash2,
 } from "lucide-react";
 
 const SEV_BADGE: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -34,6 +41,15 @@ export default function DesviosList() {
   const searchString = useSearch();
   const params = new URLSearchParams(searchString);
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const deleteMutation = trpc.desvios.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Desvio excluído");
+      setConfirmDeleteId(null);
+    },
+  });
 
   const [statusFilter, setStatusFilter] = useState(params.get("status") || "all");
   const [sevFilter, setSevFilter] = useState(params.get("severidade") || "all");
