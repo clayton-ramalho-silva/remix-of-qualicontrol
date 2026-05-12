@@ -648,6 +648,17 @@ const mutationResolvers: Record<string, Resolver> = {
   },
   "desvios.update": async (input: any) => {
     const { id, ...rest } = input;
+    // Bloqueia edição de desvio excluído (soft delete)
+    {
+      const { data: del } = await supabase
+        .from("desvios")
+        .select("deleted_at")
+        .eq("id", id)
+        .maybeSingle();
+      if ((del as any)?.deleted_at) {
+        throw new Error("Desvio excluído — restaure antes de editar.");
+      }
+    }
     // Trava: não permite fechar enquanto aprovações exigidas estiverem pendentes
     if (rest.status === "fechado") {
       const { data: cur } = await supabase
