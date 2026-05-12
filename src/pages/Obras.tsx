@@ -72,7 +72,7 @@ export default function Obras() {
     queryFn: async (): Promise<Obra[]> => {
       const [obrasResult, desviosResult, verificacoesResult] = await Promise.all([
         supabase.from("obras").select("*").order("codigo"),
-        supabase.from("desvios").select("obra_id, data_identificacao"),
+        supabase.from("desvios").select("obra_id, data_identificacao").is("deleted_at", null),
         supabase
           .from("verificacoes")
           .select("obra_id, data_vistoria, status_geral, score_geral")
