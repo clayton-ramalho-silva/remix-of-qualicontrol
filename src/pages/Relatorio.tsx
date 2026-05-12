@@ -212,13 +212,15 @@ export default function Relatorio() {
     let indexHtml = "";
     if (desvios.length > 0) {
       const thForn = cfg.mostrarFornecedores ? `<th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Fornecedor</th>` : "";
-      const thPrazo = cfg.mostrarDataPrevista ? `<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Prazo</th>` : "";
+      const thPrazo = cfg.mostrarDataPrevista ? `<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Data Prevista</th>` : "";
+      const thData = cfg.mostrarDataCriacao !== false ? `<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Data</th>` : "";
       const thVert = cfg.mostrarVertical ? `<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Vertical</th>` : "";
       const thSev = cfg.mostrarSeveridade !== false ? `<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Severidade</th>` : "";
       const thAprov = cfg.mostrarAprovacoes !== false ? `<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Aprovações</th>` : "";
       const buildRow = (d: any) => {
         const tdForn = cfg.mostrarFornecedores ? `<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9">${d.fornecedor || "—"}</td>` : "";
         const tdPrazo = cfg.mostrarDataPrevista ? `<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;white-space:nowrap">${fmtDate(d.prazoSugerido)}${atrasoBadgePdf(d)}</td>` : "";
+        const tdData = cfg.mostrarDataCriacao !== false ? `<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;color:#64748b;vertical-align:top">${fmtDate(d.dataIdentificacao)}</td>` : "";
         const tdVert = cfg.mostrarVertical ? `<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;vertical-align:top">${oLabels[d.origem] || d.origem}</td>` : "";
         const tdSev = cfg.mostrarSeveridade !== false ? `<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;vertical-align:top">${sevBadge(d.severidade)}</td>` : "";
         let tdAprov = "";
@@ -236,9 +238,9 @@ export default function Relatorio() {
         const atrasado = destaqueAtrasos && isAtrasado(d);
         const rowBg = atrasado ? "background:#fef2f2;" : "";
         const firstCellShadow = atrasado ? "box-shadow:inset 3px 0 0 #dc2626;" : "";
-        return `<tr style="${rowBg}"><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;font-family:monospace;vertical-align:top;${firstCellShadow}"><a href="#desvio-${d.id}" style="color:#0d9488;text-decoration:none;font-weight:600">#${d.id}</a></td><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;vertical-align:top">${d.disciplina}</td>${tdForn}<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;white-space:normal;word-break:break-word;vertical-align:top">${d.descricao}</td>${tdSev}<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;vertical-align:top">${stBadge(d.status)}</td>${tdVert}<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;color:#64748b;vertical-align:top">${fmtDate(d.dataIdentificacao)}</td>${tdPrazo}${tdAprov}</tr>`;
+        return `<tr style="${rowBg}"><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;font-family:monospace;vertical-align:top;${firstCellShadow}"><a href="#desvio-${d.id}" style="color:#0d9488;text-decoration:none;font-weight:600">#${d.id}</a></td><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;vertical-align:top">${d.disciplina}</td>${tdForn}<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;white-space:normal;word-break:break-word;vertical-align:top">${d.descricao}</td>${tdSev}<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;vertical-align:top">${stBadge(d.status)}</td>${tdVert}${tdData}${tdPrazo}${tdAprov}</tr>`;
       };
-      const tableHead = `<thead><tr style="background:#f1f5f9"><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">#</th><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Grupo</th>${thForn}<th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Descrição</th>${thSev}<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Status</th>${thVert}<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Data</th>${thPrazo}${thAprov}</tr></thead>`;
+      const tableHead = `<thead><tr style="background:#f1f5f9"><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">#</th><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Grupo</th>${thForn}<th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Descrição</th>${thSev}<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Status</th>${thVert}${thData}${thPrazo}${thAprov}</tr></thead>`;
       if (agruparPorAmbiente) {
         const groups = groupByAmbiente(desvios);
         const blocks = groups.map((g, i) => {
