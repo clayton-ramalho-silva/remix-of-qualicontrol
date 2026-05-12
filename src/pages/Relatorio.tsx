@@ -840,7 +840,7 @@ function RelatorioDesvios() {
               </div>
 
               {/* KPIs */}
-              {data.kpis && (
+              {data.kpis && data.config?.mostrarIndicadores !== false && (
                 <div className="section mb-6">
                   <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
                     <BarChart3 className="h-4 w-4 text-primary" /> Indicadores
@@ -952,7 +952,7 @@ function RelatorioDesvios() {
               )}
 
               {/* Performance Fornecedores */}
-              {data.config?.mostrarFornecedores && data.performance && data.performance.length > 0 && (
+              {data.config?.mostrarPerformanceFornecedores !== false && data.performance && data.performance.length > 0 && (
                 <>
                   <Separator className="my-6" />
                   <div className="section mb-6">
@@ -990,7 +990,7 @@ function RelatorioDesvios() {
               )}
 
               {/* Índice de Desvios */}
-              {data.desvios && data.desvios.length > 0 && (
+              {data.config?.mostrarIndiceDesvios !== false && data.desvios && data.desvios.length > 0 && (
                 <>
                   <Separator className="my-6" />
                   <div className="section mb-6">
