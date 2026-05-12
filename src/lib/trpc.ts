@@ -101,10 +101,11 @@ const queryResolvers: Record<string, Resolver> = {
     const { data: desvio, error } = await supabase.from("desvios").select("*").eq("id", id).maybeSingle();
     if (error) throw error;
     if (!desvio) return null;
-    const [{ data: fotos }, { data: vinculos }, { data: historico }] = await Promise.all([
+    const [{ data: fotos }, { data: vinculos }, { data: historico }, { data: aprovacoes }] = await Promise.all([
       supabase.from("fotos_evidencia").select("*").eq("desvio_id", id).order("created_at"),
       supabase.from("plano_desvios" as any).select("plano_id").eq("desvio_id", id),
       supabase.from("historico").select("*").eq("desvio_id", id).order("created_at", { ascending: false }),
+      supabase.from("desvio_aprovacoes").select("*").eq("desvio_id", id).order("created_at"),
     ]);
     const planoIds = Array.from(new Set((vinculos || []).map((v: any) => v.plano_id)));
     let planos: any[] = [];
@@ -121,6 +122,15 @@ const queryResolvers: Record<string, Resolver> = {
         userId: h.user_id,
         userName: h.user_name,
         createdAt: new Date(h.created_at).getTime(),
+      })),
+      aprovacoes: (aprovacoes || []).map((a: any) => ({
+        id: a.id,
+        tipo: a.tipo,
+        decisao: a.decisao,
+        aprovadorId: a.aprovador_id,
+        aprovadorNome: a.aprovador_nome,
+        comentario: a.comentario,
+        createdAt: new Date(a.created_at).getTime(),
       })),
     };
   },
@@ -637,6 +647,26 @@ const mutationResolvers: Record<string, Resolver> = {
   },
   "desvios.update": async (input: any) => {
     const { id, ...rest } = input;
+    // Trava: não permite fechar enquanto aprovações exigidas estiverem pendentes
+    if (rest.status === "fechado") {
+      const { data: cur } = await supabase
+        .from("desvios")
+        .select("tag_solicitado_gerenciadora, tag_solicitado_arquitetura")
+        .eq("id", id)
+        .maybeSingle();
+      const needGer = (cur?.tag_solicitado_gerenciadora ?? 0) === 1;
+      const needArq = (cur?.tag_solicitado_arquitetura ?? 0) === 1;
+      if (needGer || needArq) {
+        const { data: aprov } = await supabase
+          .from("desvio_aprovacoes")
+          .select("tipo, decisao")
+          .eq("desvio_id", id);
+        const okGer = (aprov || []).some((a: any) => a.tipo === "gerenciadora" && a.decisao === "aprovado");
+        const okArq = (aprov || []).some((a: any) => a.tipo === "arquitetura" && a.decisao === "aprovado");
+        if (needGer && !okGer) throw new Error("Aprovação da Gerenciadora pendente — não é possível fechar este desvio.");
+        if (needArq && !okArq) throw new Error("Aprovação da Arquitetura Externa pendente — não é possível fechar este desvio.");
+      }
+    }
     const patch: any = {};
     const map: Record<string, string> = {
       disciplina: "disciplina", grupoId: "grupo_id",
