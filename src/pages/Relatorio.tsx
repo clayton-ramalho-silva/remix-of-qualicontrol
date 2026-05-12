@@ -703,6 +703,10 @@ export default function Relatorio() {
                 <FileText className="h-3.5 w-3.5 text-muted-foreground" /> Detalhamento dos desvios
               </label>
               <label className="flex items-center gap-2 cursor-pointer text-sm">
+                <Checkbox checked={destaqueAtrasos} onCheckedChange={(v) => setDestaqueAtrasos(!!v)} />
+                <AlertTriangle className="h-3.5 w-3.5 text-red-600" /> Destacar itens em atraso
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm">
                 <Checkbox checked={incluirAnalise} onCheckedChange={(v) => setIncluirAnalise(!!v)} />
                 <BrainCircuit className="h-3.5 w-3.5 text-primary" /> Incluir análise IA
               </label>
