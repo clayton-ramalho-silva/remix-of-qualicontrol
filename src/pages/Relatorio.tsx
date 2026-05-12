@@ -121,6 +121,9 @@ function RelatorioDesvios() {
   const [mostrarAprovacoes, setMostrarAprovacoes] = useState(true);
   const [mostrarDetalhamento, setMostrarDetalhamento] = useState(true);
   const [destaqueAtrasos, setDestaqueAtrasos] = useState(true);
+  const [mostrarIndicadores, setMostrarIndicadores] = useState(true);
+  const [mostrarPerformanceFornecedores, setMostrarPerformanceFornecedores] = useState(true);
+  const [mostrarIndiceDesvios, setMostrarIndiceDesvios] = useState(true);
 
   // Seção 5 — Formato
   const [formato, setFormato] = useState<"pdf" | "excel">("pdf");
@@ -164,6 +167,9 @@ function RelatorioDesvios() {
       incluirAnalise,
       mostrarAprovacoes,
       mostrarDetalhamento,
+      mostrarIndicadores,
+      mostrarPerformanceFornecedores,
+      mostrarIndiceDesvios,
       formato,
     });
   };
@@ -222,7 +228,7 @@ function RelatorioDesvios() {
 
     // Performance Fornecedores
     let perfHtml = "";
-    if (cfg.mostrarFornecedores && performance.length > 0) {
+    if (cfg.mostrarPerformanceFornecedores !== false && performance.length > 0) {
       const rows = performance.map((f: any) =>
         `<tr><td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;font-weight:500">${f.nome}</td><td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${f.total}</td><td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${f.abertos}</td><td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${f.fechados}</td><td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${f.graves}</td><td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center;font-weight:600">${f.taxaFechamento}%</td></tr>`
       ).join("");
@@ -231,7 +237,7 @@ function RelatorioDesvios() {
 
     // Índice de Desvios
     let indexHtml = "";
-    if (desvios.length > 0) {
+    if (cfg.mostrarIndiceDesvios !== false && desvios.length > 0) {
       const thForn = cfg.mostrarFornecedores ? `<th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Fornecedor</th>` : "";
       const thPrazo = cfg.mostrarDataPrevista ? `<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Data Prevista</th>` : "";
       const thData = cfg.mostrarDataCriacao !== false ? `<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Data</th>` : "";
@@ -420,7 +426,7 @@ function RelatorioDesvios() {
   </div>
 
   <!-- KPIs -->
-  ${kpis ? `<div style="margin-bottom:20px"><h2 style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #0d9488">Indicadores</h2><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px">${kpiHtml}</div></div>` : ""}
+  ${kpis && cfg.mostrarIndicadores !== false ? `<div style="margin-bottom:20px"><h2 style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #0d9488">Indicadores</h2><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px">${kpiHtml}</div></div>` : ""}
 
   ${atrasoHtml}
   ${discHtml}
@@ -706,7 +712,19 @@ function RelatorioDesvios() {
               </label>
               <label className="flex items-center gap-2 cursor-pointer text-sm">
                 <Checkbox checked={mostrarTabelaGrupos} onCheckedChange={(v) => setMostrarTabelaGrupos(!!v)} />
-                <BarChart3 className="h-3.5 w-3.5 text-muted-foreground" /> Tabela de grupos
+                <BarChart3 className="h-3.5 w-3.5 text-muted-foreground" /> Resumo por Grupo
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm">
+                <Checkbox checked={mostrarIndicadores} onCheckedChange={(v) => setMostrarIndicadores(!!v)} />
+                <BarChart3 className="h-3.5 w-3.5 text-primary" /> Indicadores
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm">
+                <Checkbox checked={mostrarPerformanceFornecedores} onCheckedChange={(v) => setMostrarPerformanceFornecedores(!!v)} />
+                <TrendingUp className="h-3.5 w-3.5 text-primary" /> Performance de Fornecedores
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm">
+                <Checkbox checked={mostrarIndiceDesvios} onCheckedChange={(v) => setMostrarIndiceDesvios(!!v)} />
+                <FileText className="h-3.5 w-3.5 text-muted-foreground" /> Índice de Desvios
               </label>
               <label className="flex items-center gap-2 cursor-pointer text-sm">
                 <Checkbox checked={mostrarFotos} onCheckedChange={(v) => setMostrarFotos(!!v)} />
@@ -834,7 +852,7 @@ function RelatorioDesvios() {
               </div>
 
               {/* KPIs */}
-              {data.kpis && (
+              {data.kpis && data.config?.mostrarIndicadores !== false && (
                 <div className="section mb-6">
                   <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
                     <BarChart3 className="h-4 w-4 text-primary" /> Indicadores
@@ -946,7 +964,7 @@ function RelatorioDesvios() {
               )}
 
               {/* Performance Fornecedores */}
-              {data.config?.mostrarFornecedores && data.performance && data.performance.length > 0 && (
+              {data.config?.mostrarPerformanceFornecedores !== false && data.performance && data.performance.length > 0 && (
                 <>
                   <Separator className="my-6" />
                   <div className="section mb-6">
@@ -984,7 +1002,7 @@ function RelatorioDesvios() {
               )}
 
               {/* Índice de Desvios */}
-              {data.desvios && data.desvios.length > 0 && (
+              {data.config?.mostrarIndiceDesvios !== false && data.desvios && data.desvios.length > 0 && (
                 <>
                   <Separator className="my-6" />
                   <div className="section mb-6">

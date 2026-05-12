@@ -1,49 +1,61 @@
 ## Objetivo
 
-Tornar **Vistoria** uma vertical de primeira classe em todo o sistema, ao lado de Qualidade, Checklist e QSMS. Hoje ela só existe em alguns pontos (sidebar, VerticalContext, rotas `/vistoria-recebimento`), mas está ausente de filtros, selects de Origem, cobertura de obras, alocação, planos de ação, relatórios, administração e Home.
+Permitir que o usuário escolha, no card **Conteúdo do Relatório** (`/relatorio`), quais blocos analíticos serão impressos no PDF/preview:
 
-## Mudanças no banco
+1. **Indicadores** (KPIs)
+2. **Resumo por Grupo** (tabela por disciplina)
+3. **Performance de Fornecedores**
+4. **Índice de Desvios**
 
-1. Adicionar valor `vistoria` ao enum `origem_desvio` (usado também pelas colunas `vertical` de `alocacoes` e `planos_acao`).
-2. Adicionar coluna `cobertura_vistoria integer NOT NULL DEFAULT 0` em `obras`.
+Hoje:
+- *Indicadores* e *Índice de Desvios* sempre são renderizados (não há controle).
+- *Resumo por Grupo* já existe como "Tabela de grupos" (`mostrarTabelaGrupos`) — apenas renomear o rótulo para "Resumo por Grupo" para alinhar com o nome usado no PDF.
+- *Performance de Fornecedores* hoje está acoplada ao toggle "Mostra fornecedores" (`mostrarFornecedores`), que também controla a coluna fornecedor na tabela. Vamos desacoplar criando um toggle próprio.
 
-Nenhuma RLS muda. Todas as tabelas afetadas já têm policy `auth all`.
+## Mudanças (somente `src/pages/Relatorio.tsx`)
 
-## Mudanças de código (frontend)
+### Novos estados
 
-Incluir `vistoria` em todos os pontos onde hoje só aparecem qualidade/checklist/qsms:
+```ts
+const [mostrarIndicadores, setMostrarIndicadores] = useState(true);
+const [mostrarPerformanceFornecedores, setMostrarPerformanceFornecedores] = useState(true);
+const [mostrarIndiceDesvios, setMostrarIndiceDesvios] = useState(true);
+```
 
-**Desvios (Origem)**
-- `src/pages/DesvioNovo.tsx` — adicionar `<SelectItem value="vistoria">Vistoria</SelectItem>` e atualizar tipo do `useState`.
-- `src/pages/DesvioDetalhe.tsx` — mesmo SelectItem no editor de Origem.
-- `src/pages/DesviosList.tsx` — opção no filtro de Origem.
+(Reaproveita `mostrarTabelaGrupos` para "Resumo por Grupo".)
 
-**Relatório**
-- `src/pages/Relatorio.tsx` — adicionar checkbox "Vistoria" no card "Origem dos Desvios" (`origemVistoria`), incluir no array `origens` enviado ao backend, e no mapa `oLabels` para o cabeçalho do PDF.
+### Config enviada ao gerador
 
-**Planos de Ação**
-- `src/pages/PlanosAcao.tsx` — opção `vistoria` no filtro de vertical.
-- `src/pages/PlanoAcaoNovo.tsx` — opção `vistoria` no select de vertical.
+Adicionar ao objeto `cfg` enviado ao backend/PDF builder:
 
-**Obras / Cobertura**
-- `src/pages/Obras.tsx` — incluir entrada `{ key: "vistoria", label: "Vistoria", icon: ClipboardCheck, coverCol: "cobertura_vistoria", color: "text-emerald-600" }` no array `verticais` e ampliar o tipo `Vertical`.
-- `src/pages/Alocacao.tsx` — mesma adição no array de verticais e tipo, mais o ramo correspondente em `if (vertical === "vistoria")` ao calcular cobertura/alocações.
+```ts
+mostrarIndicadores,
+mostrarPerformanceFornecedores,
+mostrarIndiceDesvios,
+```
 
-**Home**
-- `src/pages/Home.tsx` — adicionar 4º card de vertical "Vistoria" (mesmo padrão dos demais), apontando para `/vistoria-recebimento`.
+### Geração do HTML do PDF (linhas ~210-275 e ~423-428)
 
-**Administração**
-- `src/pages/Administracao.tsx` — adicionar `{ id: "vistoria", label: "Vistoria" }` na lista de categorias para configuração de seções/itens de checklist e faixas.
+- KPIs (linha 423): envolver em `${cfg.mostrarIndicadores ? ... : ""}`.
+- Performance (linha 225): trocar `if (cfg.mostrarFornecedores && ...)` por `if (cfg.mostrarPerformanceFornecedores && ...)`.
+- Índice (linha 234): envolver em `if (cfg.mostrarIndiceDesvios !== false && desvios.length > 0)`.
+- Resumo por Grupo já controlado por `cfg.mostrarTabelaDisciplinas` (= `mostrarTabelaGrupos`) — sem mudança.
 
-**Backend lib**
-- `src/lib/trpc.ts` — incluir `vistoria: 0` no objeto `porOrigem` (linha ~319) para que a contagem por origem nos relatórios/dashboards inclua Vistoria.
+### Preview HTML (seção que renderiza no app, ~903)
 
-## Notas
+Aplicar os mesmos guards condicionais nos blocos correspondentes do preview para refletir as escolhas.
 
-- O VerticalContext, VerticalSwitcher e a sidebar já contemplam `vistoria` — não precisam mudar.
-- As rotas `/vistoria-recebimento` continuam sendo a área operacional da vertical; as novas opções apenas permitem classificar/filtrar desvios, planos, alocações e cobertura por essa vertical.
-- A migration do enum precisa ser commitada antes do uso nos selects (Postgres exige ADD VALUE em transação separada — será feito em migration própria).
+### UI — Conteúdo do Relatório (linhas ~662-747)
 
-## Arquivos editados
+Adicionar 3 novos checkboxes (e renomear o label de "Tabela de grupos" para "Resumo por Grupo"):
 
-`supabase/migrations/<novo>.sql`, `src/pages/DesvioNovo.tsx`, `src/pages/DesvioDetalhe.tsx`, `src/pages/DesviosList.tsx`, `src/pages/Relatorio.tsx`, `src/pages/PlanosAcao.tsx`, `src/pages/PlanoAcaoNovo.tsx`, `src/pages/Obras.tsx`, `src/pages/Alocacao.tsx`, `src/pages/Home.tsx`, `src/pages/Administracao.tsx`, `src/lib/trpc.ts`.
+- ☐ Indicadores (ícone `BarChart3`)
+- ☐ Resumo por Grupo (já existe, renomear label)
+- ☐ Performance de Fornecedores (ícone `TrendingUp`)
+- ☐ Índice de Desvios (ícone `FileText`)
+
+Todos default `true` para manter o comportamento atual.
+
+## Arquivo editado
+
+`src/pages/Relatorio.tsx`
