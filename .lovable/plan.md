@@ -1,103 +1,49 @@
+## Objetivo
 
-# Novo módulo: Checklist de Entrega de Obra
+Tornar **Vistoria** uma vertical de primeira classe em todo o sistema, ao lado de Qualidade, Checklist e QSMS. Hoje ela só existe em alguns pontos (sidebar, VerticalContext, rotas `/vistoria-recebimento`), mas está ausente de filtros, selects de Origem, cobertura de obras, alocação, planos de ação, relatórios, administração e Home.
 
-Criar um novo menu **Checklist** para gerar o "Relatório de Vistoria de Entrega de Obra" (modelo enviado em PDF), reaproveitando obras, fornecedores, equipe alocada e fotos de desvios já existentes.
+## Mudanças no banco
 
----
+1. Adicionar valor `vistoria` ao enum `origem_desvio` (usado também pelas colunas `vertical` de `alocacoes` e `planos_acao`).
+2. Adicionar coluna `cobertura_vistoria integer NOT NULL DEFAULT 0` em `obras`.
 
-## 1. Menu e navegação
+Nenhuma RLS muda. Todas as tabelas afetadas já têm policy `auth all`.
 
-- Adicionar item **"Checklist"** na sidebar (`src/components/DashboardLayout.tsx`), entre "Desvios" e "Planos de Ação", com ícone `ClipboardList`/`ListChecks`.
-- Novas rotas em `src/App.tsx`:
-  - `/checklists` — lista de checklists criados
-  - `/checklists/novo` — criar novo
-  - `/checklists/:id` — editar/visualizar
-- Na página **Relatório** (`/relatorio`), adicionar uma nova **aba "Vistoria de Entrega"** ao lado da existente, para gerar o PDF deste módulo.
+## Mudanças de código (frontend)
 
----
+Incluir `vistoria` em todos os pontos onde hoje só aparecem qualidade/checklist/qsms:
 
-## 2. Estrutura do Checklist (baseado no modelo)
+**Desvios (Origem)**
+- `src/pages/DesvioNovo.tsx` — adicionar `<SelectItem value="vistoria">Vistoria</SelectItem>` e atualizar tipo do `useState`.
+- `src/pages/DesvioDetalhe.tsx` — mesmo SelectItem no editor de Origem.
+- `src/pages/DesviosList.tsx` — opção no filtro de Origem.
 
-### 2.1 Cabeçalho (página 1 do PDF)
-- Obra (apenas obras que já tenham desvios cadastrados)
-- Data da Vistoria
-- Metragem (m²)
-- GC (Gerente de Contrato) — texto livre com sugestão dos membros da equipe
-- GO (Gerente de Obra) — idem
-- Condição da Obra: **RUIM | REGULAR | ÓTIMA** (botões coloridos)
-- Total de Itens (calculado: soma de itens das disciplinas + desvios vinculados)
+**Relatório**
+- `src/pages/Relatorio.tsx` — adicionar checkbox "Vistoria" no card "Origem dos Desvios" (`origemVistoria`), incluir no array `origens` enviado ao backend, e no mapa `oLabels` para o cabeçalho do PDF.
 
-### 2.2 Resumo (grid de disciplinas)
-Tabela editável com linhas:
-- **Disciplina** (select de catálogo dedicado a este formulário)
-- **Fornecedor** (autocomplete a partir de `fornecedores`)
-- **Equipe Alocada** (autocomplete; ao escolher fornecedor, sugere equipes já vinculadas a ele)
-- **Avaliação** — 3 ícones equivalentes aos do PDF:
-  - ✅ OK (verde)
-  - ⚠️ Atenção (amarelo)
-  - ❌ Crítico (vermelho)
-- **Comentários** (texto livre)
-- Botão "+ Adicionar disciplina"
+**Planos de Ação**
+- `src/pages/PlanosAcao.tsx` — opção `vistoria` no filtro de vertical.
+- `src/pages/PlanoAcaoNovo.tsx` — opção `vistoria` no select de vertical.
 
-### 2.3 Páginas de detalhe por disciplina (páginas 3+ do PDF)
-Para cada linha da tabela, abrir bloco expandível:
-- Título: `DISCIPLINA / FORNECEDOR — RESPONSÁVEL`
-- Galeria de fotos: usuário **escolhe entre fotos de desvios já existentes** da mesma obra (filtro por disciplina/fornecedor sugerido).
-- Para cada foto selecionada: legenda pré-preenchida com a descrição do desvio (editável).
-- Permite reordenar e remover fotos.
+**Obras / Cobertura**
+- `src/pages/Obras.tsx` — incluir entrada `{ key: "vistoria", label: "Vistoria", icon: ClipboardCheck, coverCol: "cobertura_vistoria", color: "text-emerald-600" }` no array `verticais` e ampliar o tipo `Vertical`.
+- `src/pages/Alocacao.tsx` — mesma adição no array de verticais e tipo, mais o ramo correspondente em `if (vertical === "vistoria")` ao calcular cobertura/alocações.
 
----
+**Home**
+- `src/pages/Home.tsx` — adicionar 4º card de vertical "Vistoria" (mesmo padrão dos demais), apontando para `/vistoria-recebimento`.
 
-## 3. Persistência (banco)
+**Administração**
+- `src/pages/Administracao.tsx` — adicionar `{ id: "vistoria", label: "Vistoria" }` na lista de categorias para configuração de seções/itens de checklist e faixas.
 
-Migrações novas (sem alterar tabelas existentes):
+**Backend lib**
+- `src/lib/trpc.ts` — incluir `vistoria: 0` no objeto `porOrigem` (linha ~319) para que a contagem por origem nos relatórios/dashboards inclua Vistoria.
 
-- **`checklist_disciplinas`** — catálogo das disciplinas válidas para este formulário (Pedra, Forro Modular, Dados/voz, Vidro, Limpeza fina, Elétrica, Sdai, Hidráulica/SPK, Drywall, Civil, Pintura, Rodapé, Vinílico/Carpete/Piso elevado, Marcenaria, Carpete, Serralheria, Divisória Industrial, Luminária, Ar Condicionado). Campos: `nome`, `ordem`, `ativo`. Seed com a lista do modelo.
+## Notas
 
-- **`checklist_fornecedor_equipe`** — relação Fornecedor ↔ Equipe alocada (nomes), para sugerir equipes ao escolher fornecedor. Campos: `fornecedor_id`, `nome_equipe`, `disciplina` (opcional). Alimentado automaticamente conforme o usuário preenche.
+- O VerticalContext, VerticalSwitcher e a sidebar já contemplam `vistoria` — não precisam mudar.
+- As rotas `/vistoria-recebimento` continuam sendo a área operacional da vertical; as novas opções apenas permitem classificar/filtrar desvios, planos, alocações e cobertura por essa vertical.
+- A migration do enum precisa ser commitada antes do uso nos selects (Postgres exige ADD VALUE em transação separada — será feito em migration própria).
 
-- **`checklist_entregas`** — cabeçalho do checklist. Campos: `obra_id`, `data_vistoria`, `metragem_m2`, `gc`, `go`, `condicao` (`ruim|regular|otima`), `total_itens`, `created_by_id`, `created_by_name`.
+## Arquivos editados
 
-- **`checklist_entrega_itens`** — uma linha do grid. Campos: `entrega_id`, `disciplina_id`, `fornecedor_id`, `fornecedor_nome`, `equipe_nome`, `avaliacao` (`ok|atencao|critico`), `comentarios`, `ordem`.
-
-- **`checklist_entrega_fotos`** — fotos escolhidas para cada item. Campos: `item_id`, `foto_evidencia_id` (referência a `fotos_evidencia` por id), `legenda`, `ordem`.
-
-RLS: padrão `auth all` (consistente com tabelas existentes do projeto).
-
----
-
-## 4. Geração do Relatório (PDF)
-
-Reutilizar o pipeline atual de `src/pages/Relatorio.tsx` (window.print + HTML estilizado):
-- **Página 1**: cabeçalho + tabela RESUMO (disciplina, fornecedor, equipe, ícone de avaliação, comentário).
-- **Páginas seguintes**: uma seção por item, com título `DISCIPLINA` + `FORNECEDOR — RESPONSÁVEL`, grade de fotos (2x2) com legenda abaixo, conforme modelo.
-- Cabeçalho fixo no topo de cada página (Obra, Condição, Data, Metragem, GC, GO, Total Itens), igual ao modelo.
-- Numeração de página `n/total`.
-
----
-
-## 5. UX / Detalhes técnicos
-
-- Página `Novo Checklist`: usar `Tabs` (Cabeçalho → Resumo → Detalhes por disciplina → Pré-visualização).
-- Filtro de obras: `obras` que tenham pelo menos 1 desvio.
-- Picker de fotos: dialog com grid de `fotos_evidencia` filtradas pela `obra_id`, agrupadas por desvio, com checkbox múltiplo. Ao confirmar, copia descrição do desvio como legenda inicial.
-- Sugestão de equipe: ao mudar `fornecedor_id`, buscar `checklist_fornecedor_equipe` e oferecer chips clicáveis.
-- Salvar como rascunho a cada alteração (debounced) ou botão "Salvar".
-
----
-
-## Arquivos a criar/editar
-
-**Novos:**
-- `src/pages/ChecklistList.tsx`
-- `src/pages/ChecklistEditor.tsx`
-- `src/components/checklist/ResumoGrid.tsx`
-- `src/components/checklist/DisciplinaDetalhe.tsx`
-- `src/components/checklist/FotosDesvioPicker.tsx`
-- `src/components/checklist/AvaliacaoIcon.tsx`
-- Migração SQL com as 5 tabelas + seed de disciplinas
-
-**Editar:**
-- `src/App.tsx` — registrar rotas
-- `src/components/DashboardLayout.tsx` — item de menu
-- `src/pages/Relatorio.tsx` — nova aba "Vistoria de Entrega" com geração do PDF deste modelo
+`supabase/migrations/<novo>.sql`, `src/pages/DesvioNovo.tsx`, `src/pages/DesvioDetalhe.tsx`, `src/pages/DesviosList.tsx`, `src/pages/Relatorio.tsx`, `src/pages/PlanosAcao.tsx`, `src/pages/PlanoAcaoNovo.tsx`, `src/pages/Obras.tsx`, `src/pages/Alocacao.tsx`, `src/pages/Home.tsx`, `src/pages/Administracao.tsx`, `src/lib/trpc.ts`.

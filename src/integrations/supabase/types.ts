@@ -804,6 +804,7 @@ export type Database = {
           cobertura_checklist: number
           cobertura_qsms: number
           cobertura_qualidade: number
+          cobertura_vistoria: number
           codigo: string
           created_at: string
           endereco: string | null
@@ -819,6 +820,7 @@ export type Database = {
           cobertura_checklist?: number
           cobertura_qsms?: number
           cobertura_qualidade?: number
+          cobertura_vistoria?: number
           codigo: string
           created_at?: string
           endereco?: string | null
@@ -834,6 +836,7 @@ export type Database = {
           cobertura_checklist?: number
           cobertura_qsms?: number
           cobertura_qualidade?: number
+          cobertura_vistoria?: number
           codigo?: string
           created_at?: string
           endereco?: string | null
@@ -1706,7 +1709,7 @@ export type Database = {
         | "at"
       decisao_aprovacao: "aprovado" | "reprovado"
       etapa_foto_ocorrencia: "cena" | "simulacao" | "evidencia" | "plano"
-      origem_desvio: "qualidade" | "checklist" | "qsms"
+      origem_desvio: "qualidade" | "checklist" | "qsms" | "vistoria"
       prioridade_plano: "urgente" | "normal" | "baixa"
       referencia_tipo: "desvio" | "plano" | "verificacao"
       responsavel_tipo: "membro" | "fornecedor"
@@ -1906,7 +1909,7 @@ export const Constants = {
       ],
       decisao_aprovacao: ["aprovado", "reprovado"],
       etapa_foto_ocorrencia: ["cena", "simulacao", "evidencia", "plano"],
-      origem_desvio: ["qualidade", "checklist", "qsms"],
+      origem_desvio: ["qualidade", "checklist", "qsms", "vistoria"],
       prioridade_plano: ["urgente", "normal", "baixa"],
       referencia_tipo: ["desvio", "plano", "verificacao"],
       responsavel_tipo: ["membro", "fornecedor"],
