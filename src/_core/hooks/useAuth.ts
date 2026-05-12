@@ -12,6 +12,7 @@ export type AuthUser = {
   name: string | null;
   email: string | null;
   role: "admin" | "user";
+  roles: string[];
 };
 
 export function useAuth(options?: UseAuthOptions) {
@@ -30,11 +31,13 @@ export function useAuth(options?: UseAuthOptions) {
       supabase.from("user_roles").select("role").eq("user_id", sUser.id),
     ]);
     const isAdmin = (roles ?? []).some((r: { role: string }) => r.role === "admin");
+    const allRoles = (roles ?? []).map((r: { role: string }) => r.role);
     setUser({
       id: sUser.id,
       name: profile?.name ?? sUser.email ?? null,
       email: profile?.email ?? sUser.email ?? null,
       role: isAdmin ? "admin" : "user",
+      roles: allRoles,
     });
   }, []);
 

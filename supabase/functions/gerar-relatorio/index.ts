@@ -153,6 +153,23 @@ Deno.serve(async (req) => {
     const plantaById = new Map<number, any>();
     (plantasAll || []).forEach((p: any) => plantaById.set(p.id, p));
 
+    // Aprovações
+    const { data: aprovAll } = ids.length > 0
+      ? await supabase.from("desvio_aprovacoes").select("*").in("desvio_id", ids)
+      : { data: [] as any[] };
+    const aprovMap = new Map<number, any[]>();
+    (aprovAll || []).forEach((a: any) => {
+      const arr = aprovMap.get(a.desvio_id) || [];
+      arr.push({
+        tipo: a.tipo,
+        decisao: a.decisao,
+        aprovador_nome: a.aprovador_nome,
+        comentario: a.comentario,
+        created_at: a.created_at,
+      });
+      aprovMap.set(a.desvio_id, arr);
+    });
+
     const desviosOut = desvios.map((d: any) => {
       const fotos = fotosMap.get(d.id) || { abertura: [], fechamento: [] };
       const planta = d.planta_id ? plantaById.get(d.planta_id) : null;
@@ -181,6 +198,7 @@ Deno.serve(async (req) => {
         plantaUrl: planta?.url,
         pinX: d.pin_x,
         pinY: d.pin_y,
+        aprovacoes: aprovMap.get(d.id) || [],
       };
     });
 

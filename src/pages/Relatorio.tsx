@@ -12,6 +12,7 @@ import {
   TrendingUp, Printer, BrainCircuit, Search, ClipboardCheck,
   Wrench, Filter, Settings2, Image, Users, Calendar, CheckCircle2,
   Clock, Siren, HardHat, UserCheck, Tag, MapPin,
+  ShieldCheck,
 } from "lucide-react";
 import { Streamdown } from "streamdown";
 
@@ -88,6 +89,7 @@ export default function Relatorio() {
   const [mostrarSeveridade, setMostrarSeveridade] = useState(true);
   const [incluirAnalise, setIncluirAnalise] = useState(true);
   const [agruparPorAmbiente, setAgruparPorAmbiente] = useState(false);
+  const [mostrarAprovacoes, setMostrarAprovacoes] = useState(true);
 
   // Seção 5 — Formato
   const [formato, setFormato] = useState<"pdf" | "excel">("pdf");
@@ -127,6 +129,7 @@ export default function Relatorio() {
       mostrarTagsClassificacao,
       mostrarSeveridade,
       incluirAnalise,
+      mostrarAprovacoes,
       formato,
     });
   };
@@ -285,6 +288,7 @@ export default function Relatorio() {
           <div style="font-size:11px;color:#1e293b;background:#f8fafc;border-left:3px solid #0d9488;padding:6px 10px;border-radius:4px;margin-bottom:8px;white-space:pre-wrap;word-break:break-word"><strong style="color:#0f172a">Descrição:</strong> ${d.descricao}</div>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px 12px;font-size:10px;color:#475569;margin-bottom:6px">${metaItems.join("")}</div>
           ${tags.length > 0 ? `<div style="display:flex;gap:4px;margin-bottom:6px">${tags.join("")}</div>` : ""}
+          ${cfg.mostrarAprovacoes !== false && d.aprovacoes && d.aprovacoes.length > 0 ? `<div style="margin-top:6px;font-size:10px"><strong>Aprovações:</strong> ${d.aprovacoes.map((a: any) => `<span style="display:inline-block;padding:2px 6px;border-radius:4px;margin-right:4px;${a.decisao === 'aprovado' ? 'background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0' : 'background:#fef2f2;color:#dc2626;border:1px solid #fecaca'}">${a.tipo === 'gerenciadora' ? 'Gerenciadora' : 'Arquitetura'} ${a.decisao === 'aprovado' ? '✓' : '✗'}${a.aprovador_nome ? ' — ' + a.aprovador_nome : ''}${a.comentario ? ' (' + a.comentario + ')' : ''}</span>`).join("")}</div>` : ""}
           ${planosHtml}
           ${fotosHtml}
           ${plantaHtml}
@@ -637,6 +641,10 @@ export default function Relatorio() {
                 <MapPin className="h-3.5 w-3.5 text-muted-foreground" /> Agrupar por ambiente
               </label>
               <label className="flex items-center gap-2 cursor-pointer text-sm">
+                <Checkbox checked={mostrarAprovacoes} onCheckedChange={(v) => setMostrarAprovacoes(!!v)} />
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> Mostrar aprovações
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm">
                 <Checkbox checked={incluirAnalise} onCheckedChange={(v) => setIncluirAnalise(!!v)} />
                 <BrainCircuit className="h-3.5 w-3.5 text-primary" /> Incluir análise IA
               </label>
@@ -982,6 +990,21 @@ export default function Relatorio() {
                               </div>
                             )}
                           </div>
+                          {data.config?.mostrarAprovacoes !== false && d.aprovacoes && d.aprovacoes.length > 0 && (
+                            <div className="text-xs mb-3 flex flex-wrap items-center gap-1.5">
+                              <span className="font-semibold text-foreground">Aprovações:</span>
+                              {d.aprovacoes.map((a: any, i: number) => (
+                                <span
+                                  key={i}
+                                  className={`inline-block px-2 py-0.5 rounded border text-[10px] font-medium ${a.decisao === "aprovado" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-red-50 text-red-700 border-red-200"}`}
+                                  title={a.comentario || ""}
+                                >
+                                  {a.tipo === "gerenciadora" ? "Gerenciadora" : "Arquitetura"} {a.decisao === "aprovado" ? "✓" : "✗"}
+                                  {a.aprovador_nome ? ` — ${a.aprovador_nome}` : ""}
+                                </span>
+                              ))}
+                            </div>
+                          )}
 
                           {/* Planos de ação */}
                           {data.config?.mostrarResponsaveis && d.planos && d.planos.length > 0 && (
