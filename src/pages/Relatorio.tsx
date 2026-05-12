@@ -640,6 +640,10 @@ export default function Relatorio() {
                 <MapPin className="h-3.5 w-3.5 text-muted-foreground" /> Agrupar por ambiente
               </label>
               <label className="flex items-center gap-2 cursor-pointer text-sm">
+                <Checkbox checked={mostrarAprovacoes} onCheckedChange={(v) => setMostrarAprovacoes(!!v)} />
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> Mostrar aprovações
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm">
                 <Checkbox checked={incluirAnalise} onCheckedChange={(v) => setIncluirAnalise(!!v)} />
                 <BrainCircuit className="h-3.5 w-3.5 text-primary" /> Incluir análise IA
               </label>
