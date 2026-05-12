@@ -62,7 +62,7 @@ export default function DesvioNovo() {
   const [contextCollapsed, setContextCollapsed] = useState(false);
   const [obraId, setObraId] = useState("");
   const [ambiente, setAmbiente] = useState("");
-  const [vertical, setVertical] = useState<"" | "qualidade" | "checklist" | "qsms">("");
+  const [vertical, setVertical] = useState<"" | "qualidade" | "checklist" | "qsms" | "vistoria">("");
   const coverColByVertical = {
     qualidade: "cobertura_qualidade",
     checklist: "cobertura_checklist",
@@ -307,6 +307,7 @@ export default function DesvioNovo() {
                     <SelectItem value="qualidade">Qualidade</SelectItem>
                     <SelectItem value="checklist">Checklist</SelectItem>
                      <SelectItem value="qsms">QSMS</SelectItem>
+                    <SelectItem value="vistoria">Vistoria</SelectItem>
                   </SelectContent>
                 </Select>
               </Field>
