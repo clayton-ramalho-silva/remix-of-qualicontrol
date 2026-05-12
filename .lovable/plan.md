@@ -1,32 +1,27 @@
-## 1. Menu "Aprovações" agrupado na sidebar
+## Objetivo
+Adicionar uma opção `mostrarDetalhamento` no relatório para que o usuário possa escolher se quer incluir ou não a seção completa de detalhamento dos desvios (cards com descrição, fotos, planos de ação, localização na planta, etc.).
 
-Em `src/components/DashboardLayout.tsx`, transformar os dois itens soltos:
-- `Aprov. Gerenciadora` → `/aprovacoes/gerenciadora`
-- `Aprov. Arquitetura` → `/aprovacoes/arquitetura`
+## Problema de UX atual
+- O relatório sempre inclui o detalhamento completo após o índice, o que pode gerar documentos muito extensos.
+- Usuários que só precisam da visão consolidada (KPIs + índice + resumos) não têm como suprimir os cards de detalhe.
 
-…em **um único grupo expansível "Aprovações"** (ícone `ShieldCheck`), seguindo o mesmo padrão dos outros grupos colapsáveis já existentes na sidebar. Itens filhos: "Gerenciadora" e "Arquitetura Externa". O grupo abre automaticamente quando a rota ativa for uma das duas. Quando a sidebar estiver no modo `collapsed` (icon-only), o grupo continua acessível via ícone.
+## Mudanças propostas
 
-## 2. Coluna "Aprovações" no Índice do Relatório
+### 1. Front-end — Configuração do relatório (`src/pages/Relatorio.tsx`)
+- **Novo estado:** `mostrarDetalhamento` (padrão: `true`, para manter compatibilidade).
+- **Novo checkbox** na seção "Conteúdo do Relatório", ao lado do "Agrupar por ambiente", com ícone `FileText`.
+- **Envio para API:** incluir `mostrarDetalhamento` no payload do `handleGenerate`.
 
-Em `src/pages/Relatorio.tsx`, a coluna no índice ainda não existe — só o bloco no detalhamento. Adicionar:
+### 2. Front-end — PDF (`handlePrint`)
+- Envolver o bloco `detailHtml` (linhas ~234-321) com condicional `cfg.mostrarDetalhamento !== false`.
+- Quando desabilitado, o PDF omite completamente a seção "Detalhamento dos Desvios" ou "Detalhamento dos Desvios por Ambiente".
 
-**PDF (HTML gerado, ~linha 196-217):**
-- Novo `thAprov` condicional a `cfg.mostrarAprovacoes !== false`, posicionado após Status.
-- Em cada linha (`rows`), nova `<td>` com badges compactos por aprovação registrada:
-  - `G✓` / `G✗` (Gerenciadora aprovado/reprovado)
-  - `A✓` / `A✗` (Arquitetura aprovado/reprovado)
-  - Verde para aprovado, vermelho para reprovado, cinza/traço quando não há aprovação
-- Tooltip não funciona em PDF, então o detalhamento (já existente) continua mostrando nome do aprovador e comentário.
+### 3. Front-end — Preview UI (React)
+- Envolver o bloco "Detalhe de cada desvio" (linhas ~964-1100+) com condicional `data.config?.mostrarDetalhamento !== false`.
+- Índice, KPIs, Performance de Fornecedores e Análise IA continuam aparecendo normalmente.
 
-**Preview UI (~linha 878-887 + linhas do tbody):**
-- Espelhar a mesma coluna condicional na tabela React, com `Badge` do shadcn (variantes verde/vermelho).
-- Usar mesma lógica: iterar `d.aprovacoes` e exibir 1 badge por registro.
-
-**Quando agrupado por ambiente:** a coluna entra no mesmo `tableHead` reutilizado, então cobre os dois modos automaticamente.
+## Nenhuma mudança de backend
+- Não é necessário alterar a edge function `gerar-relatorio`, pois ela já devolve todos os dados necessários (`desvios`, `config`). O front-end apenas decide renderizar ou não a seção de detalhamento baseado na flag.
 
 ## Arquivos afetados
-
-- `src/components/DashboardLayout.tsx` — agrupar menu Aprovações
-- `src/pages/Relatorio.tsx` — adicionar coluna Aprovações no índice (PDF + preview)
-
-Nenhuma mudança de DB, edge function ou hooks. Os dados `d.aprovacoes` já chegam do backend.
+- `src/pages/Relatorio.tsx` — único arquivo modificado.

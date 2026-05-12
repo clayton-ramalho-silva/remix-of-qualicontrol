@@ -90,6 +90,7 @@ export default function Relatorio() {
   const [incluirAnalise, setIncluirAnalise] = useState(true);
   const [agruparPorAmbiente, setAgruparPorAmbiente] = useState(false);
   const [mostrarAprovacoes, setMostrarAprovacoes] = useState(true);
+  const [mostrarDetalhamento, setMostrarDetalhamento] = useState(true);
 
   // Seção 5 — Formato
   const [formato, setFormato] = useState<"pdf" | "excel">("pdf");
@@ -130,6 +131,7 @@ export default function Relatorio() {
       mostrarSeveridade,
       incluirAnalise,
       mostrarAprovacoes,
+      mostrarDetalhamento,
       formato,
     });
   };
