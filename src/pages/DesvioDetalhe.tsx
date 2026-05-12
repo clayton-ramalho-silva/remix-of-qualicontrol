@@ -23,6 +23,8 @@ import {
 import PlantaPinSelector from "@/components/PlantaPinSelector";
 import PhotoAnnotator from "@/components/PhotoAnnotator";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { RotateCcw, Trash2 } from "lucide-react";
 
 // Grupos carregados do banco de dados (substitui disciplinas fixas)
 
@@ -53,8 +55,17 @@ export default function DesvioDetalhe() {
   const desvioId = parseInt(params.id || "0");
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
 
   const { data, isLoading } = trpc.desvios.getById.useQuery({ id: desvioId });
+  const restoreDesvio = trpc.desvios.restore.useMutation({
+    onSuccess: () => {
+      utils.desvios.getById.invalidate({ id: desvioId });
+      toast.success("Desvio restaurado.");
+    },
+    onError: (err) => toast.error(err.message || "Erro ao restaurar."),
+  });
   const updateDesvio = trpc.desvios.update.useMutation({
     onSuccess: () => {
       utils.desvios.getById.invalidate({ id: desvioId });
