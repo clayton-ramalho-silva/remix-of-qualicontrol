@@ -504,11 +504,17 @@ export default function DesvioDetalhe() {
                   </div>
                   <div>
                     <Label className="text-sm font-medium">Fornecedor</Label>
-                    <Select value={editFornecedorNome} onValueChange={setEditFornecedorNome}>
+                    <Select
+                      value={editFornecedorNome || "__none__"}
+                      onValueChange={(v) => setEditFornecedorNome(v === "__none__" ? "" : v)}
+                    >
                       <SelectTrigger className="mt-1 bg-background">
                         <SelectValue placeholder="Selecione ou deixe em branco..." />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="__none__">
+                          <span className="text-muted-foreground">Nenhum</span>
+                        </SelectItem>
                         {fornecedoresData?.map((f) => (
                           <SelectItem key={f.id} value={f.nome}>{f.nome}</SelectItem>
                         ))}

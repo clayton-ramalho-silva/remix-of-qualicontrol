@@ -447,9 +447,15 @@ export default function DesvioNovo() {
                 </Field>
 
                 <Field label="Fornecedor" hint={HINTS.fornecedor}>
-                  <Select value={fornecedorNome} onValueChange={setFornecedorNome}>
+                  <Select
+                    value={fornecedorNome || "__none__"}
+                    onValueChange={(v) => setFornecedorNome(v === "__none__" ? "" : v)}
+                  >
                     <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="__none__">
+                        <span className="text-muted-foreground">Nenhum</span>
+                      </SelectItem>
                       {fornecedoresDb?.map(f => (
                         <SelectItem key={f.id} value={f.nome}>{f.nome}</SelectItem>
                       ))}
