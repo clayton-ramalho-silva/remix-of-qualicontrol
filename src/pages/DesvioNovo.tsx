@@ -67,6 +67,7 @@ export default function DesvioNovo() {
     qualidade: "cobertura_qualidade",
     checklist: "cobertura_checklist",
     qsms: "cobertura_qsms",
+    vistoria: "cobertura_vistoria",
   } as const;
   const obras = vertical
     ? obrasAll?.filter((o: any) => Number(o[coverColByVertical[vertical]] ?? 0) > 0)
