@@ -15,6 +15,8 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { Streamdown } from "streamdown";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import ChecklistList from "@/pages/ChecklistList";
 
 const statusLabels: Record<string, string> = {
   aberto: "Aberto", em_andamento: "Em Andamento",
@@ -57,6 +59,23 @@ function diasAtraso(d: any): number {
 }
 
 export default function Relatorio() {
+  return (
+    <Tabs defaultValue="desvios" className="max-w-6xl mx-auto">
+      <TabsList className="mb-4">
+        <TabsTrigger value="desvios">Desvios</TabsTrigger>
+        <TabsTrigger value="vistoria">Vistoria de Entrega</TabsTrigger>
+      </TabsList>
+      <TabsContent value="desvios">
+        <RelatorioDesvios />
+      </TabsContent>
+      <TabsContent value="vistoria">
+        <ChecklistList />
+      </TabsContent>
+    </Tabs>
+  );
+}
+
+function RelatorioDesvios() {
   const { data: obras } = trpc.obras.list.useQuery();
   const { data: fornecedores } = trpc.fornecedores.list.useQuery();
   const reportRef = useRef<HTMLDivElement>(null);
