@@ -926,10 +926,23 @@ export default function Relatorio() {
                   <Separator className="my-6" />
                   <div className="section">
                     <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4 text-amber-500" /> Detalhamento dos Desvios
+                      <AlertTriangle className="h-4 w-4 text-amber-500" />
+                      {agruparPorAmbiente ? "Detalhamento dos Desvios por Ambiente" : "Detalhamento dos Desvios"}
                     </h2>
-                    <div className="space-y-4">
-                      {data.desvios.map((d: any) => (
+                    {(() => {
+                      const groups = agruparPorAmbiente
+                        ? groupByAmbiente(data.desvios)
+                        : [{ nome: "", items: data.desvios as any[] }];
+                      return (
+                        <div className="space-y-6">
+                          {groups.map((g, gi) => (
+                            <div key={gi} className="space-y-4">
+                              {agruparPorAmbiente && (
+                                <div className="text-sm font-bold text-foreground bg-primary/5 border-l-4 border-primary px-3 py-2 rounded">
+                                  Ambiente: {g.nome} <span className="text-muted-foreground font-normal text-xs">— {g.items.length} desvio{g.items.length > 1 ? "s" : ""}</span>
+                                </div>
+                              )}
+                              {g.items.map((d: any) => (
                         <div key={d.id} className="desvio-detail border rounded-lg p-4">
                           <div className="flex items-center justify-between mb-2">
                             <h3 className="text-sm font-semibold flex items-center gap-2">
@@ -1051,7 +1064,11 @@ export default function Relatorio() {
                           )}
                         </div>
                       ))}
-                    </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </>
               )}
