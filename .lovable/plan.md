@@ -1,61 +1,49 @@
 ## Objetivo
 
-Permitir que o usuário escolha, no card **Conteúdo do Relatório** (`/relatorio`), quais blocos analíticos serão impressos no PDF/preview:
+Garantir que um desvio só possa transitar para **Fechado** quando todas as aprovações exigidas pelas tags de classificação estiverem registradas como `aprovado`:
 
-1. **Indicadores** (KPIs)
-2. **Resumo por Grupo** (tabela por disciplina)
-3. **Performance de Fornecedores**
-4. **Índice de Desvios**
+- Se `tag_solicitado_gerenciadora = 1` → exige `desvio_aprovacoes` com `tipo='gerenciadora'` e `decisao='aprovado'`.
+- Se `tag_solicitado_arquitetura = 1` → exige `desvio_aprovacoes` com `tipo='arquitetura'` e `decisao='aprovado'`.
 
-Hoje:
-- *Indicadores* e *Índice de Desvios* sempre são renderizados (não há controle).
-- *Resumo por Grupo* já existe como "Tabela de grupos" (`mostrarTabelaGrupos`) — apenas renomear o rótulo para "Resumo por Grupo" para alinhar com o nome usado no PDF.
-- *Performance de Fornecedores* hoje está acoplada ao toggle "Mostra fornecedores" (`mostrarFornecedores`), que também controla a coluna fornecedor na tabela. Vamos desacoplar criando um toggle próprio.
+Hoje o `handleStatusChange` em `src/pages/DesvioDetalhe.tsx` só valida fotos de fechamento; o resolver `desvios.update` em `src/lib/trpc.ts` não consulta `desvio_aprovacoes`.
 
-## Mudanças (somente `src/pages/Relatorio.tsx`)
+## Mudanças
 
-### Novos estados
+### 1. Backend — `src/lib/trpc.ts`
+
+**`desvios.getById`** (linhas ~100-126): adicionar carregamento de aprovações.
 
 ```ts
-const [mostrarIndicadores, setMostrarIndicadores] = useState(true);
-const [mostrarPerformanceFornecedores, setMostrarPerformanceFornecedores] = useState(true);
-const [mostrarIndiceDesvios, setMostrarIndiceDesvios] = useState(true);
+supabase.from("desvio_aprovacoes").select("*").eq("desvio_id", id).order("created_at"),
 ```
 
-(Reaproveita `mostrarTabelaGrupos` para "Resumo por Grupo".)
+Retornar `aprovacoes` no objeto, com campos camelCase (`aprovadorNome`, `createdAt` etc.).
 
-### Config enviada ao gerador
+**`desvios.update`** (linha ~638): antes de aplicar `patch`, se `rest.status === "fechado"`:
 
-Adicionar ao objeto `cfg` enviado ao backend/PDF builder:
+1. Buscar o desvio atual (`tag_solicitado_gerenciadora`, `tag_solicitado_arquitetura`).
+2. Buscar `desvio_aprovacoes` do desvio.
+3. Se `tag_solicitado_gerenciadora=1` e não houver registro `tipo='gerenciadora'` com `decisao='aprovado'` → `throw new Error("Aprovação da Gerenciadora pendente — não é possível fechar.")`.
+4. Mesma checagem para `arquitetura`.
 
-```ts
-mostrarIndicadores,
-mostrarPerformanceFornecedores,
-mostrarIndiceDesvios,
-```
+Isso protege também atualizações vindas de outros caminhos (não só do detalhe).
 
-### Geração do HTML do PDF (linhas ~210-275 e ~423-428)
+### 2. Frontend — `src/pages/DesvioDetalhe.tsx`
 
-- KPIs (linha 423): envolver em `${cfg.mostrarIndicadores ? ... : ""}`.
-- Performance (linha 225): trocar `if (cfg.mostrarFornecedores && ...)` por `if (cfg.mostrarPerformanceFornecedores && ...)`.
-- Índice (linha 234): envolver em `if (cfg.mostrarIndiceDesvios !== false && desvios.length > 0)`.
-- Resumo por Grupo já controlado por `cfg.mostrarTabelaDisciplinas` (= `mostrarTabelaGrupos`) — sem mudança.
+- Consumir `data.aprovacoes` retornado pelo `getById`.
+- Em `handleStatusChange`, antes do `mutate`, replicar a mesma checagem para falhar cedo com `toast.error` claro indicando qual aprovação está pendente.
+- Ajustar o seletor de status: quando faltar aprovação requerida, exibir o item "Fechado" desabilitado (ou marcado como pendente) com tooltip indicando o motivo.
+- Adicionar um pequeno bloco visível no topo da página (próximo às tags) listando o status das aprovações exigidas:
+  - "Gerenciadora: aguardando" / "aprovado" / "reprovado"
+  - "Arquitetura: aguardando" / "aprovado" / "reprovado"
 
-### Preview HTML (seção que renderiza no app, ~903)
+A página `/aprovacoes/...` continua sendo o lugar onde o aprovador realmente registra a aprovação — apenas adicionamos um link/atalho a partir do detalhe.
 
-Aplicar os mesmos guards condicionais nos blocos correspondentes do preview para refletir as escolhas.
+### 3. Observação sobre status `aguardando_aceite`
 
-### UI — Conteúdo do Relatório (linhas ~662-747)
+Mantemos a regra atual (só exige fotos de fechamento). A trava só atua na transição para `fechado`.
 
-Adicionar 3 novos checkboxes (e renomear o label de "Tabela de grupos" para "Resumo por Grupo"):
+## Arquivos editados
 
-- ☐ Indicadores (ícone `BarChart3`)
-- ☐ Resumo por Grupo (já existe, renomear label)
-- ☐ Performance de Fornecedores (ícone `TrendingUp`)
-- ☐ Índice de Desvios (ícone `FileText`)
-
-Todos default `true` para manter o comportamento atual.
-
-## Arquivo editado
-
-`src/pages/Relatorio.tsx`
+- `src/lib/trpc.ts`
+- `src/pages/DesvioDetalhe.tsx`
