@@ -90,6 +90,7 @@ export default function Relatorio() {
   const [incluirAnalise, setIncluirAnalise] = useState(true);
   const [agruparPorAmbiente, setAgruparPorAmbiente] = useState(false);
   const [mostrarAprovacoes, setMostrarAprovacoes] = useState(true);
+  const [mostrarDetalhamento, setMostrarDetalhamento] = useState(true);
 
   // Seção 5 — Formato
   const [formato, setFormato] = useState<"pdf" | "excel">("pdf");
@@ -130,6 +131,7 @@ export default function Relatorio() {
       mostrarSeveridade,
       incluirAnalise,
       mostrarAprovacoes,
+      mostrarDetalhamento,
       formato,
     });
   };
@@ -233,7 +235,7 @@ export default function Relatorio() {
 
     // Detalhamento dos Desvios
     let detailHtml = "";
-    if (desvios.length > 0) {
+    if (desvios.length > 0 && cfg.mostrarDetalhamento !== false) {
       const buildCard = (d: any) => {
         const tags: string[] = [];
         if (cfg.mostrarTagsClassificacao !== false) {
@@ -658,6 +660,10 @@ export default function Relatorio() {
                 <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> Mostrar aprovações
               </label>
               <label className="flex items-center gap-2 cursor-pointer text-sm">
+                <Checkbox checked={mostrarDetalhamento} onCheckedChange={(v) => setMostrarDetalhamento(!!v)} />
+                <FileText className="h-3.5 w-3.5 text-muted-foreground" /> Detalhamento dos desvios
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm">
                 <Checkbox checked={incluirAnalise} onCheckedChange={(v) => setIncluirAnalise(!!v)} />
                 <BrainCircuit className="h-3.5 w-3.5 text-primary" /> Incluir análise IA
               </label>
@@ -962,7 +968,7 @@ export default function Relatorio() {
               )}
 
               {/* Detalhe de cada desvio */}
-              {data.desvios && data.desvios.length > 0 && (
+              {data.desvios && data.desvios.length > 0 && data.config?.mostrarDetalhamento !== false && (
                 <>
                   <Separator className="my-6" />
                   <div className="section">
