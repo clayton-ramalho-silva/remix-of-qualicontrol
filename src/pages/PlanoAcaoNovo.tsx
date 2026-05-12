@@ -270,6 +270,7 @@ export default function PlanoAcaoNovo() {
                       <SelectItem value="qualidade">Qualidade</SelectItem>
                       <SelectItem value="qsms">QSMS</SelectItem>
                       <SelectItem value="checklist">Checklist</SelectItem>
+                      <SelectItem value="vistoria">Vistoria</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
