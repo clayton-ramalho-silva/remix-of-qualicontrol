@@ -46,6 +46,7 @@ import {
   Siren,
   ChevronRight,
   ShieldCheck,
+  ListChecks,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -79,6 +80,7 @@ const menuItems: MenuItem[] = [
   },
   { icon: PlusCircle, label: "Novo Desvio", path: "/desvios/novo" },
   { icon: ClipboardList, label: "Desvios", path: "/desvios" },
+  { icon: ListChecks, label: "Checklist", path: "/checklists" },
   { icon: Target, label: "Planos de Ação", path: "/planos-acao", badgeKey: "planosPendentes" },
   {
     group: true,
