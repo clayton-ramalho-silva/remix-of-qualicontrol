@@ -633,6 +633,10 @@ export default function Relatorio() {
                 <AlertTriangle className="h-3.5 w-3.5 text-muted-foreground" /> Mostra severidade
               </label>
               <label className="flex items-center gap-2 cursor-pointer text-sm">
+                <Checkbox checked={agruparPorAmbiente} onCheckedChange={(v) => setAgruparPorAmbiente(!!v)} />
+                <MapPin className="h-3.5 w-3.5 text-muted-foreground" /> Agrupar por ambiente
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm">
                 <Checkbox checked={incluirAnalise} onCheckedChange={(v) => setIncluirAnalise(!!v)} />
                 <BrainCircuit className="h-3.5 w-3.5 text-primary" /> Incluir análise IA
               </label>
