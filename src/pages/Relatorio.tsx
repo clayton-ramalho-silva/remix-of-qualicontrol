@@ -968,7 +968,7 @@ export default function Relatorio() {
               )}
 
               {/* Detalhe de cada desvio */}
-              {data.desvios && data.desvios.length > 0 && (
+              {data.desvios && data.desvios.length > 0 && data.config?.mostrarDetalhamento !== false && (
                 <>
                   <Separator className="my-6" />
                   <div className="section">
