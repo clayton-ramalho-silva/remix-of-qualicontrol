@@ -40,6 +40,8 @@ Deno.serve(async (req) => {
       tagCritico,
       tagSegurancaTrabalho,
       tagSolicitadoCliente,
+      tagSolicitadoGerenciadora,
+      tagSolicitadoArquitetura,
       formato = "pdf",
       incluirAnalise = false,
     } = cfg;
@@ -57,6 +59,10 @@ Deno.serve(async (req) => {
     else if (tagSegurancaTrabalho === "nao") q = q.eq("tag_seguranca_trabalho", 0);
     if (tagSolicitadoCliente === "sim") q = q.eq("tag_solicitado_cliente", 1);
     else if (tagSolicitadoCliente === "nao") q = q.eq("tag_solicitado_cliente", 0);
+    if (tagSolicitadoGerenciadora === "sim") q = q.eq("tag_solicitado_gerenciadora", 1);
+    else if (tagSolicitadoGerenciadora === "nao") q = q.eq("tag_solicitado_gerenciadora", 0);
+    if (tagSolicitadoArquitetura === "sim") q = q.eq("tag_solicitado_arquitetura", 1);
+    else if (tagSolicitadoArquitetura === "nao") q = q.eq("tag_solicitado_arquitetura", 0);
     const { data: desviosRaw, error } = await q;
     if (error) throw error;
     const desvios = desviosRaw || [];
@@ -165,6 +171,8 @@ Deno.serve(async (req) => {
         tagCritico: d.tag_critico,
         tagSegurancaTrabalho: d.tag_seguranca_trabalho,
         tagSolicitadoCliente: d.tag_solicitado_cliente,
+        tagSolicitadoGerenciadora: d.tag_solicitado_gerenciadora,
+        tagSolicitadoArquitetura: d.tag_solicitado_arquitetura,
         fotosAbertura: fotos.abertura,
         fotosFechamento: fotos.fechamento,
         planos: planosMap.get(d.id) || [],
@@ -210,7 +218,7 @@ Deno.serve(async (req) => {
           "ID", "Descrição", "Disciplina", "Fornecedor", "Severidade",
           "Status", "Origem", "Localização", "Data identificação",
           "Prazo sugerido", "Data fechamento", "Crítico",
-          "Segurança", "Solicitado cliente", "Planta",
+          "Segurança", "Solicitado cliente", "Solic. Gerenciadora", "Solic. Arquitetura", "Planta",
         ],
         ...desviosOut.map((d: any) => [
           d.id, d.descricao, d.disciplina, d.fornecedor, d.severidade,
@@ -219,6 +227,8 @@ Deno.serve(async (req) => {
           d.tagCritico ? "Sim" : "Não",
           d.tagSegurancaTrabalho ? "Sim" : "Não",
           d.tagSolicitadoCliente ? "Sim" : "Não",
+          d.tagSolicitadoGerenciadora ? "Sim" : "Não",
+          d.tagSolicitadoArquitetura ? "Sim" : "Não",
           d.plantaNome || "",
         ]),
       ];
