@@ -288,6 +288,7 @@ export default function Relatorio() {
           <div style="font-size:11px;color:#1e293b;background:#f8fafc;border-left:3px solid #0d9488;padding:6px 10px;border-radius:4px;margin-bottom:8px;white-space:pre-wrap;word-break:break-word"><strong style="color:#0f172a">Descrição:</strong> ${d.descricao}</div>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px 12px;font-size:10px;color:#475569;margin-bottom:6px">${metaItems.join("")}</div>
           ${tags.length > 0 ? `<div style="display:flex;gap:4px;margin-bottom:6px">${tags.join("")}</div>` : ""}
+          ${cfg.mostrarAprovacoes !== false && d.aprovacoes && d.aprovacoes.length > 0 ? `<div style="margin-top:6px;font-size:10px"><strong>Aprovações:</strong> ${d.aprovacoes.map((a: any) => `<span style="display:inline-block;padding:2px 6px;border-radius:4px;margin-right:4px;${a.decisao === 'aprovado' ? 'background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0' : 'background:#fef2f2;color:#dc2626;border:1px solid #fecaca'}">${a.tipo === 'gerenciadora' ? 'Gerenciadora' : 'Arquitetura'} ${a.decisao === 'aprovado' ? '✓' : '✗'}${a.aprovador_nome ? ' — ' + a.aprovador_nome : ''}${a.comentario ? ' (' + a.comentario + ')' : ''}</span>`).join("")}</div>` : ""}
           ${planosHtml}
           ${fotosHtml}
           ${plantaHtml}
