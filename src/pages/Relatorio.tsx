@@ -84,6 +84,7 @@ export default function Relatorio() {
   const [mostrarResponsaveis, setMostrarResponsaveis] = useState(true);
   const [mostrarVertical, setMostrarVertical] = useState(true);
   const [mostrarDataPrevista, setMostrarDataPrevista] = useState(true);
+  const [mostrarDataCriacao, setMostrarDataCriacao] = useState(true);
   const [mostrarDataFinalizacao, setMostrarDataFinalizacao] = useState(true);
   const [mostrarAbertos, setMostrarAbertos] = useState(true);
   const [mostrarEmAndamento, setMostrarEmAndamento] = useState(true);
@@ -127,6 +128,7 @@ export default function Relatorio() {
       mostrarResponsaveis,
       mostrarVertical,
       mostrarDataPrevista,
+      mostrarDataCriacao,
       mostrarDataFinalizacao,
       mostrarAbertos,
       mostrarEmAndamento,
@@ -210,13 +212,15 @@ export default function Relatorio() {
     let indexHtml = "";
     if (desvios.length > 0) {
       const thForn = cfg.mostrarFornecedores ? `<th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Fornecedor</th>` : "";
-      const thPrazo = cfg.mostrarDataPrevista ? `<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Prazo</th>` : "";
+      const thPrazo = cfg.mostrarDataPrevista ? `<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Data Prevista</th>` : "";
+      const thData = cfg.mostrarDataCriacao !== false ? `<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Data</th>` : "";
       const thVert = cfg.mostrarVertical ? `<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Vertical</th>` : "";
       const thSev = cfg.mostrarSeveridade !== false ? `<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Severidade</th>` : "";
       const thAprov = cfg.mostrarAprovacoes !== false ? `<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Aprovações</th>` : "";
       const buildRow = (d: any) => {
         const tdForn = cfg.mostrarFornecedores ? `<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9">${d.fornecedor || "—"}</td>` : "";
         const tdPrazo = cfg.mostrarDataPrevista ? `<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;white-space:nowrap">${fmtDate(d.prazoSugerido)}${atrasoBadgePdf(d)}</td>` : "";
+        const tdData = cfg.mostrarDataCriacao !== false ? `<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;color:#64748b;vertical-align:top">${fmtDate(d.dataIdentificacao)}</td>` : "";
         const tdVert = cfg.mostrarVertical ? `<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;vertical-align:top">${oLabels[d.origem] || d.origem}</td>` : "";
         const tdSev = cfg.mostrarSeveridade !== false ? `<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;vertical-align:top">${sevBadge(d.severidade)}</td>` : "";
         let tdAprov = "";
@@ -234,9 +238,9 @@ export default function Relatorio() {
         const atrasado = destaqueAtrasos && isAtrasado(d);
         const rowBg = atrasado ? "background:#fef2f2;" : "";
         const firstCellShadow = atrasado ? "box-shadow:inset 3px 0 0 #dc2626;" : "";
-        return `<tr style="${rowBg}"><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;font-family:monospace;vertical-align:top;${firstCellShadow}"><a href="#desvio-${d.id}" style="color:#0d9488;text-decoration:none;font-weight:600">#${d.id}</a></td><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;vertical-align:top">${d.disciplina}</td>${tdForn}<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;white-space:normal;word-break:break-word;vertical-align:top">${d.descricao}</td>${tdSev}<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;vertical-align:top">${stBadge(d.status)}</td>${tdVert}<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;color:#64748b;vertical-align:top">${fmtDate(d.dataIdentificacao)}</td>${tdPrazo}${tdAprov}</tr>`;
+        return `<tr style="${rowBg}"><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;font-family:monospace;vertical-align:top;${firstCellShadow}"><a href="#desvio-${d.id}" style="color:#0d9488;text-decoration:none;font-weight:600">#${d.id}</a></td><td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;vertical-align:top">${d.disciplina}</td>${tdForn}<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;white-space:normal;word-break:break-word;vertical-align:top">${d.descricao}</td>${tdSev}<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;text-align:center;vertical-align:top">${stBadge(d.status)}</td>${tdVert}${tdData}${tdPrazo}${tdAprov}</tr>`;
       };
-      const tableHead = `<thead><tr style="background:#f1f5f9"><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">#</th><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Grupo</th>${thForn}<th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Descrição</th>${thSev}<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Status</th>${thVert}<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Data</th>${thPrazo}${thAprov}</tr></thead>`;
+      const tableHead = `<thead><tr style="background:#f1f5f9"><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">#</th><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Grupo</th>${thForn}<th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Descrição</th>${thSev}<th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #e2e8f0">Status</th>${thVert}${thData}${thPrazo}${thAprov}</tr></thead>`;
       if (agruparPorAmbiente) {
         const groups = groupByAmbiente(desvios);
         const blocks = groups.map((g, i) => {
@@ -270,7 +274,7 @@ export default function Relatorio() {
         ];
         if (cfg.mostrarVertical) metaItems.splice(1, 0, `<div><strong>Vertical:</strong> ${oLabels[d.origem] || d.origem}</div>`);
         if (cfg.mostrarFornecedores) metaItems.splice(1, 0, `<div><strong>Fornecedor:</strong> ${d.fornecedor || "—"}</div>`);
-        if (cfg.mostrarDataPrevista) metaItems.push(`<div><strong>Prazo:</strong> ${fmtDate(d.prazoSugerido)}</div>`);
+        if (cfg.mostrarDataPrevista) metaItems.push(`<div><strong>Data Prevista:</strong> ${fmtDate(d.prazoSugerido)}</div>`);
         if (cfg.mostrarDataFinalizacao) metaItems.push(`<div><strong>Fechamento:</strong> ${fmtDate(d.dataFechamento)}</div>`);
 
         // Planos de ação
@@ -360,7 +364,7 @@ export default function Relatorio() {
         atrasoHtml = `<div style="margin-top:20px;page-break-inside:avoid;border:1px solid #fecaca;border-radius:8px;padding:14px;background:#fff;border-left:4px solid #dc2626">
           <h2 style="font-size:14px;font-weight:700;color:#dc2626;margin-bottom:10px;display:flex;align-items:center;gap:6px">⚠ Itens em Atraso (${atrasados.length})</h2>
           <table style="width:100%;border-collapse:collapse;font-size:10px">
-            <thead><tr style="background:#fef2f2"><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">#</th><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">Grupo</th>${fornHead}<th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">Descrição</th><th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">Prazo</th><th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">Dias em atraso</th></tr></thead>
+            <thead><tr style="background:#fef2f2"><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">#</th><th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">Grupo</th>${fornHead}<th style="text-align:left;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">Descrição</th><th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">Data Prevista</th><th style="text-align:center;padding:8px;font-weight:600;border-bottom:2px solid #fecaca">Dias em atraso</th></tr></thead>
             <tbody>${rows}</tbody>
           </table>
         </div>`;
@@ -647,6 +651,10 @@ export default function Relatorio() {
                 <Calendar className="h-3.5 w-3.5 text-muted-foreground" /> Mostra data prevista
               </label>
               <label className="flex items-center gap-2 cursor-pointer text-sm">
+                <Checkbox checked={mostrarDataCriacao} onCheckedChange={(v) => setMostrarDataCriacao(!!v)} />
+                <Calendar className="h-3.5 w-3.5 text-muted-foreground" /> Mostra data de criação
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm">
                 <Checkbox checked={mostrarDataFinalizacao} onCheckedChange={(v) => setMostrarDataFinalizacao(!!v)} />
                 <Calendar className="h-3.5 w-3.5 text-muted-foreground" /> Mostra data de finalização
               </label>
@@ -841,7 +849,7 @@ export default function Relatorio() {
                             <th className="text-left py-2 px-2 font-semibold">Grupo</th>
                             {data.config?.mostrarFornecedores && <th className="text-left py-2 px-2 font-semibold">Fornecedor</th>}
                             <th className="text-left py-2 px-2 font-semibold">Descrição</th>
-                            <th className="text-center py-2 px-2 font-semibold">Prazo</th>
+                            <th className="text-center py-2 px-2 font-semibold">Data Prevista</th>
                             <th className="text-center py-2 px-2 font-semibold">Dias em atraso</th>
                           </tr>
                         </thead>
@@ -986,8 +994,8 @@ export default function Relatorio() {
                             {data.config?.mostrarSeveridade !== false && <th className="text-center py-2 px-2 font-semibold">Severidade</th>}
                             <th className="text-center py-2 px-2 font-semibold">Status</th>
                             {data.config?.mostrarVertical && <th className="text-center py-2 px-2 font-semibold">Vertical</th>}
-                            <th className="text-center py-2 px-2 font-semibold">Data</th>
-                            {data.config?.mostrarDataPrevista && <th className="text-center py-2 px-2 font-semibold">Prazo</th>}
+                            {data.config?.mostrarDataCriacao !== false && <th className="text-center py-2 px-2 font-semibold">Data</th>}
+                            {data.config?.mostrarDataPrevista && <th className="text-center py-2 px-2 font-semibold">Data Prevista</th>}
                             {data.config?.mostrarAprovacoes !== false && <th className="text-center py-2 px-2 font-semibold">Aprovações</th>}
                           </tr>
                         </thead>
@@ -1011,9 +1019,11 @@ export default function Relatorio() {
                                 </span>
                               </td>
                               {data.config?.mostrarVertical && <td className="py-1.5 px-2 text-center text-xs">{origemLabels[d.origem] || d.origem}</td>}
-                              <td className="py-1.5 px-2 text-center text-muted-foreground">
-                                {d.dataIdentificacao ? new Date(d.dataIdentificacao).toLocaleDateString("pt-BR") : "—"}
-                              </td>
+                              {data.config?.mostrarDataCriacao !== false && (
+                                <td className="py-1.5 px-2 text-center text-muted-foreground">
+                                  {d.dataIdentificacao ? new Date(d.dataIdentificacao).toLocaleDateString("pt-BR") : "—"}
+                                </td>
+                              )}
                               {data.config?.mostrarDataPrevista && (
                                 <td className="py-1.5 px-2 text-center text-muted-foreground whitespace-nowrap">
                                   {d.prazoSugerido ? new Date(d.prazoSugerido).toLocaleDateString("pt-BR") : "—"}
@@ -1111,7 +1121,7 @@ export default function Relatorio() {
                             {data.config?.mostrarVertical && <div><span className="font-medium text-foreground">Vertical:</span> {origemLabels[d.origem] || d.origem}</div>}
                             <div><span className="font-medium text-foreground">Local:</span> {d.localizacao || "—"}</div>
                             <div><span className="font-medium text-foreground">Identificação:</span> {d.dataIdentificacao ? new Date(d.dataIdentificacao).toLocaleDateString("pt-BR") : "—"}</div>
-                            {data.config?.mostrarDataPrevista && <div><span className="font-medium text-foreground">Prazo:</span> {d.prazoSugerido ? new Date(d.prazoSugerido).toLocaleDateString("pt-BR") : "—"}</div>}
+                            {data.config?.mostrarDataPrevista && <div><span className="font-medium text-foreground">Data Prevista:</span> {d.prazoSugerido ? new Date(d.prazoSugerido).toLocaleDateString("pt-BR") : "—"}</div>}
                             {data.config?.mostrarDataFinalizacao && <div><span className="font-medium text-foreground">Fechamento:</span> {d.dataFechamento ? new Date(d.dataFechamento).toLocaleDateString("pt-BR") : "—"}</div>}
                             {data.config?.mostrarTagsClassificacao !== false && (d.tagCritico || d.tagSegurancaTrabalho || d.tagSolicitadoCliente || d.tagSolicitadoGerenciadora || d.tagSolicitadoArquitetura) && (
                               <div className="flex gap-1 items-center flex-wrap">
