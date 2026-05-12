@@ -83,8 +83,11 @@ export default function DesviosList() {
     let result = desvios;
     if (discFilter !== "all") result = result.filter(d => d.disciplina === discFilter);
     if (searchTerm) {
-      const term = searchTerm.toLowerCase();
+      const term = searchTerm.toLowerCase().trim();
+      const termId = term.replace(/^#/, "");
       result = result.filter(d =>
+        String(d.id) === termId ||
+        String(d.id).includes(termId) ||
         d.descricao.toLowerCase().includes(term) ||
         (d.disciplina || "").toLowerCase().includes(term) ||
         (d.fornecedorNome || "").toLowerCase().includes(term) ||
@@ -115,7 +118,7 @@ export default function DesviosList() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por descrição, grupo, fornecedor, localização..."
+              placeholder="Buscar por #ID, descrição, grupo, fornecedor, localização..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-9 bg-background"
