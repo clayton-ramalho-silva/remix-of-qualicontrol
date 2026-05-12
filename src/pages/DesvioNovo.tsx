@@ -94,6 +94,8 @@ export default function DesvioNovo() {
   const [tagCritico, setTagCritico] = useState(false);
   const [tagDepProjeto, setTagDepProjeto] = useState(false);
   const [tagPendenteGo, setTagPendenteGo] = useState(false);
+  const [tagGerenciadora, setTagGerenciadora] = useState(false);
+  const [tagArquitetura, setTagArquitetura] = useState(false);
   const [fotos, setFotos] = useState<Foto[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [registrados, setRegistrados] = useState<{ id: number; descricao: string }[]>([]);
@@ -204,6 +206,8 @@ export default function DesvioNovo() {
         tagCritico: tagCritico ? 1 : 0,
         tagSegurancaTrabalho: tagDepProjeto ? 1 : 0,
         tagSolicitadoCliente: tagPendenteGo ? 1 : 0,
+        tagSolicitadoGerenciadora: tagGerenciadora ? 1 : 0,
+        tagSolicitadoArquitetura: tagArquitetura ? 1 : 0,
         dataIdentificacao: localDateMs(dataInspecao),
         prazoSugerido: prazoSugerido ? localDateMs(prazoSugerido) : undefined,
         plantaId: plantaId || undefined,
@@ -511,6 +515,20 @@ export default function DesvioNovo() {
                     <span className="text-sm flex items-center gap-1.5">
                       <span className="inline-block w-2 h-2 rounded-full bg-blue-500" />
                       Pendente Agendamento GO
+                    </span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox checked={tagGerenciadora} onCheckedChange={c => setTagGerenciadora(!!c)} />
+                    <span className="text-sm flex items-center gap-1.5">
+                      <span className="inline-block w-2 h-2 rounded-full bg-purple-500" />
+                      Solicitado pela Gerenciadora
+                    </span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox checked={tagArquitetura} onCheckedChange={c => setTagArquitetura(!!c)} />
+                    <span className="text-sm flex items-center gap-1.5">
+                      <span className="inline-block w-2 h-2 rounded-full bg-amber-500" />
+                      Solicitado pela Arquitetura Externa
                     </span>
                   </label>
                 </div>
