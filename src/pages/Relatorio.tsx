@@ -1085,7 +1085,12 @@ export default function Relatorio() {
                               <span className="text-muted-foreground">#{d.id}</span>
                               Desvio
                             </h3>
-                            <div className="flex gap-1.5">
+                            <div className="flex gap-1.5 items-center">
+                              {destaqueAtrasos && isAtrasado(d) && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-600 text-white">
+                                  <AlertTriangle className="h-3 w-3" /> EM ATRASO • {diasAtraso(d)}d
+                                </span>
+                              )}
                               {data.config?.mostrarSeveridade !== false && (
                                 <span className={`badge inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${sevColors[d.severidade] || ""}`}>
                                   {d.severidade}
