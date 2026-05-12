@@ -45,6 +45,7 @@ import {
   HardHat,
   Siren,
   ChevronRight,
+  ShieldCheck,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -79,6 +80,8 @@ const menuItems: MenuItem[] = [
   { icon: PlusCircle, label: "Novo Desvio", path: "/desvios/novo" },
   { icon: ClipboardList, label: "Desvios", path: "/desvios" },
   { icon: Target, label: "Planos de Ação", path: "/planos-acao", badgeKey: "planosPendentes" },
+  { icon: ShieldCheck, label: "Aprov. Gerenciadora", path: "/aprovacoes/gerenciadora" },
+  { icon: ShieldCheck, label: "Aprov. Arquitetura", path: "/aprovacoes/arquitetura" },
   { icon: BrainCircuit, label: "Assistente IA", path: "/assistente" },
   { icon: FileText, label: "Relatório", path: "/relatorio" },
   { separator: true },
