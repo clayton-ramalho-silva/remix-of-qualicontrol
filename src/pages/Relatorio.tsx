@@ -11,7 +11,7 @@ import {
   FileText, Download, Loader2, BarChart3, AlertTriangle,
   TrendingUp, Printer, BrainCircuit, Search, ClipboardCheck,
   Wrench, Filter, Settings2, Image, Users, Calendar, CheckCircle2,
-  Clock, Siren, HardHat, UserCheck,
+  Clock, Siren, HardHat, UserCheck, Tag,
 } from "lucide-react";
 import { Streamdown } from "streamdown";
 
