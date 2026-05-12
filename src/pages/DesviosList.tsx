@@ -161,6 +161,7 @@ export default function DesviosList() {
                 <SelectItem value="qualidade">Qualidade</SelectItem>
                 <SelectItem value="checklist">Checklist</SelectItem>
                  <SelectItem value="qsms">Inspeção de Segurança</SelectItem>
+                <SelectItem value="vistoria">Vistoria</SelectItem>
               </SelectContent>
             </Select>
             <Select value={tagFilter} onValueChange={setTagFilter}>
