@@ -886,7 +886,7 @@ const mutationResolvers: Record<string, Resolver> = {
           .eq("id", input.desvioId)
           .maybeSingle();
         if (desvio) {
-          let novo: string | null = null;
+          let novo: "em_andamento" | "aguardando_aceite" | null = null;
           if (tipo === "abertura" && desvio.status === "aberto") {
             novo = "em_andamento";
           } else if (tipo === "fechamento" && desvio.status === "em_andamento") {
