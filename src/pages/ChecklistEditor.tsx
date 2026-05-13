@@ -80,6 +80,19 @@ export default function ChecklistEditor() {
   const [loading, setLoading] = useState(isEdit);
   const printRef = useRef<HTMLDivElement>(null);
 
+  // Total de itens = total de desvios da obra selecionada
+  useEffect(() => {
+    if (!obraId) { setTotalItens(""); return; }
+    (async () => {
+      const { count, error } = await supabase
+        .from("desvios")
+        .select("id", { count: "exact", head: true })
+        .eq("obra_id", Number(obraId))
+        .is("deleted_at", null);
+      if (!error) setTotalItens(String(count ?? 0));
+    })();
+  }, [obraId]);
+
   // Load lookups
   useEffect(() => {
     (async () => {
@@ -345,7 +358,14 @@ export default function ChecklistEditor() {
           </div>
           <div>
             <Label>Total de Itens</Label>
-            <Input className="mt-1" type="number" value={totalItens} onChange={(e) => setTotalItens(e.target.value)} />
+            <Input
+              className="mt-1 bg-muted"
+              type="number"
+              value={totalItens}
+              readOnly
+              title="Calculado automaticamente: total de desvios da obra"
+            />
+            <p className="text-xs text-muted-foreground mt-1">Calculado automaticamente a partir dos desvios da obra</p>
           </div>
         </CardContent>
       </Card>
