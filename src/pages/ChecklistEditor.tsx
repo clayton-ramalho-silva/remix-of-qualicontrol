@@ -358,7 +358,14 @@ export default function ChecklistEditor() {
           </div>
           <div>
             <Label>Total de Itens</Label>
-            <Input className="mt-1" type="number" value={totalItens} onChange={(e) => setTotalItens(e.target.value)} />
+            <Input
+              className="mt-1 bg-muted"
+              type="number"
+              value={totalItens}
+              readOnly
+              title="Calculado automaticamente: total de desvios da obra"
+            />
+            <p className="text-xs text-muted-foreground mt-1">Calculado automaticamente a partir dos desvios da obra</p>
           </div>
         </CardContent>
       </Card>
