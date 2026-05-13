@@ -79,11 +79,19 @@ export default function DesvioDetalhe() {
     onSuccess: () => { utils.desvios.getById.invalidate({ id: desvioId }); setComment(""); toast.success("Comentário adicionado!"); },
   });
   const uploadFoto = trpc.fotos.upload.useMutation({
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       utils.desvios.getById.invalidate({ id: desvioId });
       setFechamentoFotos([]);
       setAberturaFotos([]);
       toast.success("Foto de fechamento enviada!");
+      const sc = data?.statusChange;
+      if (sc?.to) {
+        const labels: Record<string, string> = {
+          em_andamento: "Em Andamento",
+          aguardando_aceite: "Aguardando Aceite",
+        };
+        toast.success(`Status atualizado automaticamente para ${labels[sc.to] || sc.to}`);
+      }
     },
   });
   const deleteFoto = trpc.fotos.delete.useMutation({
