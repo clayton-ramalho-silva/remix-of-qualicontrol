@@ -80,6 +80,19 @@ export default function ChecklistEditor() {
   const [loading, setLoading] = useState(isEdit);
   const printRef = useRef<HTMLDivElement>(null);
 
+  // Total de itens = total de desvios da obra selecionada
+  useEffect(() => {
+    if (!obraId) { setTotalItens(""); return; }
+    (async () => {
+      const { count, error } = await supabase
+        .from("desvios")
+        .select("id", { count: "exact", head: true })
+        .eq("obra_id", Number(obraId))
+        .is("deleted_at", null);
+      if (!error) setTotalItens(String(count ?? 0));
+    })();
+  }, [obraId]);
+
   // Load lookups
   useEffect(() => {
     (async () => {
