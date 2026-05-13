@@ -1,55 +1,30 @@
-# Automação de status do desvio por upload de fotos
+# Backfill: aplicar a nova regra de automação aos desvios existentes
 
-## Objetivo
+## O que farei
 
-Tirar do usuário a tarefa manual de mudar o status do desvio. O sistema passa a reagir automaticamente ao upload de fotos:
+Aplicar a mesma regra que agora roda no upload, mas retroativamente nos desvios que já estão no banco.
 
-- 1ª foto de **abertura** (evidência inicial) enviada → desvio passa de `aberto` para `em_andamento`.
-- 1ª foto de **fechamento** enviada → desvio passa de `em_andamento` para `aguardando_aceite` (status atual no banco que representa "aguardando cliente / aceite final").
+## Diagnóstico atual
 
-Tudo continua respeitando as regras de aprovação que já existem hoje (gerenciadora/arquitetura).
+Consultei a base e encontrei:
 
-## Observação importante sobre nomenclatura
+- **144 desvios** com status `aberto` que já têm pelo menos 1 foto de **abertura** → devem ir para `em_andamento`.
+- **0 desvios** com status `em_andamento` que já têm foto de **fechamento** → nada a migrar para `aguardando_aceite`.
 
-Hoje o enum `status_desvio` no banco tem 4 valores: `aberto`, `em_andamento`, `fechado`, `aguardando_aceite`. Não existe `aguardando_cliente`. Vou tratar o que você chamou de "aguardando_cliente" como o mesmo `aguardando_aceite` já existente, que é exatamente a etapa de validação final pelo cliente. Se preferir renomear o rótulo na UI para "Aguardando Cliente", faço isso junto sem mexer no enum.
+Ou seja, na prática só a transição abertura → em_andamento será aplicada agora.
 
-## Regras de transição
+## Operação
 
-```text
-estado atual          gatilho                              novo estado
---------------------  -----------------------------------  ---------------------
-aberto                upload da 1ª foto tipo=abertura      em_andamento
-em_andamento          upload da 1ª foto tipo=fechamento    aguardando_aceite
-qualquer outro        (sem efeito)                          (mantém)
-```
+Em uma única operação de update no banco:
 
-Condições e proteções:
+1. `UPDATE desvios SET status='em_andamento' WHERE deleted_at IS NULL AND status='aberto' AND EXISTS (foto de abertura)`
+2. Para cada desvio alterado, inserir um registro em `historico` com `tipo='status'`, `de='aberto'`, `para='em_andamento'`, descrição "Status ajustado em massa pela nova regra de automação (1ª foto de abertura)".
 
-- A automação só dispara se for **realmente a primeira** foto daquele tipo no desvio (contagem prévia em `fotos_evidencia` filtrada por `desvio_id` + `tipo`).
-- A transição para `aguardando_aceite` só ocorre se as aprovações pendentes (`tag_solicitado_gerenciadora` / `tag_solicitado_arquitetura`) já estiverem `aprovado` em `desvio_aprovacoes`. Se ainda houver aprovação pendente, a foto de fechamento sobe normalmente, mas o status permanece `em_andamento` (igual à regra atual de bloqueio de fechamento).
-- Não rebaixa status: se o desvio já está em `fechado`, nada acontece.
-- A mudança automática gera um registro em `historico` (tipo `status`, com `de`/`para`) para rastreabilidade, marcado como ação automática ("Status alterado automaticamente após 1ª foto de abertura/fechamento").
-
-## Onde implementar
-
-Centralizo a lógica no único ponto onde fotos são criadas via app: `fotos.upload` em `src/lib/trpc.ts` (linhas ~848-873). Ali, depois do `insert` em `fotos_evidencia` e antes do retorno:
-
-1. Conta fotos existentes do mesmo `tipo` para o `desvio_id` (excluindo a recém-criada → contar antes do insert ou usar `count` e comparar com 1).
-2. Lê o desvio (`status` e tags de aprovação).
-3. Aplica a tabela de transição acima.
-4. Se houver mudança: `update` em `desvios.status`, `insert` em `historico`.
-
-Isso cobre automaticamente todos os pontos do app que sobem foto (DesvioNovo, DesvioDetalhe, etc.), porque todos passam por esse handler. O `RespostaFotosUploader` (vistorias) e `FotosDesvioPicker` (checklists) **não** afetam o status do desvio — eles operam em outro fluxo.
-
-## UI
-
-- Na tela do desvio (`src/pages/DesvioDetalhe.tsx`), depois do upload, dar refetch do desvio para o badge de status atualizar sozinho (já é o padrão lá).
-- Pequeno toast "Status atualizado para Em Andamento" / "Status atualizado para Aguardando Aceite" quando a transição automática ocorrer (o handler retorna a info; a página exibe).
+Sem `user_id` (operação do sistema). Não toco em desvios `fechado`, `aguardando_aceite` ou excluídos. Não rebaixa nada.
 
 ## Fora de escopo
 
-- Não mexo no enum do banco nem crio `aguardando_cliente` novo.
-- Não altero o fluxo de aprovações gerenciadora/arquitetura.
-- Não toco nos uploads de checklist/vistoria.
+- Não altero nenhum código (a automação on-upload já está ativa).
+- Não envio notificações para usuários sobre a mudança em massa.
 
-Confirma se posso usar `aguardando_aceite` (apenas com rótulo "Aguardando Cliente" na UI, se quiser) e eu sigo com a implementação.
+Confirma e eu executo.
