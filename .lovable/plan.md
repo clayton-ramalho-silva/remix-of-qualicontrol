@@ -1,34 +1,19 @@
 ## Problema
 
-A "marca laranja" no canto superior esquerdo do mapa da planta 18 são, na verdade, **dois pins de desvios sobrepostos** (#34 "Melhorar calafetação da grelha" e #37 "Painel riscado e manchado por abrasão"), ambos com `pin_x` e `pin_y` nulos no banco.
-
-No `PlantaView.tsx`, o código faz `Number(desvio.pinX)` em valores nulos, resultando em `NaN`/`0`, e renderiza o pin em `left: 0%, top: 0%` com `translate(-50%, -50%)` — empilhando-os no canto.
+A listagem em `/checklists` (Checklist de Vistoria de Entrega) só tem botões de Editar e Imprimir na coluna **Ações**. Não há como excluir um checklist.
 
 ## Solução
 
-Em `src/pages/PlantaView.tsx`, dentro do `.map()` que renderiza os pins (linhas ~92-152):
+Adicionar um botão de lixeira na coluna Ações, com confirmação via `AlertDialog`, que apaga o registro de `checklist_entregas`. As tabelas filhas (`checklist_entrega_itens` e `checklist_entrega_fotos`) já têm `ON DELETE CASCADE`, então a exclusão é limpa em uma única chamada.
 
-- Antes de renderizar o pin, validar se `pinX` e `pinY` são números válidos (não nulos, não `NaN`).
-- Se forem inválidos, retornar `null` (não renderizar o pin no mapa).
-- Manter o desvio aparecendo na lista lateral normalmente (são desvios válidos, só não foram posicionados na planta).
+### Mudanças (apenas em `src/pages/ChecklistList.tsx`)
 
-Trecho de mudança:
+1. Importar `Trash2` do `lucide-react`, `AlertDialog*` de `@/components/ui/alert-dialog` e `toast` do `sonner`.
+2. Adicionar estado `confirmDeleteId: number | null` e `deleting: boolean`.
+3. Adicionar botão `<Button variant="ghost" size="sm">` com ícone `Trash2` (cor destructive) ao lado dos botões existentes em cada linha; ao clicar, seta `confirmDeleteId`.
+4. Renderizar `<AlertDialog>` ao final do componente:
+   - Título: "Excluir checklist?"
+   - Descrição avisando que itens e fotos vinculados também serão removidos.
+   - Ação confirma → `await supabase.from("checklist_entregas").delete().eq("id", confirmDeleteId)` → toast de sucesso/erro → `load()` para atualizar lista.
 
-```tsx
-{desviosNaPlanta?.map((desvio) => {
-  const x = Number(desvio.pinX);
-  const y = Number(desvio.pinY);
-  if (desvio.pinX == null || desvio.pinY == null || !Number.isFinite(x) || !Number.isFinite(y)) {
-    return null;
-  }
-  // ... resto igual
-})}
-```
-
-## Observação opcional
-
-Posso, se quiser, ajustar também o contador "144 desvio(s) marcado(s) nesta planta" para refletir só os que têm coordenadas válidas — mas isso é opcional.
-
-## Arquivos afetados
-
-- `src/pages/PlantaView.tsx` (apenas frontend, sem mudanças no banco nem nos desvios #34/#37)
+Sem mudanças de schema, RLS ou backend — a policy `auth all ent` já permite DELETE para usuários autenticados, e o cascade cuida das tabelas filhas.

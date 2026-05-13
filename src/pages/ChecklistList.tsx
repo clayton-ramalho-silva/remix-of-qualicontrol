@@ -4,7 +4,12 @@ import { useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ListChecks, Plus, Loader2, Pencil, Printer } from "lucide-react";
+import { ListChecks, Plus, Loader2, Pencil, Printer, Trash2 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 type Row = {
   id: number;
@@ -27,6 +32,8 @@ export default function ChecklistList() {
   const [, navigate] = useLocation();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -44,6 +51,20 @@ export default function ChecklistList() {
   }
 
   useEffect(() => { load(); }, []);
+
+  async function handleDelete() {
+    if (confirmDeleteId === null) return;
+    setDeleting(true);
+    const { error } = await supabase.from("checklist_entregas").delete().eq("id", confirmDeleteId);
+    setDeleting(false);
+    if (error) {
+      toast.error("Erro ao excluir checklist");
+      return;
+    }
+    toast.success("Checklist excluído");
+    setConfirmDeleteId(null);
+    load();
+  }
 
   return (
     <div className="space-y-4 max-w-6xl mx-auto">
@@ -101,6 +122,15 @@ export default function ChecklistList() {
                       <Button size="sm" variant="ghost" onClick={() => navigate(`/checklists/${r.id}?print=1`)}>
                         <Printer className="h-4 w-4" />
                       </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-muted-foreground hover:text-destructive"
+                        onClick={() => setConfirmDeleteId(r.id)}
+                        title="Excluir checklist"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </td>
                   </tr>
                 ))}
@@ -109,6 +139,27 @@ export default function ChecklistList() {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={confirmDeleteId !== null} onOpenChange={(o) => !o && setConfirmDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir checklist?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é permanente. Os itens e fotos vinculados a este checklist também serão removidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleting}
+              onClick={(e) => { e.preventDefault(); handleDelete(); }}
+            >
+              {deleting ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
