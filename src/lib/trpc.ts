@@ -869,7 +869,65 @@ const mutationResolvers: Record<string, Resolver> = {
       descricao: `Foto de ${input.tipo ?? "abertura"} adicionada`,
       user_id: user?.id ?? null, user_name: user?.email ?? null,
     });
-    return { ...data, fileKey: data.file_key };
+    // --- Automação de status com base na 1ª foto ---
+    let statusChange: { from: string; to: string } | null = null;
+    try {
+      const tipo = input.tipo ?? "abertura";
+      const { count } = await supabase
+        .from("fotos_evidencia")
+        .select("id", { count: "exact", head: true })
+        .eq("desvio_id", input.desvioId)
+        .eq("tipo", tipo);
+      const isFirst = (count ?? 0) === 1; // já contém a recém-inserida
+      if (isFirst) {
+        const { data: desvio } = await supabase
+          .from("desvios")
+          .select("status, tag_solicitado_gerenciadora, tag_solicitado_arquitetura")
+          .eq("id", input.desvioId)
+          .maybeSingle();
+        if (desvio) {
+          let novo: "em_andamento" | "aguardando_aceite" | null = null;
+          if (tipo === "abertura" && desvio.status === "aberto") {
+            novo = "em_andamento";
+          } else if (tipo === "fechamento" && desvio.status === "em_andamento") {
+            const needGer = (desvio.tag_solicitado_gerenciadora ?? 0) === 1;
+            const needArq = (desvio.tag_solicitado_arquitetura ?? 0) === 1;
+            let aprovOk = true;
+            if (needGer || needArq) {
+              const { data: aprov } = await supabase
+                .from("desvio_aprovacoes")
+                .select("tipo, decisao")
+                .eq("desvio_id", input.desvioId);
+              const okGer = (aprov || []).some((a: any) => a.tipo === "gerenciadora" && a.decisao === "aprovado");
+              const okArq = (aprov || []).some((a: any) => a.tipo === "arquitetura" && a.decisao === "aprovado");
+              aprovOk = (!needGer || okGer) && (!needArq || okArq);
+            }
+            if (aprovOk) novo = "aguardando_aceite";
+          }
+          if (novo) {
+            const { error: upErr2 } = await supabase
+              .from("desvios")
+              .update({ status: novo })
+              .eq("id", input.desvioId);
+            if (!upErr2) {
+              statusChange = { from: desvio.status, to: novo };
+              await supabase.from("historico").insert({
+                desvio_id: input.desvioId,
+                tipo: "status",
+                de: desvio.status,
+                para: novo,
+                descricao: `Status alterado automaticamente para ${novo} após 1ª foto de ${tipo}`,
+                user_id: user?.id ?? null,
+                user_name: user?.email ?? null,
+              });
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("[fotos.upload] auto-status falhou:", e);
+    }
+    return { ...data, fileKey: data.file_key, statusChange };
   },
 
   "fotos.delete": async (input: any) => {
