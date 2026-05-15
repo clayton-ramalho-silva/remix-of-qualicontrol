@@ -1,0 +1,25 @@
+[
+  {
+    "acao": null,
+    "alerta_atraso_enviado": null,
+    "categoria_id": null,
+    "created_at": null,
+    "desvio_id": null,
+    "id": null,
+    "lembrete_enviado": null,
+    "notificado_em": null,
+    "obra_id": null,
+    "observacoes": null,
+    "ocorrencia_id": null,
+    "prazo": null,
+    "prioridade": null,
+    "responsavel": null,
+    "responsavel_email": null,
+    "responsavel_id": null,
+    "responsavel_tipo": null,
+    "status": null,
+    "tipo": null,
+    "updated_at": null,
+    "vertical": null
+  }
+]

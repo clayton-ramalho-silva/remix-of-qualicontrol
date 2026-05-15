@@ -1,0 +1,16 @@
+[
+  {
+    "ativo": null,
+    "created_at": null,
+    "id": null,
+    "nome": null,
+    "numero": null,
+    "origem": null,
+    "pavimento": null,
+    "pin_x": null,
+    "pin_y": null,
+    "planta_id": null,
+    "revisado": null,
+    "updated_at": null
+  }
+]
