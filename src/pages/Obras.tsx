@@ -5,10 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Search, Plus, Pencil, Calendar, Loader2, ArrowLeftRight, Bookmark, BookmarkCheck, BookmarkX, ShieldCheck, ListChecks, HardHat, Layers, ClipboardCheck } from "lucide-react";
+import { Building2, Search, Calendar, Loader2, ArrowLeftRight, Bookmark, BookmarkCheck, BookmarkX, ShieldCheck, ListChecks, HardHat, Layers, ClipboardCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 
@@ -125,25 +122,7 @@ export default function Obras() {
     onError: (e: any) => toast.error(e.message || "Erro ao actualizar obra"),
   });
 
-  const createObra = useMutation({
-    mutationFn: async (input: { codigo: string; nome: string; cliente?: string; endereco?: string }) => {
-      const { error } = await supabase.from("obras").insert(input);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["obras"] });
-      toast.success("Obra criada com sucesso");
-      setShowCreate(false);
-      setNewObra({ codigo: "", nome: "", cliente: "", endereco: "" });
-    },
-    onError: (e: any) => toast.error(e.message || "Erro ao criar obra"),
-  });
-
   const [searchTerm, setSearchTerm] = useState("");
-  const [showCreate, setShowCreate] = useState(false);
-  const [showEdit, setShowEdit] = useState(false);
-  const [editObra, setEditObra] = useState<any>(null);
-  const [newObra, setNewObra] = useState({ codigo: "", nome: "", cliente: "", endereco: "" });
   const [filtroGerais, setFiltroGerais] = useState<"todas" | "na_fila" | "sem" | "descartada">("todas");
   const [vertical, setVertical] = useState<Vertical>("qualidade");
   const verticalAtiva = verticais.find((v) => v.key === vertical)!;
@@ -193,29 +172,6 @@ export default function Obras() {
     updateObra.mutate({ id: obra.id, marcacao: next });
   };
 
-  const handleCreate = () => {
-    if (!newObra.codigo || !newObra.nome) { toast.error("Preencha código e nome"); return; }
-    createObra.mutate({
-      codigo: newObra.codigo,
-      nome: newObra.nome,
-      cliente: newObra.cliente || undefined,
-      endereco: newObra.endereco || undefined,
-    });
-  };
-
-  const handleEdit = () => {
-    if (!editObra) return;
-    updateObra.mutate({
-      id: editObra.id,
-      codigo: editObra.codigo,
-      nome: editObra.nome,
-      cliente: editObra.cliente || null,
-      endereco: editObra.endereco || null,
-      status: editObra.status,
-    });
-    setShowEdit(false);
-    toast.success("Obra atualizada");
-  };
 
   const formatDate = (timestamp: number | null | undefined) => {
     if (!timestamp) return "—";
@@ -275,9 +231,6 @@ export default function Obras() {
             <Button variant="ghost" size="icon" className="h-7 w-7" title={side === "gerais" ? `Cobrir em ${verticalAtiva.label}` : `Remover de ${verticalAtiva.label}`} onClick={() => toggleCobertura(obra)}>
               <ArrowLeftRight className="h-3.5 w-3.5" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditObra({ ...obra }); setShowEdit(true); }}>
-              <Pencil className="h-3.5 w-3.5" />
-            </Button>
           </div>
         </div>
         {side === "gerais" && (
@@ -314,9 +267,6 @@ export default function Obras() {
           </h1>
           <p className="text-muted-foreground text-sm mt-1">Cobertura por vertical — cada equipe escolhe quais obras cobre</p>
         </div>
-        <Button onClick={() => setShowCreate(true)} size="sm">
-          <Plus className="h-4 w-4 mr-1" /> Nova Obra
-        </Button>
       </div>
 
       <div className="inline-flex rounded-lg border bg-card p-1 gap-1">
@@ -405,54 +355,6 @@ export default function Obras() {
         <span className="flex items-center gap-1"><BookmarkX className="h-3.5 w-3.5 text-red-600" /> Descartada</span>
       </div>
 
-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Nova Obra</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-4">
-              <div><Label>Código *</Label><Input value={newObra.codigo} onChange={e => setNewObra({ ...newObra, codigo: e.target.value })} placeholder="Ex: 4707/25" className="mt-1" /></div>
-              <div><Label>Nome *</Label><Input value={newObra.nome} onChange={e => setNewObra({ ...newObra, nome: e.target.value })} placeholder="Ex: Frec Funchal 641" className="mt-1" /></div>
-            </div>
-            <div><Label>Cliente</Label><Input value={newObra.cliente} onChange={e => setNewObra({ ...newObra, cliente: e.target.value })} className="mt-1" /></div>
-            <div><Label>Endereço</Label><Input value={newObra.endereco} onChange={e => setNewObra({ ...newObra, endereco: e.target.value })} className="mt-1" /></div>
-            <Button className="w-full" disabled={!newObra.codigo || !newObra.nome || createObra.isPending} onClick={handleCreate}>
-              {createObra.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Criar Obra
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showEdit} onOpenChange={setShowEdit}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Editar Obra</DialogTitle></DialogHeader>
-          {editObra && (
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-4">
-                <div><Label>Código</Label><Input value={editObra.codigo} onChange={e => setEditObra({ ...editObra, codigo: e.target.value })} className="mt-1" /></div>
-                <div><Label>Nome</Label><Input value={editObra.nome} onChange={e => setEditObra({ ...editObra, nome: e.target.value })} className="mt-1" /></div>
-              </div>
-              <div><Label>Cliente</Label><Input value={editObra.cliente || ""} onChange={e => setEditObra({ ...editObra, cliente: e.target.value })} className="mt-1" /></div>
-              <div><Label>Endereço</Label><Input value={editObra.endereco || ""} onChange={e => setEditObra({ ...editObra, endereco: e.target.value })} className="mt-1" /></div>
-              <div>
-                <Label>Status</Label>
-                <Select value={editObra.status} onValueChange={v => setEditObra({ ...editObra, status: v })}>
-                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ativa">Ativa</SelectItem>
-                    <SelectItem value="concluida">Concluída</SelectItem>
-                    <SelectItem value="pausada">Pausada</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button className="w-full" disabled={updateObra.isPending} onClick={handleEdit}>
-                {updateObra.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                Salvar Alterações
-              </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

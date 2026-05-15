@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# API mapping documentation
+api-mapping/
+
+note.txt
