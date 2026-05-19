@@ -1,0 +1,2 @@
+bd: remix-of-qualicontrol-db
+password db supabase qualicontrol: 9651MfdeYimfQLZb
