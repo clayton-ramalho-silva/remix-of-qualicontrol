@@ -23,5 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 
-/api-mapping
+# API mapping documentation
+api-mapping/
+
 note.txt
