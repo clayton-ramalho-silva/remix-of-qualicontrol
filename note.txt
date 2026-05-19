@@ -27,10 +27,21 @@ service_role key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZ
   -H "X-Api-Key: 346c5850ec28c6fa301e7f9de30e83f1f263093af971cd2695cf3a393cd46d67" \
   -d '{}'
 
+
+Step 1
 curl -X POST https://nchwtuewgfferbhoigmt.supabase.co/functions/v1/sync-obras-step1 \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jaHd0dWV3Z2ZmZXJiaG9pZ210Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODg3MDUzOSwiZXhwIjoyMDk0NDQ2NTM5fQ.637qJOakx0vAdFbt9PYECEDca8rvKVZBf_Cxp60-aio" \
   -d '{}'
+
+Step 2
+curl -X POST https://nchwtuewgfferbhoigmt.supabase.co/functions/v1/sync-obras-step2 \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jaHd0dWV3Z2ZmZXJiaG9pZ210Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODg3MDUzOSwiZXhwIjoyMDk0NDQ2NTM5fQ.637qJOakx0vAdFbt9PYECEDca8rvKVZBf_Cxp60-aio" \
+  -d '{}'
+
+
+
 
 
 
