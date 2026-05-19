@@ -5,87 +5,80 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, X-Api-Key",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
 serve(async (req) => {
-  // === CORS pre-flight ===
+  // CORS pre-flight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: CORS_HEADERS });
   }
 
   try {
-    // === Autenticação simplificada: apenas X-Api-Key ===
-    const apiKey = req.headers.get("X-Api-Key");
-    const expectedKey = Deno.env.get("INTERNAL_API_KEY");
-    
-    if (expectedKey && apiKey !== expectedKey) {
-      return new Response(
-        JSON.stringify({ error: "Não autorizado. X-Api-Key inválido." }),
-        {
-          status: 401,
-          headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    // === Cliente Supabase (service_role para operações internas) ===
+    // 🗄️ Cliente Supabase (service_role ignora RLS, ideal para sync interno)
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // === Consumir API externa ===
-    console.log("🔄 Buscando projetos na API externa...");
-    const externalRes = await fetch(
-      "https://gateway.athiewohnrath.com.br/aw-api-hub/check-busca-projeto",
-      {
-        headers: {
-          "accept": "*/*",
-          "X-Api-Key": Deno.env.get("EXTERNAL_API_KEY")!,
-        },
-      }
-    );
+    // 🌐 1. Consultar API externa
+    console.log("🔄 Consultando API externa...");
+    const response = await fetch("https://gateway.athiewohnrath.com.br/aw-api-hub/check-busca-projeto", {
+      headers: {
+        "accept": "*/*",
+        "X-Api-Key": Deno.env.get("EXTERNAL_API_KEY")!,
+      },
+    });
 
-    if (!externalRes.ok) {
-      const errorText = await externalRes.text().catch(() => "sem detalhes");
-      throw new Error(`API externa falhou: ${externalRes.status} - ${errorText}`);
+    if (!response.ok) {
+      throw new Error(`API externa retornou: ${response.status}`);
     }
 
-    const externalData = await externalRes.json();
+    const externalData = await response.json();
     console.log(`✅ Recebidos ${externalData.length} projetos`);
 
-    // === Mapeamento de-para ===
-    const projetosParaGravar = externalData.map((p: any) => ({
-      id_externo: p.IdProjeto,
-      codigo: p.NumeroProjeto,
-      nome: p.NomeProjeto,
-      cliente: p.Cliente,
-      endereco: p.Endereco,
-      cidade: p.Cidade,
-      complementoEndereco: p.ComplementoEndereco,
-      bairro: p.Bairro,
-      cep: p.Cep,
-      status_externo: p.DescricaoStatus, // campo extra para auditoria
-      sincronizado_em: new Date().toISOString(),
+    // 🔄 2. DE-PARA: Mapeamento final
+    console.log("🔄 Transformando dados...");
+    const projetosParaGravar = externalData.map((item: any) => ({
+      // Identificador único (obrigatório para upsert)
+      id_externo: item.IdProjeto,
+      
+      // Campos principais
+      codigo: item.NumeroProjeto,
+      nome: item.NomeProjeto,
+      cliente: item.Cliente,
+      endereco: item.Endereco,
+      
+      // Endereço detalhado
+      cidade: item.Cidade,
+      complemento_endereco: item.ComplementoEndereco, // ← underscore no banco
+      bairro: item.Bairro,
+      cep: item.Cep,
+      
+      // 📅 Datas do sistema externo (úteis para sync incremental futuro)
+      data_criacao_externa: item.DataCriacao ?? null,
+      data_atualizacao_externa: item.DataAtualizacao ?? null,
     }));
 
-    // === Upsert no banco ===
-    console.log("💾 Gravando no Supabase...");
+    // 💾 3. Upsert no banco
+    console.log("💾 Gravando com upsert...");
     const { data, error } = await supabase
-      .from("obras") // ← confirme o nome da sua tabela
+      .from("obras")
       .upsert(projetosParaGravar, {
-        onConflict: "id_externo", // ← requer UNIQUE index em id_externo
+        onConflict: "id_externo",  // ← usa a CONSTRAINT UNIQUE criada
+        ignoreDuplicates: false,   // false = atualiza se já existir
       })
       .select("id, id_externo, codigo, nome");
 
     if (error) throw error;
 
-    console.log(`✅ Sucesso: ${data?.length} registros sincronizados`);
+    console.log(`✅ Sucesso: ${data?.length} registros processados`);
 
+    // 📤 Resposta final
     return new Response(
       JSON.stringify({
-        success: true,
+        ok: true,
+        message: "Sincronização concluída",
         total_recebidos: externalData.length,
         total_gravados: data?.length || 0,
         amostra: data?.slice(0, 3) || [],
@@ -96,12 +89,13 @@ serve(async (req) => {
       }
     );
 
-  } catch (err) {
-    console.error("🚨 Erro na sync-obras:", err);
+  } catch (err: any) {
+    console.error("🚨 Erro na sync-obras:", err?.message || String(err));
+    
     return new Response(
       JSON.stringify({
-        success: false,
-        error: err instanceof Error ? err.message : "Erro desconhecido",
+        ok: false,
+        error: err?.message || "Erro desconhecido",
       }),
       {
         status: 500,
