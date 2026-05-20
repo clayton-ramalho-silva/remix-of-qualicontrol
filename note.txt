@@ -54,6 +54,15 @@ curl -X POST https://nchwtuewgfferbhoigmt.supabase.co/functions/v1/sync-obras \
   -d '{}'
 
 
+Step 5 - Sincronizar edificios e andares
+curl -X POST https://nchwtuewgfferbhoigmt.supabase.co/functions/v1/sync-obras-detalhes \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jaHd0dWV3Z2ZmZXJiaG9pZ210Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODg3MDUzOSwiZXhwIjoyMDk0NDQ2NTM5fQ.637qJOakx0vAdFbt9PYECEDca8rvKVZBf_Cxp60-aio" \
+  -d '{}'
+
+
+
+
 
 
 
