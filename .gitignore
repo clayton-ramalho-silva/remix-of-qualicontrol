@@ -27,3 +27,4 @@ dist-ssr
 api-mapping/
 
 note.txt
+.env.local

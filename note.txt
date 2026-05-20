@@ -1,2 +1,72 @@
 bd: remix-of-qualicontrol-db
-password db supabase qualicontrol: 9651MfdeYimfQLZb
+password db supabase qualicontrol: LdWeb2026@Qualicontrol
+
+
+
+
+Started supabase local development setup.
+
+         API URL: http://127.0.0.1:54321
+     GraphQL URL: http://127.0.0.1:54321/graphql/v1
+  S3 Storage URL: http://127.0.0.1:54321/storage/v1/s3
+          DB URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      Studio URL: http://127.0.0.1:54323
+    Inbucket URL: http://127.0.0.1:54324
+      JWT secret: super-secret-jwt-token-with-at-least-32-characters-long
+        anon key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+service_role key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+   S3 Access Key: 625729a08b95bf1b7ff351a663f3a23c
+   S3 Secret Key: 850181e4652dd023b7a98c58ae0d2d34bd487ee0cc3254aed6eda37307425907
+       S3 Region: local
+
+
+
+
+  curl -X POST https://nchwtuewgfferbhoigmt.supabase.co/functions/v1/sync-obras-step1 \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: 346c5850ec28c6fa301e7f9de30e83f1f263093af971cd2695cf3a393cd46d67" \
+  -d '{}'
+
+
+Step 1
+curl -X POST https://nchwtuewgfferbhoigmt.supabase.co/functions/v1/sync-obras-step1 \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jaHd0dWV3Z2ZmZXJiaG9pZ210Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODg3MDUzOSwiZXhwIjoyMDk0NDQ2NTM5fQ.637qJOakx0vAdFbt9PYECEDca8rvKVZBf_Cxp60-aio" \
+  -d '{}'
+
+Step 2
+curl -X POST https://nchwtuewgfferbhoigmt.supabase.co/functions/v1/sync-obras-step2 \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jaHd0dWV3Z2ZmZXJiaG9pZ210Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODg3MDUzOSwiZXhwIjoyMDk0NDQ2NTM5fQ.637qJOakx0vAdFbt9PYECEDca8rvKVZBf_Cxp60-aio" \
+  -d '{}'
+
+Step 3
+curl -X POST https://nchwtuewgfferbhoigmt.supabase.co/functions/v1/sync-obras-step3 \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jaHd0dWV3Z2ZmZXJiaG9pZ210Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODg3MDUzOSwiZXhwIjoyMDk0NDQ2NTM5fQ.637qJOakx0vAdFbt9PYECEDca8rvKVZBf_Cxp60-aio" \
+  -d '{}'
+
+
+Step 4 - consolidando tudo
+curl -X POST https://nchwtuewgfferbhoigmt.supabase.co/functions/v1/sync-obras \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jaHd0dWV3Z2ZmZXJiaG9pZ210Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODg3MDUzOSwiZXhwIjoyMDk0NDQ2NTM5fQ.637qJOakx0vAdFbt9PYECEDca8rvKVZBf_Cxp60-aio" \
+  -d '{}'
+
+
+Step 5 - Sincronizar edificios e andares
+curl -X POST https://nchwtuewgfferbhoigmt.supabase.co/functions/v1/sync-obras-detalhes \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jaHd0dWV3Z2ZmZXJiaG9pZ210Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODg3MDUzOSwiZXhwIjoyMDk0NDQ2NTM5fQ.637qJOakx0vAdFbt9PYECEDca8rvKVZBf_Cxp60-aio" \
+  -d '{}'
+
+
+
+
+
+
+
+
+
+  anon public= eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jaHd0dWV3Z2ZmZXJiaG9pZ210Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODg3MDUzOSwiZXhwIjoyMDk0NDQ2NTM5fQ.637qJOakx0vAdFbt9PYECEDca8rvKVZBf_Cxp60-aio
+  service_role=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jaHd0dWV3Z2ZmZXJiaG9pZ210Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODg3MDUzOSwiZXhwIjoyMDk0NDQ2NTM5fQ.637qJOakx0vAdFbt9PYECEDca8rvKVZBf_Cxp60-aio
