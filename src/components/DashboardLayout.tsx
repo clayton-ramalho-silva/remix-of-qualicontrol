@@ -40,6 +40,7 @@ import {
   Settings,
   Users,
   Layers,
+  Network,
   CalendarDays,
   Target,
   HardHat,
@@ -100,6 +101,7 @@ const menuItems: MenuItem[] = [
   { icon: Truck, label: "Fornecedores", path: "/fornecedores" },
   { icon: Users, label: "Usuários", path: "/usuarios" },
   { icon: Settings, label: "Administração", path: "/administracao" },
+  { icon: Network, label: "Sistema", path: "/sistema" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
