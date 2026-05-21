@@ -38,6 +38,7 @@ import AndarDetalhe from "./pages/AndarDetalhe";
 import Aprovacoes from "./pages/Aprovacoes";
 import ChecklistList from "./pages/ChecklistList";
 import ChecklistEditor from "./pages/ChecklistEditor";
+import Sistema from "./pages/Sistema";
 
 function ProtectedShell() {
   const { user, loading } = useAuth();
