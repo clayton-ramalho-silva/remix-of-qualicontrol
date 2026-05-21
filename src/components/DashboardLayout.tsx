@@ -40,6 +40,7 @@ import {
   Settings,
   Users,
   Layers,
+  Network,
   CalendarDays,
   Target,
   HardHat,
