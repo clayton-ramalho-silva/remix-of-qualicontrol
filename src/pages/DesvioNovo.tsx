@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import {
@@ -88,6 +88,9 @@ export default function DesvioNovo() {
   // ---------- Etapa 2: Desvio (form atual + contador) ----------
   const [grupoId, setGrupoId] = useState("");
   const [grupoSearch, setGrupoSearch] = useState("");
+  const [subAtividadeId, setSubAtividadeId] = useState("");
+  const [subAtividades, setSubAtividades] = useState<{ id: number; nome: string }[]>([]);
+  const [loadingSubAtividades, setLoadingSubAtividades] = useState(false);
   const [fornecedorNome, setFornecedorNome] = useState("");
   const [descricao, setDescricao] = useState("");
   const [severidade, setSeveridade] = useState<"leve" | "moderado" | "grave">("moderado");
@@ -165,6 +168,8 @@ export default function DesvioNovo() {
   const resetForm = () => {
     setGrupoId("");
     setGrupoSearch("");
+    setSubAtividadeId("");
+    setSubAtividades([]);
     setFornecedorNome("");
     setDescricao("");
     setSeveridade("moderado");
@@ -175,6 +180,34 @@ export default function DesvioNovo() {
     fotos.forEach(f => URL.revokeObjectURL(f.preview));
     setFotos([]);
   };
+
+  // Carrega subatividades sempre que o grupo muda
+  useEffect(() => {
+    setSubAtividadeId("");
+    setSubAtividades([]);
+    if (!grupoId) return;
+    let cancelled = false;
+    (async () => {
+      setLoadingSubAtividades(true);
+      try {
+        const { data, error } = await supabase.functions.invoke(
+          "sync-sub-atividade-inspecao",
+          { body: { idAtividadeInspecao: Number(grupoId) } },
+        );
+        if (error) throw error;
+        if (!cancelled && data?.success) {
+          setSubAtividades(data.subAtividades || []);
+        }
+      } catch (e) {
+        console.error("Falha ao carregar subatividades:", e);
+        if (!cancelled) toast.error("Não foi possível carregar as subatividades");
+      } finally {
+        if (!cancelled) setLoadingSubAtividades(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [grupoId]);
+
 
   const iniciarInspecao = () => {
     if (!obraId) { toast.error("Selecione a obra"); return; }
@@ -445,6 +478,36 @@ export default function DesvioNovo() {
                     </SelectContent>
                   </Select>
                 </Field>
+
+                <Field label="Sub Atividade de Inspeção" hint="Subatividade vinculada ao grupo selecionado.">
+                  <Select
+                    value={subAtividadeId}
+                    onValueChange={setSubAtividadeId}
+                    disabled={!grupoId || loadingSubAtividades}
+                  >
+                    <SelectTrigger>
+                      <SelectValue
+                        placeholder={
+                          !grupoId
+                            ? "Selecione um grupo primeiro..."
+                            : loadingSubAtividades
+                              ? "Carregando..."
+                              : subAtividades.length === 0
+                                ? "Nenhuma subatividade"
+                                : "Selecione a subatividade..."
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {subAtividades.map(s => (
+                        <SelectItem key={s.id} value={String(s.id)}>
+                          {s.id} - {s.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+
 
                 <Field label="Fornecedor" hint={HINTS.fornecedor}>
                   <Select
