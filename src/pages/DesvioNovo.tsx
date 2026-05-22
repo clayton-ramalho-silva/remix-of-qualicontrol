@@ -168,6 +168,8 @@ export default function DesvioNovo() {
   const resetForm = () => {
     setGrupoId("");
     setGrupoSearch("");
+    setSubAtividadeId("");
+    setSubAtividades([]);
     setFornecedorNome("");
     setDescricao("");
     setSeveridade("moderado");
