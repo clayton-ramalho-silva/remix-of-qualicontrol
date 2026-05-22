@@ -816,8 +816,11 @@ export type Database = {
           cobertura_vistoria: number
           codigo: string
           created_at: string
+          data_atualizacao: string | null
+          data_criacao: string | null
           endereco: string | null
           id: number
+          id_projeto: number | null
           marcacao: string | null
           nome: string
           status: Database["public"]["Enums"]["status_obra"]
@@ -832,8 +835,11 @@ export type Database = {
           cobertura_vistoria?: number
           codigo: string
           created_at?: string
+          data_atualizacao?: string | null
+          data_criacao?: string | null
           endereco?: string | null
           id?: number
+          id_projeto?: number | null
           marcacao?: string | null
           nome: string
           status?: Database["public"]["Enums"]["status_obra"]
@@ -848,8 +854,11 @@ export type Database = {
           cobertura_vistoria?: number
           codigo?: string
           created_at?: string
+          data_atualizacao?: string | null
+          data_criacao?: string | null
           endereco?: string | null
           id?: number
+          id_projeto?: number | null
           marcacao?: string | null
           nome?: string
           status?: Database["public"]["Enums"]["status_obra"]
