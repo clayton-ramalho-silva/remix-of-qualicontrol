@@ -479,6 +479,36 @@ export default function DesvioNovo() {
                   </Select>
                 </Field>
 
+                <Field label="Sub Atividade de Inspeção" hint="Subatividade vinculada ao grupo selecionado.">
+                  <Select
+                    value={subAtividadeId}
+                    onValueChange={setSubAtividadeId}
+                    disabled={!grupoId || loadingSubAtividades}
+                  >
+                    <SelectTrigger>
+                      <SelectValue
+                        placeholder={
+                          !grupoId
+                            ? "Selecione um grupo primeiro..."
+                            : loadingSubAtividades
+                              ? "Carregando..."
+                              : subAtividades.length === 0
+                                ? "Nenhuma subatividade"
+                                : "Selecione a subatividade..."
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {subAtividades.map(s => (
+                        <SelectItem key={s.id} value={String(s.id)}>
+                          {s.id} - {s.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+
+
                 <Field label="Fornecedor" hint={HINTS.fornecedor}>
                   <Select
                     value={fornecedorNome || "__none__"}
