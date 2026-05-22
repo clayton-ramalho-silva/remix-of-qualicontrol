@@ -181,6 +181,34 @@ export default function DesvioNovo() {
     setFotos([]);
   };
 
+  // Carrega subatividades sempre que o grupo muda
+  useEffect(() => {
+    setSubAtividadeId("");
+    setSubAtividades([]);
+    if (!grupoId) return;
+    let cancelled = false;
+    (async () => {
+      setLoadingSubAtividades(true);
+      try {
+        const { data, error } = await supabase.functions.invoke(
+          "sync-sub-atividade-inspecao",
+          { body: { idAtividadeInspecao: Number(grupoId) } },
+        );
+        if (error) throw error;
+        if (!cancelled && data?.success) {
+          setSubAtividades(data.subAtividades || []);
+        }
+      } catch (e) {
+        console.error("Falha ao carregar subatividades:", e);
+        if (!cancelled) toast.error("Não foi possível carregar as subatividades");
+      } finally {
+        if (!cancelled) setLoadingSubAtividades(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [grupoId]);
+
+
   const iniciarInspecao = () => {
     if (!obraId) { toast.error("Selecione a obra"); return; }
     if (!ambiente.trim()) { toast.error("Informe o ambiente/local"); return; }
