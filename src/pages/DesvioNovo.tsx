@@ -92,6 +92,8 @@ export default function DesvioNovo() {
   const [subAtividades, setSubAtividades] = useState<{ id: number; nome: string }[]>([]);
   const [loadingSubAtividades, setLoadingSubAtividades] = useState(false);
   const [fornecedorNome, setFornecedorNome] = useState("");
+  const [fornecedoresApi, setFornecedoresApi] = useState<{ id: number; nome: string; cnpj?: string }[]>([]);
+  const [loadingFornecedores, setLoadingFornecedores] = useState(false);
   const [descricao, setDescricao] = useState("");
   const [severidade, setSeveridade] = useState<"leve" | "moderado" | "grave">("moderado");
   const [prazoSugerido, setPrazoSugerido] = useState("");
