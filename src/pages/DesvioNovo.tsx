@@ -211,8 +211,39 @@ export default function DesvioNovo() {
     return () => { cancelled = true; };
   }, [grupoId]);
 
+  // Carrega fornecedores quando a subatividade muda (depende também da obra/idProjeto)
+  useEffect(() => {
+    setFornecedorNome("");
+    setFornecedoresApi([]);
+    const idProjeto = (obraSelecionada as any)?.id_projeto;
+    if (!subAtividadeId || !idProjeto) return;
+    let cancelled = false;
+    (async () => {
+      setLoadingFornecedores(true);
+      try {
+        const { data, error } = await supabase.functions.invoke(
+          "sync-fornecedores-sub-atividade",
+          {
+            body: {
+              idProjeto: Number(idProjeto),
+              idSubAtividadeInspecao: Number(subAtividadeId),
+            },
+          },
+        );
+        if (error) throw error;
+        if (!cancelled && data?.success) {
+          setFornecedoresApi(data.fornecedores || []);
+        }
+      } catch (e) {
+        console.error("Falha ao carregar fornecedores:", e);
+        if (!cancelled) toast.error("Não foi possível carregar os fornecedores");
+      } finally {
+        if (!cancelled) setLoadingFornecedores(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [subAtividadeId, (obraSelecionada as any)?.id_projeto]);
 
-  const iniciarInspecao = () => {
     if (!obraId) { toast.error("Selecione a obra"); return; }
     if (!ambiente.trim()) { toast.error("Informe o ambiente/local"); return; }
     setStep(2);
