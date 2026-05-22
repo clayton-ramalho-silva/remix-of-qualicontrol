@@ -173,6 +173,7 @@ export default function DesvioNovo() {
     setSubAtividadeId("");
     setSubAtividades([]);
     setFornecedorNome("");
+    setFornecedoresApi([]);
     setDescricao("");
     setSeveridade("moderado");
     setPrazoSugerido("");
