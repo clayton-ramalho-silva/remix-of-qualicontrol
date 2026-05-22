@@ -244,6 +244,9 @@ export default function DesvioNovo() {
     return () => { cancelled = true; };
   }, [subAtividadeId, (obraSelecionada as any)?.id_projeto]);
 
+  const iniciarInspecao = () => {
+
+
     if (!obraId) { toast.error("Selecione a obra"); return; }
     if (!ambiente.trim()) { toast.error("Informe o ambiente/local"); return; }
     setStep(2);
