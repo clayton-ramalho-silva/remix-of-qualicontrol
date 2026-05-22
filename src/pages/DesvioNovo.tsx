@@ -92,6 +92,8 @@ export default function DesvioNovo() {
   const [subAtividades, setSubAtividades] = useState<{ id: number; nome: string }[]>([]);
   const [loadingSubAtividades, setLoadingSubAtividades] = useState(false);
   const [fornecedorNome, setFornecedorNome] = useState("");
+  const [fornecedoresApi, setFornecedoresApi] = useState<{ id: number; nome: string; cnpj?: string }[]>([]);
+  const [loadingFornecedores, setLoadingFornecedores] = useState(false);
   const [descricao, setDescricao] = useState("");
   const [severidade, setSeveridade] = useState<"leve" | "moderado" | "grave">("moderado");
   const [prazoSugerido, setPrazoSugerido] = useState("");
@@ -171,6 +173,7 @@ export default function DesvioNovo() {
     setSubAtividadeId("");
     setSubAtividades([]);
     setFornecedorNome("");
+    setFornecedoresApi([]);
     setDescricao("");
     setSeveridade("moderado");
     setPrazoSugerido("");
@@ -208,8 +211,42 @@ export default function DesvioNovo() {
     return () => { cancelled = true; };
   }, [grupoId]);
 
+  // Carrega fornecedores quando a subatividade muda (depende também da obra/idProjeto)
+  useEffect(() => {
+    setFornecedorNome("");
+    setFornecedoresApi([]);
+    const idProjeto = (obraSelecionada as any)?.id_projeto;
+    if (!subAtividadeId || !idProjeto) return;
+    let cancelled = false;
+    (async () => {
+      setLoadingFornecedores(true);
+      try {
+        const { data, error } = await supabase.functions.invoke(
+          "sync-fornecedores-sub-atividade",
+          {
+            body: {
+              idProjeto: Number(idProjeto),
+              idSubAtividadeInspecao: Number(subAtividadeId),
+            },
+          },
+        );
+        if (error) throw error;
+        if (!cancelled && data?.success) {
+          setFornecedoresApi(data.fornecedores || []);
+        }
+      } catch (e) {
+        console.error("Falha ao carregar fornecedores:", e);
+        if (!cancelled) toast.error("Não foi possível carregar os fornecedores");
+      } finally {
+        if (!cancelled) setLoadingFornecedores(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [subAtividadeId, (obraSelecionada as any)?.id_projeto]);
 
   const iniciarInspecao = () => {
+
+
     if (!obraId) { toast.error("Selecione a obra"); return; }
     if (!ambiente.trim()) { toast.error("Informe o ambiente/local"); return; }
     setStep(2);
@@ -513,13 +550,26 @@ export default function DesvioNovo() {
                   <Select
                     value={fornecedorNome || "__none__"}
                     onValueChange={(v) => setFornecedorNome(v === "__none__" ? "" : v)}
+                    disabled={!subAtividadeId || loadingFornecedores}
                   >
-                    <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue
+                        placeholder={
+                          !subAtividadeId
+                            ? "Selecione a subatividade primeiro..."
+                            : loadingFornecedores
+                              ? "Carregando..."
+                              : fornecedoresApi.length === 0
+                                ? "Nenhum fornecedor"
+                                : "Selecione..."
+                        }
+                      />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__none__">
                         <span className="text-muted-foreground">Nenhum</span>
                       </SelectItem>
-                      {fornecedoresDb?.map(f => (
+                      {fornecedoresApi.map(f => (
                         <SelectItem key={f.id} value={f.nome}>{f.nome}</SelectItem>
                       ))}
                     </SelectContent>
