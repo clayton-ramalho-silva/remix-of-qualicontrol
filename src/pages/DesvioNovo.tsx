@@ -550,13 +550,26 @@ export default function DesvioNovo() {
                   <Select
                     value={fornecedorNome || "__none__"}
                     onValueChange={(v) => setFornecedorNome(v === "__none__" ? "" : v)}
+                    disabled={!subAtividadeId || loadingFornecedores}
                   >
-                    <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue
+                        placeholder={
+                          !subAtividadeId
+                            ? "Selecione a subatividade primeiro..."
+                            : loadingFornecedores
+                              ? "Carregando..."
+                              : fornecedoresApi.length === 0
+                                ? "Nenhum fornecedor"
+                                : "Selecione..."
+                        }
+                      />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__none__">
                         <span className="text-muted-foreground">Nenhum</span>
                       </SelectItem>
-                      {fornecedoresDb?.map(f => (
+                      {fornecedoresApi.map(f => (
                         <SelectItem key={f.id} value={f.nome}>{f.nome}</SelectItem>
                       ))}
                     </SelectContent>
