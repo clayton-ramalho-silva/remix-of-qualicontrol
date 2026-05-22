@@ -61,11 +61,19 @@ const queryResolvers: Record<string, Resolver> = {
 
   // --- GRUPOS ---
   "grupos.list": async () => {
+    // Sincroniza com a API externa AW (check-lista-atividade-inspecao)
+    // e devolve a lista atualizada da tabela grupos.
+    const { data: fnData, error: fnError } = await supabase.functions.invoke(
+      "sync-grupos-inspecao",
+    );
+    if (!fnError && fnData?.grupos) return fnData.grupos;
+
+    // Fallback: lê direto da tabela se a sync falhar
     const { data, error } = await supabase
       .from("grupos")
       .select("*")
       .eq("ativo", 1)
-      .order("codigo");
+      .order("nome");
     if (error) throw error;
     return data || [];
   },
