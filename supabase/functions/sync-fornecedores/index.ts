@@ -88,11 +88,27 @@ Deno.serve(async (req) => {
     while (true) {
       const url =
         `${AW_BASE_URL}/check-lista-fornecedor?pagina=${pagina}&tamanhoPagina=${pageSize}`;
-      const resp = await fetch(url, {
-        headers: { accept: "*/*", "X-Api-Key": AW_API_KEY },
-      });
-      if (!resp.ok) {
-        throw new Error(`AW API falhou [${resp.status}] página ${pagina}: ${await resp.text()}`);
+      let resp: Response | null = null;
+      let lastErr = "";
+      for (let attempt = 1; attempt <= 4; attempt++) {
+        try {
+          resp = await fetch(url, {
+            headers: { accept: "*/*", "X-Api-Key": AW_API_KEY },
+          });
+          if (resp.ok) break;
+          lastErr = `HTTP ${resp.status}`;
+          await resp.text();
+        } catch (e) {
+          lastErr = e instanceof Error ? e.message : String(e);
+        }
+        await new Promise((r) => setTimeout(r, 1000 * attempt));
+        resp = null;
+      }
+      if (!resp || !resp.ok) {
+        errors.push({ error: `página ${pagina} falhou após retries: ${lastErr}` });
+        pagina++;
+        if (paginaFinal != null && pagina > paginaFinal) break;
+        continue;
       }
       const data = (await resp.json()) as
         | ApiFornecedor[]
