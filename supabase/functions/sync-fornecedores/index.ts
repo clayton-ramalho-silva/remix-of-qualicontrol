@@ -208,24 +208,39 @@ Deno.serve(async (req) => {
       pagina++;
     }
 
+    console.log("sync-fornecedores done:", {
+      paginas_lidas: pagina, fornecedores_api: totalApi,
+      fornecedores_upserted: totalUpserted, vinculos_grupos: totalGrupos,
+      vinculos_disciplinas: totalDisc, errors_count: errors.length,
+    });
+    return {
+      success: true,
+      paginas_lidas: pagina,
+      fornecedores_api: totalApi,
+      fornecedores_upserted: totalUpserted,
+      vinculos_grupos: totalGrupos,
+      vinculos_disciplinas: totalDisc,
+      errors,
+    };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error("sync-fornecedores error:", message);
+      return { success: false, error: message };
+    }
+  };
+
+  if (background) {
+    // @ts-ignore EdgeRuntime existe no Supabase
+    EdgeRuntime.waitUntil(run());
     return new Response(
-      JSON.stringify({
-        success: true,
-        paginas_lidas: pagina,
-        fornecedores_api: totalApi,
-        fornecedores_upserted: totalUpserted,
-        vinculos_grupos: totalGrupos,
-        vinculos_disciplinas: totalDisc,
-        errors,
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error("sync-fornecedores error:", message);
-    return new Response(
-      JSON.stringify({ success: false, error: message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      JSON.stringify({ success: true, started: true, paginaInicial, paginaFinal }),
+      { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
+
+  const result = await run();
+  return new Response(JSON.stringify(result), {
+    status: result.success ? 200 : 500,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 });
