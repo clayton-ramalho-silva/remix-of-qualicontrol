@@ -42,9 +42,8 @@ Deno.serve(async (req) => {
     }
     const atividades = (await resp.json()) as AtividadeInspecao[];
 
-    // 2) De-para → grupos
+    // 2) De-para → grupos (id é auto-incremento; usamos `codigo` como chave de conflito)
     const rows = atividades.map((a) => ({
-      id: a.IdAtividadeInspecao,
       codigo: String(a.IdAtividadeInspecao),
       nome: a.Descricao,
       ativo: 1,
@@ -53,7 +52,7 @@ Deno.serve(async (req) => {
     if (rows.length > 0) {
       const { error: upsertErr } = await supabase
         .from("grupos")
-        .upsert(rows, { onConflict: "id" });
+        .upsert(rows, { onConflict: "codigo" });
       if (upsertErr) throw upsertErr;
     }
 
