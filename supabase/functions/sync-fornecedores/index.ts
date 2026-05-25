@@ -90,10 +90,15 @@ Deno.serve(async (req) => {
       if (!resp.ok) {
         throw new Error(`AW API falhou [${resp.status}] página ${pagina}: ${await resp.text()}`);
       }
-      const data = (await resp.json()) as ApiFornecedor[] | { Itens?: ApiFornecedor[] };
+      const data = (await resp.json()) as
+        | ApiFornecedor[]
+        | { dados?: ApiFornecedor[]; Itens?: ApiFornecedor[]; paginacao?: { totalPaginas?: number } };
       const lista: ApiFornecedor[] = Array.isArray(data)
         ? data
-        : (data?.Itens ?? []);
+        : ((data as any)?.dados ?? (data as any)?.Itens ?? []);
+      const totalPaginas = !Array.isArray(data)
+        ? Number((data as any)?.paginacao?.totalPaginas ?? 0)
+        : 0;
       if (!lista.length) break;
       totalApi += lista.length;
 
