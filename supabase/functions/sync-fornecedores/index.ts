@@ -183,7 +183,8 @@ Deno.serve(async (req) => {
 
       if (limit != null && totalUpserted >= limit) break;
       if (totalPaginas && pagina >= totalPaginas) break;
-      if (lista.length < pageSize) break;
+      if (paginaFinal != null && pagina >= paginaFinal) break;
+      if (lista.length === 0) break;
       pagina++;
     }
 
