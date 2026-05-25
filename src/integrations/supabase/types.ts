@@ -552,6 +552,41 @@ export type Database = {
           },
         ]
       }
+      disciplinas: {
+        Row: {
+          created_at: string
+          id: number
+          id_disciplina: number
+          id_grupo: number
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          id_disciplina: number
+          id_grupo: number
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          id_disciplina?: number
+          id_grupo?: number
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "disciplinas_id_grupo_fkey"
+            columns: ["id_grupo"]
+            isOneToOne: false
+            referencedRelation: "grupos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       edificios: {
         Row: {
           ativo: number
