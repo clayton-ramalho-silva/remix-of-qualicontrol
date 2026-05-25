@@ -55,10 +55,14 @@ Deno.serve(async (req) => {
 
     let limit: number | null = null;
     let pageSize = 50;
+    let paginaInicial = 1;
+    let paginaFinal: number | null = null;
     try {
       const body = await req.json();
       if (body?.limit != null) limit = Number(body.limit);
       if (body?.pageSize != null) pageSize = Number(body.pageSize);
+      if (body?.paginaInicial != null) paginaInicial = Number(body.paginaInicial);
+      if (body?.paginaFinal != null) paginaFinal = Number(body.paginaFinal);
     } catch (_) { /* sem body */ }
 
     // Pré-carrega mapas auxiliares para os pivots
