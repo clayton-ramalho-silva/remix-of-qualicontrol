@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
     let totalUpserted = 0;
     let totalGrupos = 0;
     let totalDisc = 0;
-    let pagina = 1;
+    let pagina = paginaInicial;
 
     while (true) {
       const url =
