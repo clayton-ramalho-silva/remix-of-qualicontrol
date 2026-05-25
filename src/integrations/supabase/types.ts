@@ -627,6 +627,7 @@ export type Database = {
           disciplina: string | null
           email: string | null
           id: number
+          id_fornecedor: number | null
           nome: string
           telefone: string | null
           updated_at: string
@@ -637,6 +638,7 @@ export type Database = {
           disciplina?: string | null
           email?: string | null
           id?: number
+          id_fornecedor?: number | null
           nome: string
           telefone?: string | null
           updated_at?: string
@@ -647,11 +649,84 @@ export type Database = {
           disciplina?: string | null
           email?: string | null
           id?: number
+          id_fornecedor?: number | null
           nome?: string
           telefone?: string | null
           updated_at?: string
         }
         Relationships: []
+      }
+      fornecedores_disciplinas: {
+        Row: {
+          created_at: string
+          disciplina_id: number
+          fornecedor_id: number
+          id: number
+        }
+        Insert: {
+          created_at?: string
+          disciplina_id: number
+          fornecedor_id: number
+          id?: number
+        }
+        Update: {
+          created_at?: string
+          disciplina_id?: number
+          fornecedor_id?: number
+          id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fornecedores_disciplinas_disciplina_id_fkey"
+            columns: ["disciplina_id"]
+            isOneToOne: false
+            referencedRelation: "disciplinas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fornecedores_disciplinas_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fornecedores_grupos: {
+        Row: {
+          created_at: string
+          fornecedor_id: number
+          grupo_id: number
+          id: number
+        }
+        Insert: {
+          created_at?: string
+          fornecedor_id: number
+          grupo_id: number
+          id?: number
+        }
+        Update: {
+          created_at?: string
+          fornecedor_id?: number
+          grupo_id?: number
+          id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fornecedores_grupos_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fornecedores_grupos_grupo_id_fkey"
+            columns: ["grupo_id"]
+            isOneToOne: false
+            referencedRelation: "grupos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       fotos_evidencia: {
         Row: {
