@@ -47,19 +47,27 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  );
 
-    let limit: number | null = null;
-    let pageSize = 50;
+  let limit: number | null = null;
+  let pageSize = 50;
+  let paginaInicial = 1;
+  let paginaFinal: number | null = null;
+  let background = false;
+  try {
+    const body = await req.json();
+    if (body?.limit != null) limit = Number(body.limit);
+    if (body?.pageSize != null) pageSize = Number(body.pageSize);
+    if (body?.paginaInicial != null) paginaInicial = Number(body.paginaInicial);
+    if (body?.paginaFinal != null) paginaFinal = Number(body.paginaFinal);
+    if (body?.background) background = !!body.background;
+  } catch (_) { /* sem body */ }
+
+  const run = async () => {
     try {
-      const body = await req.json();
-      if (body?.limit != null) limit = Number(body.limit);
-      if (body?.pageSize != null) pageSize = Number(body.pageSize);
-    } catch (_) { /* sem body */ }
 
     // Pré-carrega mapas auxiliares para os pivots
     const { data: grupos, error: gErr } = await supabase
@@ -79,16 +87,32 @@ Deno.serve(async (req) => {
     let totalUpserted = 0;
     let totalGrupos = 0;
     let totalDisc = 0;
-    let pagina = 1;
+    let pagina = paginaInicial;
 
     while (true) {
       const url =
         `${AW_BASE_URL}/check-lista-fornecedor?pagina=${pagina}&tamanhoPagina=${pageSize}`;
-      const resp = await fetch(url, {
-        headers: { accept: "*/*", "X-Api-Key": AW_API_KEY },
-      });
-      if (!resp.ok) {
-        throw new Error(`AW API falhou [${resp.status}] página ${pagina}: ${await resp.text()}`);
+      let resp: Response | null = null;
+      let lastErr = "";
+      for (let attempt = 1; attempt <= 4; attempt++) {
+        try {
+          resp = await fetch(url, {
+            headers: { accept: "*/*", "X-Api-Key": AW_API_KEY },
+          });
+          if (resp.ok) break;
+          lastErr = `HTTP ${resp.status}`;
+          await resp.text();
+        } catch (e) {
+          lastErr = e instanceof Error ? e.message : String(e);
+        }
+        await new Promise((r) => setTimeout(r, 1000 * attempt));
+        resp = null;
+      }
+      if (!resp || !resp.ok) {
+        errors.push({ error: `página ${pagina} falhou após retries: ${lastErr}` });
+        pagina++;
+        if (paginaFinal != null && pagina > paginaFinal) break;
+        continue;
       }
       const data = (await resp.json()) as
         | ApiFornecedor[]
@@ -179,28 +203,44 @@ Deno.serve(async (req) => {
 
       if (limit != null && totalUpserted >= limit) break;
       if (totalPaginas && pagina >= totalPaginas) break;
-      if (lista.length < pageSize) break;
+      if (paginaFinal != null && pagina >= paginaFinal) break;
+      if (lista.length === 0) break;
       pagina++;
     }
 
+    console.log("sync-fornecedores done:", {
+      paginas_lidas: pagina, fornecedores_api: totalApi,
+      fornecedores_upserted: totalUpserted, vinculos_grupos: totalGrupos,
+      vinculos_disciplinas: totalDisc, errors_count: errors.length,
+    });
+    return {
+      success: true,
+      paginas_lidas: pagina,
+      fornecedores_api: totalApi,
+      fornecedores_upserted: totalUpserted,
+      vinculos_grupos: totalGrupos,
+      vinculos_disciplinas: totalDisc,
+      errors,
+    };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error("sync-fornecedores error:", message);
+      return { success: false, error: message };
+    }
+  };
+
+  if (background) {
+    // @ts-ignore EdgeRuntime existe no Supabase
+    EdgeRuntime.waitUntil(run());
     return new Response(
-      JSON.stringify({
-        success: true,
-        paginas_lidas: pagina,
-        fornecedores_api: totalApi,
-        fornecedores_upserted: totalUpserted,
-        vinculos_grupos: totalGrupos,
-        vinculos_disciplinas: totalDisc,
-        errors,
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error("sync-fornecedores error:", message);
-    return new Response(
-      JSON.stringify({ success: false, error: message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      JSON.stringify({ success: true, started: true, paginaInicial, paginaFinal }),
+      { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
+
+  const result = await run();
+  return new Response(JSON.stringify(result), {
+    status: result.success ? 200 : 500,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 });
