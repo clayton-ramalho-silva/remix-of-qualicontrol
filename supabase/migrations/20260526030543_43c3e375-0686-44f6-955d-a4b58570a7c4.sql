@@ -1,0 +1,1 @@
+SELECT setval('public.edificios_id_seq', (SELECT MAX(id) FROM public.edificios));
