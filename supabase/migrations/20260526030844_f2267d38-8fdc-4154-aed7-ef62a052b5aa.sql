@@ -1,0 +1,1 @@
+SELECT setval('public.andares_id_seq', (SELECT MAX(id) FROM public.andares));
