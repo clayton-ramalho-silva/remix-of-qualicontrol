@@ -42,9 +42,25 @@ type PerfRow = {
 export default function Fornecedores() {
   const qc = useQueryClient();
 
+  const [selectedObraId, setSelectedObraId] = useState<string>("all");
+  const obraIdNum = selectedObraId === "all" ? undefined : parseInt(selectedObraId);
+
   const { data: fornecedores, isLoading: fornLoading } = useQuery({
-    queryKey: ["fornecedores"],
+    queryKey: ["fornecedores", obraIdNum ?? "all"],
     queryFn: async (): Promise<Fornecedor[]> => {
+      if (obraIdNum) {
+        const { data: pivot, error: pErr } = await supabase
+          .from("obras_fornecedores")
+          .select("fornecedor_id")
+          .eq("obra_id", obraIdNum);
+        if (pErr) throw pErr;
+        const ids = (pivot || []).map((r: any) => r.fornecedor_id);
+        if (ids.length === 0) return [];
+        const { data, error } = await supabase
+          .from("fornecedores").select("*").in("id", ids).order("nome");
+        if (error) throw error;
+        return (data || []) as Fornecedor[];
+      }
       const { data, error } = await supabase.from("fornecedores").select("*").order("nome");
       if (error) throw error;
       return (data || []) as Fornecedor[];
@@ -59,9 +75,6 @@ export default function Fornecedores() {
       return (data || []) as Obra[];
     },
   });
-
-  const [selectedObraId, setSelectedObraId] = useState<string>("all");
-  const obraIdNum = selectedObraId === "all" ? undefined : parseInt(selectedObraId);
 
   const { data: performance, isLoading: perfLoading } = useQuery({
     queryKey: ["fornecedor-performance", obraIdNum ?? "all"],
