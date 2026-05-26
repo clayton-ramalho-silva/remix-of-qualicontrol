@@ -53,7 +53,8 @@ Deno.serve(async (req) => {
       const text = await resp.text();
       throw new Error(`AW API falhou [${resp.status}]: ${text}`);
     }
-    const subs = (await resp.json()) as SubAtividade[];
+    const raw = (await resp.text()).trim();
+    const subs = (raw ? JSON.parse(raw) : []) as SubAtividade[];
 
     const subAtividades = subs
       .map((s) => ({
