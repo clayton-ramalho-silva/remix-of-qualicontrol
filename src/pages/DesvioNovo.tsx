@@ -88,11 +88,11 @@ export default function DesvioNovo() {
   // ---------- Etapa 2: Desvio (form atual + contador) ----------
   const [grupoId, setGrupoId] = useState("");
   const [grupoSearch, setGrupoSearch] = useState("");
-  const [subAtividadeId, setSubAtividadeId] = useState("");
-  const [subAtividades, setSubAtividades] = useState<{ id: number; nome: string }[]>([]);
-  const [loadingSubAtividades, setLoadingSubAtividades] = useState(false);
+  const [disciplinaId, setDisciplinaId] = useState("");
+  const [disciplinas, setDisciplinas] = useState<{ id: number; nome: string }[]>([]);
+  const [loadingDisciplinas, setLoadingDisciplinas] = useState(false);
   const [fornecedorNome, setFornecedorNome] = useState("");
-  const [fornecedoresApi, setFornecedoresApi] = useState<{ id: number; nome: string; cnpj?: string }[]>([]);
+  const [fornecedoresApi, setFornecedoresApi] = useState<{ id: number; nome: string }[]>([]);
   const [loadingFornecedores, setLoadingFornecedores] = useState(false);
   const [descricao, setDescricao] = useState("");
   const [severidade, setSeveridade] = useState<"leve" | "moderado" | "grave">("moderado");
