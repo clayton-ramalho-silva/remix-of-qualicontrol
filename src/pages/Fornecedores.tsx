@@ -25,6 +25,7 @@ type Fornecedor = {
   contato: string | null;
   telefone: string | null;
   email: string | null;
+  disciplinas?: string[];
 };
 
 type Obra = { id: number; codigo: string; nome: string };
