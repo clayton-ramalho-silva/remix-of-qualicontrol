@@ -293,7 +293,19 @@ export default function Fornecedores() {
                   {filteredFornecedores.map((f) => (
                     <tr key={f.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                       <td className="py-3 px-2 font-medium">{f.nome}</td>
-                      <td className="py-3 px-2">{f.disciplina ? <Badge variant="outline" className="font-normal">{f.disciplina}</Badge> : <span className="text-muted-foreground">—</span>}</td>
+                      <td className="py-3 px-2">
+                        {f.disciplinas && f.disciplinas.length > 0 ? (
+                          <div className="flex flex-wrap gap-1 max-w-[280px]">
+                            {f.disciplinas.map((d) => (
+                              <Badge key={d} variant="outline" className="font-normal">{d}</Badge>
+                            ))}
+                          </div>
+                        ) : f.disciplina ? (
+                          <Badge variant="outline" className="font-normal">{f.disciplina}</Badge>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
                       <td className="py-3 px-2">{f.email ? <a href={`mailto:${f.email}`} className="text-primary hover:underline flex items-center gap-1"><Mail className="h-3 w-3" /> {f.email}</a> : <span className="text-muted-foreground">—</span>}</td>
                       <td className="py-3 px-2">{f.contato || <span className="text-muted-foreground">—</span>}</td>
                       <td className="py-3 px-2">{f.telefone || <span className="text-muted-foreground">—</span>}</td>
