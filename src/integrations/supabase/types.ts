@@ -976,6 +976,42 @@ export type Database = {
         }
         Relationships: []
       }
+      obras_fornecedores: {
+        Row: {
+          created_at: string
+          fornecedor_id: number
+          id: number
+          obra_id: number
+        }
+        Insert: {
+          created_at?: string
+          fornecedor_id: number
+          id?: number
+          obra_id: number
+        }
+        Update: {
+          created_at?: string
+          fornecedor_id?: number
+          id?: number
+          obra_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obras_fornecedores_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obras_fornecedores_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ocorrencia_causas: {
         Row: {
           categoria:
