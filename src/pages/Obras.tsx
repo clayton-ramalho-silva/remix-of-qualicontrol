@@ -22,6 +22,7 @@ const verticais: { key: Vertical; label: string; icon: any; coverCol: "cobertura
 ];
 
 type Obra = {
+  id_projeto?: number | null;
   id: number;
   codigo: string;
   nome: string;
