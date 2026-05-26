@@ -521,29 +521,29 @@ export default function DesvioNovo() {
                   </Select>
                 </Field>
 
-                <Field label="Sub Atividade de Inspeção" hint="Subatividade vinculada ao grupo selecionado.">
+                <Field label="Disciplina" hint="Disciplina vinculada ao grupo selecionado.">
                   <Select
-                    value={subAtividadeId}
-                    onValueChange={setSubAtividadeId}
-                    disabled={!grupoId || loadingSubAtividades}
+                    value={disciplinaId}
+                    onValueChange={setDisciplinaId}
+                    disabled={!grupoId || loadingDisciplinas}
                   >
                     <SelectTrigger>
                       <SelectValue
                         placeholder={
                           !grupoId
                             ? "Selecione um grupo primeiro..."
-                            : loadingSubAtividades
+                            : loadingDisciplinas
                               ? "Carregando..."
-                              : subAtividades.length === 0
-                                ? "Nenhuma subatividade"
-                                : "Selecione a subatividade..."
+                              : disciplinas.length === 0
+                                ? "Nenhuma disciplina"
+                                : "Selecione a disciplina..."
                         }
                       />
                     </SelectTrigger>
                     <SelectContent>
-                      {subAtividades.map(s => (
-                        <SelectItem key={s.id} value={String(s.id)}>
-                          {s.id} - {s.nome}
+                      {disciplinas.map(d => (
+                        <SelectItem key={d.id} value={String(d.id)}>
+                          {d.nome}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -555,13 +555,13 @@ export default function DesvioNovo() {
                   <Select
                     value={fornecedorNome || "__none__"}
                     onValueChange={(v) => setFornecedorNome(v === "__none__" ? "" : v)}
-                    disabled={!subAtividadeId || loadingFornecedores}
+                    disabled={!disciplinaId || loadingFornecedores}
                   >
                     <SelectTrigger>
                       <SelectValue
                         placeholder={
-                          !subAtividadeId
-                            ? "Selecione a subatividade primeiro..."
+                          !disciplinaId
+                            ? "Selecione a disciplina primeiro..."
                             : loadingFornecedores
                               ? "Carregando..."
                               : fornecedoresApi.length === 0
