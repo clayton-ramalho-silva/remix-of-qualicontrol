@@ -181,6 +181,21 @@ export default function Obras() {
   const toggleCobertura = (obra: Obra) => {
     const atual = coverFor(obra);
     const next = atual ? 0 : 1;
+
+    // Quando vai cobrir (0 -> 1), exige id_projeto e dispara sync de fornecedores
+    if (!atual) {
+      if (!obra.id_projeto) {
+        toast.error("Obra sem id_projeto — não é possível sincronizar fornecedores.");
+        return;
+      }
+      supabase.functions
+        .invoke("sync-obra-fornecedores", { body: { obraId: obra.id } })
+        .then(({ error }) => {
+          if (error) console.error("sync-obra-fornecedores invoke error", error);
+        });
+      toast.success(`Sincronização de fornecedores iniciada — ${verticalAtiva.label}`);
+    }
+
     updateObra.mutate(
       { id: obra.id, [verticalAtiva.coverCol]: next } as any,
       {
@@ -188,6 +203,7 @@ export default function Obras() {
       }
     );
   };
+
 
   const setMarcacao = (obra: Obra, marcacao: Obra["marcacao"]) => {
     const next = obra.marcacao === marcacao ? null : marcacao;
