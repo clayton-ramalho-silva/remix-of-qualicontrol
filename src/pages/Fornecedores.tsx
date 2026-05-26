@@ -192,6 +192,7 @@ export default function Fornecedores() {
     return fornecedores.filter(f =>
       f.nome.toLowerCase().includes(term) ||
       (f.disciplina && f.disciplina.toLowerCase().includes(term)) ||
+      (f.disciplinas && f.disciplinas.some((d) => d.toLowerCase().includes(term))) ||
       (f.contato && f.contato.toLowerCase().includes(term)) ||
       (f.email && f.email.toLowerCase().includes(term))
     );
