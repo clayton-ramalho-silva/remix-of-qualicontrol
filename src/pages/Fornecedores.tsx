@@ -49,6 +49,7 @@ export default function Fornecedores() {
   const { data: fornecedores, isLoading: fornLoading } = useQuery({
     queryKey: ["fornecedores", obraIdNum ?? "all"],
     queryFn: async (): Promise<Fornecedor[]> => {
+      let base: Fornecedor[] = [];
       if (obraIdNum) {
         const { data: pivot, error: pErr } = await supabase
           .from("obras_fornecedores")
@@ -60,11 +61,28 @@ export default function Fornecedores() {
         const { data, error } = await supabase
           .from("fornecedores").select("*").in("id", ids).order("nome");
         if (error) throw error;
-        return (data || []) as Fornecedor[];
+        base = (data || []) as Fornecedor[];
+      } else {
+        const { data, error } = await supabase.from("fornecedores").select("*").order("nome");
+        if (error) throw error;
+        base = (data || []) as Fornecedor[];
       }
-      const { data, error } = await supabase.from("fornecedores").select("*").order("nome");
-      if (error) throw error;
-      return (data || []) as Fornecedor[];
+      if (base.length === 0) return base;
+
+      const ids = base.map((f) => f.id);
+      const { data: fd } = await supabase
+        .from("fornecedores_disciplinas")
+        .select("fornecedor_id, disciplinas(nome)")
+        .in("fornecedor_id", ids);
+      const map = new Map<number, string[]>();
+      (fd || []).forEach((row: any) => {
+        const nome = row?.disciplinas?.nome;
+        if (!nome) return;
+        const arr = map.get(row.fornecedor_id) || [];
+        if (!arr.includes(nome)) arr.push(nome);
+        map.set(row.fornecedor_id, arr);
+      });
+      return base.map((f) => ({ ...f, disciplinas: map.get(f.id) || [] }));
     },
   });
 
