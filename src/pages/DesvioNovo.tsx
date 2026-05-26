@@ -267,12 +267,13 @@ export default function DesvioNovo() {
       return;
     }
     const grupo = grupos?.find(g => g.id === parseInt(grupoId));
+    const disciplina = disciplinas.find(d => d.id === parseInt(disciplinaId));
 
     setSubmitting(true);
     try {
       const result = await createDesvio.mutateAsync({
         obraId: parseInt(obraId),
-        disciplina: grupo ? `${grupo.codigo} - ${grupo.nome}` : "",
+        disciplina: disciplina?.nome || (grupo ? `${grupo.codigo} - ${grupo.nome}` : ""),
         grupoId: parseInt(grupoId),
         fornecedorNome: fornecedorNome || undefined,
         descricao,
