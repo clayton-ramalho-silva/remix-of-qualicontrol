@@ -184,56 +184,61 @@ export default function DesvioNovo() {
     setFotos([]);
   };
 
-  // Carrega subatividades sempre que o grupo muda
+  // Carrega disciplinas associadas ao grupo selecionado
   useEffect(() => {
-    setSubAtividadeId("");
-    setSubAtividades([]);
+    setDisciplinaId("");
+    setDisciplinas([]);
     if (!grupoId) return;
     let cancelled = false;
     (async () => {
-      setLoadingSubAtividades(true);
+      setLoadingDisciplinas(true);
       try {
-        const { data, error } = await supabase.functions.invoke(
-          "sync-sub-atividade-inspecao",
-          { body: { idAtividadeInspecao: Number(grupoId) } },
-        );
+        const { data, error } = await supabase
+          .from("disciplinas")
+          .select("id, nome")
+          .eq("id_grupo", Number(grupoId))
+          .order("nome");
         if (error) throw error;
-        if (!cancelled && data?.success) {
-          setSubAtividades(data.subAtividades || []);
-        }
+        if (!cancelled) setDisciplinas((data || []) as any);
       } catch (e) {
-        console.error("Falha ao carregar subatividades:", e);
-        if (!cancelled) toast.error("Não foi possível carregar as subatividades");
+        console.error("Falha ao carregar disciplinas:", e);
+        if (!cancelled) toast.error("Não foi possível carregar as disciplinas");
       } finally {
-        if (!cancelled) setLoadingSubAtividades(false);
+        if (!cancelled) setLoadingDisciplinas(false);
       }
     })();
     return () => { cancelled = true; };
   }, [grupoId]);
 
-  // Carrega fornecedores quando a subatividade muda (depende também da obra/idProjeto)
+  // Carrega fornecedores: interseção entre obras_fornecedores (obra) e
+  // fornecedores_disciplinas (disciplina selecionada)
   useEffect(() => {
     setFornecedorNome("");
     setFornecedoresApi([]);
-    const idProjeto = (obraSelecionada as any)?.id_projeto;
-    if (!subAtividadeId || !idProjeto) return;
+    if (!obraId || !disciplinaId) return;
     let cancelled = false;
     (async () => {
       setLoadingFornecedores(true);
       try {
-        const { data, error } = await supabase.functions.invoke(
-          "sync-fornecedores-sub-atividade",
-          {
-            body: {
-              idProjeto: Number(idProjeto),
-              idSubAtividadeInspecao: Number(subAtividadeId),
-            },
-          },
-        );
-        if (error) throw error;
-        if (!cancelled && data?.success) {
-          setFornecedoresApi(data.fornecedores || []);
+        const [{ data: of, error: e1 }, { data: fd, error: e2 }] = await Promise.all([
+          supabase.from("obras_fornecedores").select("fornecedor_id").eq("obra_id", Number(obraId)),
+          supabase.from("fornecedores_disciplinas").select("fornecedor_id").eq("disciplina_id", Number(disciplinaId)),
+        ]);
+        if (e1) throw e1;
+        if (e2) throw e2;
+        const obraSet = new Set((of || []).map((r: any) => r.fornecedor_id));
+        const ids = (fd || []).map((r: any) => r.fornecedor_id).filter((id: number) => obraSet.has(id));
+        if (ids.length === 0) {
+          if (!cancelled) setFornecedoresApi([]);
+          return;
         }
+        const { data: forns, error: e3 } = await supabase
+          .from("fornecedores")
+          .select("id, nome")
+          .in("id", ids)
+          .order("nome");
+        if (e3) throw e3;
+        if (!cancelled) setFornecedoresApi((forns || []) as any);
       } catch (e) {
         console.error("Falha ao carregar fornecedores:", e);
         if (!cancelled) toast.error("Não foi possível carregar os fornecedores");
@@ -242,7 +247,7 @@ export default function DesvioNovo() {
       }
     })();
     return () => { cancelled = true; };
-  }, [subAtividadeId, (obraSelecionada as any)?.id_projeto]);
+  }, [obraId, disciplinaId]);
 
   const iniciarInspecao = () => {
 
