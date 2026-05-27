@@ -206,7 +206,7 @@ function DashboardLayoutContent({
                 <div className="flex flex-col min-w-0 gap-0.5">
                   <img src={AW_LOGO_WHITE} alt="athie|wohnrath" className="h-4 object-contain object-left" />
                   <span className="text-[11px] font-semibold tracking-widest uppercase text-sidebar-foreground/70">
-                    QualiControl
+                    AW Check
                   </span>
                 </div>
               )}
