@@ -125,7 +125,7 @@ export default function Assistente() {
                 <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
                   <MessageSquare className="h-8 w-8 text-primary" />
                 </div>
-                <h3 className="text-lg font-semibold mb-1">Olá! Sou o QualiControl AI</h3>
+                <h3 className="text-lg font-semibold mb-1">Olá! Sou o AW Check AI</h3>
                 <p className="text-sm text-muted-foreground max-w-md">
                   Posso analisar os dados de qualidade das suas obras, identificar tendências,
                   sugerir ações corretivas e responder perguntas sobre desvios e fornecedores.

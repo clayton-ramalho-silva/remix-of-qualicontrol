@@ -1,6 +1,6 @@
 {
-  "name": "QualiControl",
-  "short_name": "QualiControl",
+  "name": "AW Check",
+  "short_name": "AW Check",
   "description": "Sistema de controle de qualidade em obras",
   "start_url": "/",
   "scope": "/",
