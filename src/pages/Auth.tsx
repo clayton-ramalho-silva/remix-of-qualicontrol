@@ -62,7 +62,7 @@ export default function Auth() {
             <ShieldCheck className="h-6 w-6" />
           </div>
           <CardTitle className="text-2xl">AW Check</CardTitle>
-          <CardDescription>Dashboard FrecFunchal de desvios</CardDescription>
+          
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="signin">
