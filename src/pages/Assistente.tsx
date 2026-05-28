@@ -70,17 +70,14 @@ export default function Assistente() {
             Faça perguntas sobre os dados de qualidade e receba análises inteligentes
           </p>
         </div>
-        <Select value={selectedObraId} onValueChange={setSelectedObraId}>
-          <SelectTrigger className="w-[220px] bg-card">
-            <SelectValue placeholder="Contexto da obra" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as obras</SelectItem>
-            {obras?.map((o) => (
-              <SelectItem key={o.id} value={String(o.id)}>{o.codigo} - {o.nome}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <ObraSelect
+          obras={obras}
+          value={selectedObraId}
+          onValueChange={setSelectedObraId}
+          allLabel="Todas as obras"
+          placeholder="Contexto da obra"
+          className="w-[220px]"
+        />
       </div>
 
       {/* Suggested Questions */}

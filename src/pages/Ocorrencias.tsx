@@ -73,15 +73,14 @@ export default function Ocorrencias() {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
-        <Select value={obraFilter} onValueChange={setObraFilter}>
-          <SelectTrigger className="w-full sm:w-[300px]"><SelectValue placeholder="Filtrar por obra..." /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as obras</SelectItem>
-            {obras?.map((o: any) => (
-              <SelectItem key={o.id} value={String(o.id)}>{o.codigo} — {o.nome}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <ObraSelect
+          obras={obras as any}
+          value={obraFilter}
+          onValueChange={setObraFilter}
+          allLabel="Todas as obras"
+          placeholder="Filtrar por obra..."
+          className="w-full sm:w-[300px]"
+        />
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-full sm:w-[220px]"><SelectValue placeholder="Status..." /></SelectTrigger>
           <SelectContent>

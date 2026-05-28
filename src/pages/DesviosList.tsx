@@ -126,17 +126,14 @@ export default function DesviosList() {
           </div>
           {/* Filter combos - grid 3x2 */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            <Select value={obraFilter} onValueChange={setObraFilter}>
-              <SelectTrigger className="w-full bg-background">
-                <SelectValue placeholder="Obra" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as obras</SelectItem>
-                {obras?.map((o) => (
-                  <SelectItem key={o.id} value={String(o.id)}>{o.codigo} - {o.nome}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <ObraSelect
+              obras={obras}
+              value={obraFilter}
+              onValueChange={setObraFilter}
+              allLabel="Todas as obras"
+              placeholder="Obra"
+              className="w-full"
+            />
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full bg-background">
                 <SelectValue placeholder="Status" />

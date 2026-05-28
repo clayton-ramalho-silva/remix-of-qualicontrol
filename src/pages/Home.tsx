@@ -138,19 +138,14 @@ export default function Home() {
             Visão geral dos desvios e indicadores de qualidade
           </p>
         </div>
-        <Select value={selectedObraId} onValueChange={setSelectedObraId}>
-          <SelectTrigger className="w-[240px] bg-card">
-            <SelectValue placeholder="Filtrar por obra" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as obras</SelectItem>
-            {obras?.map((obra) => (
-              <SelectItem key={obra.id} value={String(obra.id)}>
-                {obra.codigo} - {obra.nome}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <ObraSelect
+          obras={obras}
+          value={selectedObraId}
+          onValueChange={setSelectedObraId}
+          allLabel="Todas as obras"
+          placeholder="Filtrar por obra"
+          className="w-[240px]"
+        />
       </div>
 
       {/* Vertical Filter Icons */}
