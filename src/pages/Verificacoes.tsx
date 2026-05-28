@@ -63,15 +63,14 @@ export default function Verificacoes({
 
       {/* Filtro */}
       <div className="flex gap-4">
-        <Select value={obraFilter} onValueChange={setObraFilter}>
-          <SelectTrigger className="w-full sm:w-[300px]"><SelectValue placeholder="Filtrar por obra..." /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as obras</SelectItem>
-            {obras?.map(o => (
-              <SelectItem key={o.id} value={String(o.id)}>{o.codigo} — {o.nome}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <ObraSelect
+          obras={obras}
+          value={obraFilter}
+          onValueChange={setObraFilter}
+          allLabel="Todas as obras"
+          placeholder="Filtrar por obra..."
+          className="w-full sm:w-[300px]"
+        />
       </div>
 
       {/* Lista de Verificações */}
