@@ -144,12 +144,13 @@ export default function PlanoAcaoNovo() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label className="text-sm">Obra *</Label>
-                <Select value={obraId} onValueChange={setObraId}>
-                  <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    {obras?.map(o => <SelectItem key={o.id} value={String(o.id)}>{o.codigo} - {o.nome}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <ObraSelect
+                  obras={obras}
+                  value={obraId}
+                  onValueChange={setObraId}
+                  placeholder="Selecione"
+                  className="mt-1 w-full"
+                />
               </div>
               <div>
                 <Label className="text-sm">Vertical *</Label>
@@ -255,13 +256,14 @@ export default function PlanoAcaoNovo() {
               <div className="p-3 border-b space-y-2">
                 <Input placeholder="Buscar por #id ou descrição..." value={search} onChange={e => setSearch(e.target.value)} className="h-9" />
                 <div className="flex gap-2">
-                  <Select value={obraFiltro} onValueChange={setObraFiltro}>
-                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Obra" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas as obras</SelectItem>
-                      {obras?.map(o => <SelectItem key={o.id} value={String(o.id)}>{o.codigo} - {o.nome}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <ObraSelect
+                    obras={obras}
+                    value={obraFiltro}
+                    onValueChange={setObraFiltro}
+                    allLabel="Todas as obras"
+                    placeholder="Obra"
+                    className="h-8 text-xs w-full"
+                  />
                   <Select value={verticalFiltro} onValueChange={setVerticalFiltro}>
                     <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Vertical" /></SelectTrigger>
                     <SelectContent>

@@ -494,17 +494,14 @@ function RelatorioDesvios() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <Label className="text-xs font-medium mb-1.5 block">Obra</Label>
-                <Select value={obraId} onValueChange={setObraId}>
-                  <SelectTrigger className="bg-background">
-                    <SelectValue placeholder="Selecione a obra" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas as obras</SelectItem>
-                    {obras?.map((o) => (
-                      <SelectItem key={o.id} value={String(o.id)}>{o.codigo} - {o.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <ObraSelect
+                  obras={obras}
+                  value={obraId}
+                  onValueChange={setObraId}
+                  allLabel="Todas as obras"
+                  placeholder="Selecione a obra"
+                  className="w-full"
+                />
               </div>
               <div>
                 <Label className="text-xs font-medium mb-1.5 block">Data Inicial</Label>
