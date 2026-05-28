@@ -336,7 +336,7 @@ export default function Usuarios() {
             <TooltipContent>Selecione as obras em que este membro atua</TooltipContent>
           </Tooltip>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 max-h-[240px] overflow-y-auto rounded-md border border-border p-2">
           {obras.map(obra => (
             <button
               key={obra.id}
@@ -356,6 +356,7 @@ export default function Usuarios() {
             <p className="text-sm text-muted-foreground">Nenhuma obra cadastrada</p>
           )}
         </div>
+
       </div>
 
       {isAdmin && !editId && (
