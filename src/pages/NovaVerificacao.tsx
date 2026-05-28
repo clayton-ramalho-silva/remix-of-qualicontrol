@@ -283,36 +283,17 @@ export default function NovaVerificacao({
           </div>
           <div>
             <Label>Gerente de Obra (GO)</Label>
-            <Select value={goId} onValueChange={setGoId}>
-              <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione o GO..." /></SelectTrigger>
-              <SelectContent>
-                {gerentesObra.map(m => (
-                  <SelectItem key={m.id} value={String(m.id)}>{m.nome}</SelectItem>
-                ))}
-                {gerentesObra.length === 0 && (
-                  <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum Gerente de Obra cadastrado em Usuários</div>
-                )}
-              </SelectContent>
-            </Select>
+            <Input className="mt-1" placeholder="Selecione uma obra..." value={goNome} onChange={e => setGoNome(e.target.value)} />
           </div>
           <div>
             <Label>Gerente de Contrato (GC)</Label>
-            <Select value={gcId} onValueChange={setGcId}>
-              <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione o GC..." /></SelectTrigger>
-              <SelectContent>
-                {gerentesContrato.map(m => (
-                  <SelectItem key={m.id} value={String(m.id)}>{m.nome}</SelectItem>
-                ))}
-                {gerentesContrato.length === 0 && (
-                  <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum Gerente de Contrato cadastrado em Usuários</div>
-                )}
-              </SelectContent>
-            </Select>
+            <Input className="mt-1" placeholder="Selecione uma obra..." value={gcNome} onChange={e => setGcNome(e.target.value)} />
           </div>
           <div>
             <Label>Núcleo</Label>
-            <Input className="mt-1" placeholder="Ex: Interiores..." value={nucleo} onChange={e => setNucleo(e.target.value)} />
+            <Input className="mt-1" placeholder="Selecione uma obra..." value={nucleo} onChange={e => setNucleo(e.target.value)} />
           </div>
+
         </CardContent>
       </Card>
 
