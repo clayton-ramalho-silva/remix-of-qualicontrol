@@ -50,13 +50,14 @@ export default function NovaVerificacao({
   const [obraId, setObraId] = useState<number | null>(null);
   const [avaliadorId, setAvaliadorId] = useState<string>("");
   const [dataVistoria, setDataVistoria] = useState(new Date().toISOString().split("T")[0]);
-  const [goId, setGoId] = useState<string>("");
-  const [obraId, setObraId] = useState<number | null>(null);
-  const [avaliadorId, setAvaliadorId] = useState<string>("");
-  const [dataVistoria, setDataVistoria] = useState(new Date().toISOString().split("T")[0]);
   const [goNome, setGoNome] = useState<string>("");
   const [gcNome, setGcNome] = useState<string>("");
   const [nucleo, setNucleo] = useState("");
+  const [diretoria, setDiretoria] = useState("");
+  const [observacoes, setObservacoes] = useState("");
+  const [respostas, setRespostas] = useState<Record<number, RespostaItem>>({});
+  const [expandedSections, setExpandedSections] = useState<Record<number, boolean>>({});
+  const [submitting, setSubmitting] = useState(false);
 
   // Filtrar membros por cargo
   const avaliadores = membros?.filter(m => m.cargo === "avaliador" && m.ativo) || [];
@@ -74,8 +75,6 @@ export default function NovaVerificacao({
     setNucleo(obra?.nucleo ?? "");
   };
 
-  const [expandedSections, setExpandedSections] = useState<Record<number, boolean>>({});
-  const [submitting, setSubmitting] = useState(false);
 
   const exigeFoto = categoria === "vistoria";
 
