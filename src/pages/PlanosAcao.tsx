@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import ObraSelect from "@/components/ObraSelect";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMemo, useState } from "react";
@@ -122,13 +123,14 @@ export default function PlanosAcao() {
             <Input placeholder="Buscar ação, responsável, desvio vinculado..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <Select value={obraFilter} onValueChange={setObraFilter}>
-              <SelectTrigger className="w-full sm:w-[200px] sm:shrink-0"><div className="truncate text-left flex-1 min-w-0"><SelectValue placeholder="Obra">{obraFilter === "all" ? "Obra: todas" : undefined}</SelectValue></div></SelectTrigger>
-              <SelectContent className="max-w-[320px]">
-                <SelectItem value="all">Todas as obras</SelectItem>
-                {obras?.map(o => <SelectItem key={o.id} value={String(o.id)}><span className="truncate block">{o.codigo} - {o.nome}</span></SelectItem>)}
-              </SelectContent>
-            </Select>
+            <ObraSelect
+              obras={obras}
+              value={obraFilter}
+              onValueChange={setObraFilter}
+              allLabel="Todas as obras"
+              placeholder="Obra"
+              className="w-full sm:w-[200px] sm:shrink-0"
+            />
             <Select value={verticalFilter} onValueChange={setVerticalFilter}>
               <SelectTrigger className="w-full sm:w-[180px] sm:shrink-0"><SelectValue placeholder="Vertical">{verticalFilter === "all" ? "Vertical: todas" : undefined}</SelectValue></SelectTrigger>
               <SelectContent>

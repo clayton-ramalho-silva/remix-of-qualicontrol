@@ -1,6 +1,7 @@
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import ObraSelect from "@/components/ObraSelect";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
@@ -138,19 +139,14 @@ export default function Home() {
             Visão geral dos desvios e indicadores de qualidade
           </p>
         </div>
-        <Select value={selectedObraId} onValueChange={setSelectedObraId}>
-          <SelectTrigger className="w-[240px] bg-card">
-            <SelectValue placeholder="Filtrar por obra" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as obras</SelectItem>
-            {obras?.map((obra) => (
-              <SelectItem key={obra.id} value={String(obra.id)}>
-                {obra.codigo} - {obra.nome}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <ObraSelect
+          obras={obras}
+          value={selectedObraId}
+          onValueChange={setSelectedObraId}
+          allLabel="Todas as obras"
+          placeholder="Filtrar por obra"
+          className="w-[240px]"
+        />
       </div>
 
       {/* Vertical Filter Icons */}

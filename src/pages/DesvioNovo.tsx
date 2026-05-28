@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import ObraSelect from "@/components/ObraSelect";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -354,14 +355,13 @@ export default function DesvioNovo() {
           </CardHeader>
           <CardContent className="space-y-5">
             <Field label="Obra" hint={HINTS.obra} required>
-              <Select value={obraId} onValueChange={setObraId}>
-                <SelectTrigger><SelectValue placeholder="Selecione a obra..." /></SelectTrigger>
-                <SelectContent>
-                  {obras?.map(o => (
-                    <SelectItem key={o.id} value={String(o.id)}>{o.codigo} - {o.nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <ObraSelect
+                obras={obras}
+                value={obraId}
+                onValueChange={setObraId}
+                placeholder="Selecione a obra..."
+                className="w-full"
+              />
             </Field>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

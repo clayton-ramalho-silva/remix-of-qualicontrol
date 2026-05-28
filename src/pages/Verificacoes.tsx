@@ -3,6 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import ObraSelect from "@/components/ObraSelect";
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
 import { ClipboardList, Plus, Calendar, User, Building2, TrendingUp, TrendingDown, Minus, Eye } from "lucide-react";
@@ -63,15 +64,14 @@ export default function Verificacoes({
 
       {/* Filtro */}
       <div className="flex gap-4">
-        <Select value={obraFilter} onValueChange={setObraFilter}>
-          <SelectTrigger className="w-full sm:w-[300px]"><SelectValue placeholder="Filtrar por obra..." /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as obras</SelectItem>
-            {obras?.map(o => (
-              <SelectItem key={o.id} value={String(o.id)}>{o.codigo} — {o.nome}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <ObraSelect
+          obras={obras}
+          value={obraFilter}
+          onValueChange={setObraFilter}
+          allLabel="Todas as obras"
+          placeholder="Filtrar por obra..."
+          className="w-full sm:w-[300px]"
+        />
       </div>
 
       {/* Lista de Verificações */}

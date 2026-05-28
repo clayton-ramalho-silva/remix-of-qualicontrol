@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import ObraSelect from "@/components/ObraSelect";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import {
@@ -220,13 +221,14 @@ export default function Fornecedores() {
           <p className="text-muted-foreground text-sm mt-1">Cadastro, performance e ranking de fornecedores</p>
         </div>
         <div className="flex items-center gap-3">
-          <Select value={selectedObraId} onValueChange={setSelectedObraId}>
-            <SelectTrigger className="w-[200px] bg-card"><SelectValue placeholder="Filtrar por obra" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas as obras</SelectItem>
-              {obras?.map((o) => <SelectItem key={o.id} value={String(o.id)}>{o.codigo} - {o.nome}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          <ObraSelect
+            obras={obras}
+            value={selectedObraId}
+            onValueChange={setSelectedObraId}
+            allLabel="Todas as obras"
+            placeholder="Filtrar por obra"
+            className="w-[200px]"
+          />
           <Dialog open={showDialog} onOpenChange={setShowDialog}>
             <DialogTrigger asChild>
               <Button size="sm"><PlusCircle className="h-4 w-4 mr-1.5" /> Novo Fornecedor</Button>

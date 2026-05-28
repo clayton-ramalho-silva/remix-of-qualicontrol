@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import ObraSelect from "@/components/ObraSelect";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useRef } from "react";
@@ -140,21 +141,13 @@ export default function Plantas() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Select
+          <ObraSelect
+            obras={obras}
             value={selectedObraId ? String(selectedObraId) : ""}
             onValueChange={(v) => setSelectedObraId(Number(v))}
-          >
-            <SelectTrigger className="w-[220px]">
-              <SelectValue placeholder="Selecione a obra" />
-            </SelectTrigger>
-            <SelectContent>
-              {obras?.map((obra) => (
-                <SelectItem key={obra.id} value={String(obra.id)}>
-                  {obra.nome}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            placeholder="Selecione a obra"
+            className="w-[220px]"
+          />
           {selectedObraId && (
             <Button size="sm" onClick={() => setShowUpload(true)}>
               <Upload className="h-4 w-4 mr-1.5" /> Nova Planta

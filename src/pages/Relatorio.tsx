@@ -2,6 +2,7 @@ import { trpc } from "@/lib/trpc";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import ObraSelect from "@/components/ObraSelect";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -494,17 +495,14 @@ function RelatorioDesvios() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <Label className="text-xs font-medium mb-1.5 block">Obra</Label>
-                <Select value={obraId} onValueChange={setObraId}>
-                  <SelectTrigger className="bg-background">
-                    <SelectValue placeholder="Selecione a obra" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas as obras</SelectItem>
-                    {obras?.map((o) => (
-                      <SelectItem key={o.id} value={String(o.id)}>{o.codigo} - {o.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <ObraSelect
+                  obras={obras}
+                  value={obraId}
+                  onValueChange={setObraId}
+                  allLabel="Todas as obras"
+                  placeholder="Selecione a obra"
+                  className="w-full"
+                />
               </div>
               <div>
                 <Label className="text-xs font-medium mb-1.5 block">Data Inicial</Label>

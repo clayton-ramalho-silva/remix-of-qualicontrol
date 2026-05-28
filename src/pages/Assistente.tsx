@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import ObraSelect from "@/components/ObraSelect";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useRef, useEffect } from "react";
 import { BrainCircuit, Send, Loader2, Lightbulb, Sparkles, MessageSquare } from "lucide-react";
@@ -70,17 +71,14 @@ export default function Assistente() {
             Faça perguntas sobre os dados de qualidade e receba análises inteligentes
           </p>
         </div>
-        <Select value={selectedObraId} onValueChange={setSelectedObraId}>
-          <SelectTrigger className="w-[220px] bg-card">
-            <SelectValue placeholder="Contexto da obra" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as obras</SelectItem>
-            {obras?.map((o) => (
-              <SelectItem key={o.id} value={String(o.id)}>{o.codigo} - {o.nome}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <ObraSelect
+          obras={obras}
+          value={selectedObraId}
+          onValueChange={setSelectedObraId}
+          allLabel="Todas as obras"
+          placeholder="Contexto da obra"
+          className="w-[220px]"
+        />
       </div>
 
       {/* Suggested Questions */}

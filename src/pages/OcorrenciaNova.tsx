@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import ObraSelect from "@/components/ObraSelect";
 import { PhotoPickerButton } from "@/components/PhotoPickerButton";
 import { ArrowLeft, Save, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -140,14 +141,13 @@ export default function OcorrenciaNova() {
         <CardContent className="grid sm:grid-cols-2 gap-4">
           <div className="sm:col-span-2">
             <Label>Obra *</Label>
-            <Select value={obraId} onValueChange={setObraId}>
-              <SelectTrigger><SelectValue placeholder="Selecione a obra..." /></SelectTrigger>
-              <SelectContent>
-                {obras?.map((o: any) => (
-                  <SelectItem key={o.id} value={String(o.id)}>{o.codigo} — {o.nome}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <ObraSelect
+              obras={obras as any}
+              value={obraId}
+              onValueChange={setObraId}
+              placeholder="Selecione a obra..."
+              className="w-full"
+            />
           </div>
           <div>
             <Label>Data *</Label>
