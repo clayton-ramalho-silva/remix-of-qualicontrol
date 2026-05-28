@@ -929,10 +929,13 @@ export type Database = {
           data_atualizacao: string | null
           data_criacao: string | null
           endereco: string | null
+          gerente_contrato: string | null
+          gerente_obra: string | null
           id: number
           id_projeto: number | null
           marcacao: string | null
           nome: string
+          nucleo: string | null
           status: Database["public"]["Enums"]["status_obra"]
           updated_at: string
         }
@@ -948,10 +951,13 @@ export type Database = {
           data_atualizacao?: string | null
           data_criacao?: string | null
           endereco?: string | null
+          gerente_contrato?: string | null
+          gerente_obra?: string | null
           id?: number
           id_projeto?: number | null
           marcacao?: string | null
           nome: string
+          nucleo?: string | null
           status?: Database["public"]["Enums"]["status_obra"]
           updated_at?: string
         }
@@ -967,10 +973,13 @@ export type Database = {
           data_atualizacao?: string | null
           data_criacao?: string | null
           endereco?: string | null
+          gerente_contrato?: string | null
+          gerente_obra?: string | null
           id?: number
           id_projeto?: number | null
           marcacao?: string | null
           nome?: string
+          nucleo?: string | null
           status?: Database["public"]["Enums"]["status_obra"]
           updated_at?: string
         }
