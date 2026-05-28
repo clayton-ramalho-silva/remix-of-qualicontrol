@@ -51,39 +51,29 @@ export default function NovaVerificacao({
   const [avaliadorId, setAvaliadorId] = useState<string>("");
   const [dataVistoria, setDataVistoria] = useState(new Date().toISOString().split("T")[0]);
   const [goId, setGoId] = useState<string>("");
-  const [gcId, setGcId] = useState<string>("");
+  const [obraId, setObraId] = useState<number | null>(null);
+  const [avaliadorId, setAvaliadorId] = useState<string>("");
+  const [dataVistoria, setDataVistoria] = useState(new Date().toISOString().split("T")[0]);
+  const [goNome, setGoNome] = useState<string>("");
+  const [gcNome, setGcNome] = useState<string>("");
+  const [nucleo, setNucleo] = useState("");
 
   // Filtrar membros por cargo
   const avaliadores = membros?.filter(m => m.cargo === "avaliador" && m.ativo) || [];
-  const gerentesObra = membros?.filter(m => m.cargo === "gerente_obra" && m.ativo) || [];
-  const gerentesContrato = membros?.filter(m => m.cargo === "gerente_contrato" && m.ativo) || [];
 
-  // Nomes resolvidos
+  // Nome resolvido do avaliador
   const avaliadorNome = membros?.find(m => String(m.id) === avaliadorId)?.nome || "";
-  const goNome = membros?.find(m => String(m.id) === goId)?.nome || "";
-  const gcNome = membros?.find(m => String(m.id) === gcId)?.nome || "";
 
-  // Pré-preencher GO e GC ao selecionar obra
+  // Pré-preencher GO, GC e Núcleo a partir da obra selecionada
   const handleObraChange = (obraIdStr: string) => {
     const newObraId = Number(obraIdStr);
     setObraId(newObraId);
-
-    // Encontrar GO vinculado à obra
-    const goMembro = gerentesObra.find(m => m.obraIds?.includes(newObraId));
-    if (goMembro) {
-      setGoId(String(goMembro.id));
-    }
-
-    // Encontrar GC vinculado à obra
-    const gcMembro = gerentesContrato.find(m => m.obraIds?.includes(newObraId));
-    if (gcMembro) {
-      setGcId(String(gcMembro.id));
-    }
+    const obra: any = obrasAll?.find((o: any) => o.id === newObraId);
+    setGoNome(obra?.gerente_obra ?? "");
+    setGcNome(obra?.gerente_contrato ?? "");
+    setNucleo(obra?.nucleo ?? "");
   };
-  const [nucleo, setNucleo] = useState("");
-  const [diretoria, setDiretoria] = useState("");
-  const [observacoes, setObservacoes] = useState("");
-  const [respostas, setRespostas] = useState<Record<number, RespostaItem>>({});
+
   const [expandedSections, setExpandedSections] = useState<Record<number, boolean>>({});
   const [submitting, setSubmitting] = useState(false);
 
