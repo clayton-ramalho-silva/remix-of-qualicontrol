@@ -34,6 +34,9 @@ async function syncObras(supabase: any) {
       endereco: joinEndereco(p),
       data_criacao: p.DataCriacao ?? null,
       data_atualizacao: p.DataAtualizacao ?? null,
+      gerente_obra: p.NomeGO ?? null,
+      gerente_contrato: p.DescricaoEquipe ?? null,
+      nucleo: p.NomeNucleo ?? null,
     }));
 
   // Upsert em lotes para evitar payloads enormes
