@@ -140,21 +140,13 @@ export default function Plantas() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Select
+          <ObraSelect
+            obras={obras}
             value={selectedObraId ? String(selectedObraId) : ""}
             onValueChange={(v) => setSelectedObraId(Number(v))}
-          >
-            <SelectTrigger className="w-[220px]">
-              <SelectValue placeholder="Selecione a obra" />
-            </SelectTrigger>
-            <SelectContent>
-              {obras?.map((obra) => (
-                <SelectItem key={obra.id} value={String(obra.id)}>
-                  {obra.nome}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            placeholder="Selecione a obra"
+            className="w-[220px]"
+          />
           {selectedObraId && (
             <Button size="sm" onClick={() => setShowUpload(true)}>
               <Upload className="h-4 w-4 mr-1.5" /> Nova Planta

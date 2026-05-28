@@ -253,14 +253,13 @@ export default function NovaVerificacao({
                 <TooltipContent>Selecione a obra que será inspecionada nesta verificação</TooltipContent>
               </Tooltip>
             </Label>
-            <Select onValueChange={handleObraChange}>
-              <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione a obra..." /></SelectTrigger>
-              <SelectContent>
-                {obras?.map(o => (
-                  <SelectItem key={o.id} value={String(o.id)}>{o.codigo} — {o.nome}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <ObraSelect
+              obras={obras}
+              value={obraId ? String(obraId) : ""}
+              onValueChange={handleObraChange}
+              placeholder="Selecione a obra..."
+              className="mt-1 w-full"
+            />
           </div>
           <div>
             <Label className="flex items-center gap-1.5">
