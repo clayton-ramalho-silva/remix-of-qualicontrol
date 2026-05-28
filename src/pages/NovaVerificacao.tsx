@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import VoiceRecorderButton from "@/components/VoiceRecorderButton";
 import RespostaFotosUploader, { type RespostaFoto } from "@/components/RespostaFotosUploader";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import ObraSelect from "@/components/ObraSelect";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
