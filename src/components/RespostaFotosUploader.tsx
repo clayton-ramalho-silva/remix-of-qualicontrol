@@ -78,7 +78,7 @@ export default function RespostaFotosUploader({ fotos, onChange, max }: Props) {
             </button>
           </div>
         ))}
-        {fotos.length < max && (
+        {(typeof max !== "number" || fotos.length < max) && (
           <Button
             type="button"
             variant="outline"
@@ -88,7 +88,7 @@ export default function RespostaFotosUploader({ fotos, onChange, max }: Props) {
             className="h-16 w-16 flex flex-col items-center justify-center gap-1 border-dashed text-slate-500 hover:text-teal-600 hover:border-teal-400"
           >
             {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-5 w-5" />}
-            <span className="text-[10px] leading-none">{fotos.length}/{max}</span>
+            <span className="text-[10px] leading-none">{typeof max === "number" ? `${fotos.length}/${max}` : fotos.length}</span>
           </Button>
         )}
       </div>
