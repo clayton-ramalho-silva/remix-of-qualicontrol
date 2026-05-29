@@ -149,7 +149,13 @@ function DashboardLayoutContent({
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const navLeaves: NavLeaf[] = menuItems.flatMap((item) => {
+  const isAdminUser = user?.role === "admin";
+  const visibleMenuItems = menuItems.filter((item) => {
+    if ('separator' in item) return true;
+    if ('adminOnly' in item && item.adminOnly && !isAdminUser) return false;
+    return true;
+  });
+  const navLeaves: NavLeaf[] = visibleMenuItems.flatMap((item) => {
     if ('separator' in item) return [];
     if ('group' in item) return item.children;
     return [item];
@@ -216,7 +222,7 @@ function DashboardLayoutContent({
 
           <SidebarContent className="gap-0">
             <SidebarMenu className="px-2 py-1">
-              {menuItems.map((item, idx) => {
+              {visibleMenuItems.map((item, idx) => {
                 if ('separator' in item) {
                   return (
                     <div key={`sep-${idx}`} className="my-2 mx-2 border-t border-sidebar-border/40" />
