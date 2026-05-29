@@ -17,14 +17,14 @@ type Props = {
   max?: number;
 };
 
-export default function RespostaFotosUploader({ fotos, onChange, max = 5 }: Props) {
+export default function RespostaFotosUploader({ fotos, onChange, max }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
-    const slotsLeft = max - fotos.length;
-    if (slotsLeft <= 0) {
+    const slotsLeft = typeof max === "number" ? max - fotos.length : files.length;
+    if (typeof max === "number" && slotsLeft <= 0) {
       toast.error(`Máximo de ${max} fotos por item`);
       return;
     }
@@ -78,7 +78,7 @@ export default function RespostaFotosUploader({ fotos, onChange, max = 5 }: Prop
             </button>
           </div>
         ))}
-        {fotos.length < max && (
+        {(typeof max !== "number" || fotos.length < max) && (
           <Button
             type="button"
             variant="outline"
@@ -88,7 +88,7 @@ export default function RespostaFotosUploader({ fotos, onChange, max = 5 }: Prop
             className="h-16 w-16 flex flex-col items-center justify-center gap-1 border-dashed text-slate-500 hover:text-teal-600 hover:border-teal-400"
           >
             {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-5 w-5" />}
-            <span className="text-[10px] leading-none">{fotos.length}/{max}</span>
+            <span className="text-[10px] leading-none">{typeof max === "number" ? `${fotos.length}/${max}` : fotos.length}</span>
           </Button>
         )}
       </div>
