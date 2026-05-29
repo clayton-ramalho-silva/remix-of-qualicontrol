@@ -60,8 +60,8 @@ import { trpc } from "@/lib/trpc";
 const AW_LOGO_WHITE = "https://d2xsxph8kpxj0f.cloudfront.net/310519663403343148/3awzRPTf7NtQjpo8LEDXgX/Logo athie l wohnrath_White_462306ea.png";
 const AW_LOGO_BLACK = "https://d2xsxph8kpxj0f.cloudfront.net/310519663403343148/3awzRPTf7NtQjpo8LEDXgX/Logo athie l wohnrath_Black_c476567f.png";
 
-type NavLeaf = { icon: typeof LayoutDashboard; label: string; path: string; badgeKey?: "planosPendentes" };
-type NavGroup = { group: true; icon: typeof LayoutDashboard; label: string; basePath: string; children: NavLeaf[] };
+type NavLeaf = { icon: typeof LayoutDashboard; label: string; path: string; badgeKey?: "planosPendentes"; adminOnly?: boolean };
+type NavGroup = { group: true; icon: typeof LayoutDashboard; label: string; basePath: string; children: NavLeaf[]; adminOnly?: boolean };
 type NavSeparator = { separator: true };
 type MenuItem = NavLeaf | NavGroup | NavSeparator;
 
@@ -100,6 +100,7 @@ const menuItems: MenuItem[] = [
   { icon: Building2, label: "Obras", path: "/obras" },
   { icon: Truck, label: "Fornecedores", path: "/fornecedores" },
   { icon: Users, label: "Usuários", path: "/usuarios" },
+  { icon: ShieldCheck, label: "Contas", path: "/contas", adminOnly: true },
   { icon: Settings, label: "Administração", path: "/administracao" },
   { icon: Network, label: "Sistema", path: "/sistema" },
 ];
@@ -148,7 +149,13 @@ function DashboardLayoutContent({
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const navLeaves: NavLeaf[] = menuItems.flatMap((item) => {
+  const isAdminUser = user?.role === "admin";
+  const visibleMenuItems = menuItems.filter((item) => {
+    if ('separator' in item) return true;
+    if ('adminOnly' in item && item.adminOnly && !isAdminUser) return false;
+    return true;
+  });
+  const navLeaves: NavLeaf[] = visibleMenuItems.flatMap((item) => {
     if ('separator' in item) return [];
     if ('group' in item) return item.children;
     return [item];
@@ -215,7 +222,7 @@ function DashboardLayoutContent({
 
           <SidebarContent className="gap-0">
             <SidebarMenu className="px-2 py-1">
-              {menuItems.map((item, idx) => {
+              {visibleMenuItems.map((item, idx) => {
                 if ('separator' in item) {
                   return (
                     <div key={`sep-${idx}`} className="my-2 mx-2 border-t border-sidebar-border/40" />
