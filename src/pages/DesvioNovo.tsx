@@ -90,9 +90,11 @@ export default function DesvioNovo() {
   const [grupoId, setGrupoId] = useState("");
   const [grupoSearch, setGrupoSearch] = useState("");
   const [disciplinaId, setDisciplinaId] = useState("");
+  const [disciplinaSearch, setDisciplinaSearch] = useState("");
   const [disciplinas, setDisciplinas] = useState<{ id: number; nome: string }[]>([]);
   const [loadingDisciplinas, setLoadingDisciplinas] = useState(false);
   const [fornecedorNome, setFornecedorNome] = useState("");
+  const [fornecedorSearch, setFornecedorSearch] = useState("");
   const [fornecedoresApi, setFornecedoresApi] = useState<{ id: number; nome: string }[]>([]);
   const [loadingFornecedores, setLoadingFornecedores] = useState(false);
   const [descricao, setDescricao] = useState("");
@@ -541,8 +543,21 @@ export default function DesvioNovo() {
                         }
                       />
                     </SelectTrigger>
-                    <SelectContent>
-                      {disciplinas.map(d => (
+                    <SelectContent className="max-h-[320px]">
+                      <div className="px-2 pb-2 sticky top-0 bg-popover z-10">
+                        <Input
+                          placeholder="Buscar disciplina..."
+                          value={disciplinaSearch}
+                          onChange={e => setDisciplinaSearch(e.target.value)}
+                          className="h-8 text-sm"
+                          onClick={e => e.stopPropagation()}
+                          onKeyDown={e => e.stopPropagation()}
+                        />
+                      </div>
+                      {disciplinas.filter(d => {
+                        if (!disciplinaSearch) return true;
+                        return d.nome.toLowerCase().includes(disciplinaSearch.toLowerCase());
+                      }).map(d => (
                         <SelectItem key={d.id} value={String(d.id)}>
                           {d.nome}
                         </SelectItem>
@@ -571,11 +586,24 @@ export default function DesvioNovo() {
                         }
                       />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-[320px]">
+                      <div className="px-2 pb-2 sticky top-0 bg-popover z-10">
+                        <Input
+                          placeholder="Buscar fornecedor..."
+                          value={fornecedorSearch}
+                          onChange={e => setFornecedorSearch(e.target.value)}
+                          className="h-8 text-sm"
+                          onClick={e => e.stopPropagation()}
+                          onKeyDown={e => e.stopPropagation()}
+                        />
+                      </div>
                       <SelectItem value="__none__">
                         <span className="text-muted-foreground">Nenhum</span>
                       </SelectItem>
-                      {fornecedoresApi.map(f => (
+                      {fornecedoresApi.filter(f => {
+                        if (!fornecedorSearch) return true;
+                        return f.nome.toLowerCase().includes(fornecedorSearch.toLowerCase());
+                      }).map(f => (
                         <SelectItem key={f.id} value={f.nome}>{f.nome}</SelectItem>
                       ))}
                     </SelectContent>
