@@ -90,9 +90,11 @@ export default function DesvioNovo() {
   const [grupoId, setGrupoId] = useState("");
   const [grupoSearch, setGrupoSearch] = useState("");
   const [disciplinaId, setDisciplinaId] = useState("");
+  const [disciplinaSearch, setDisciplinaSearch] = useState("");
   const [disciplinas, setDisciplinas] = useState<{ id: number; nome: string }[]>([]);
   const [loadingDisciplinas, setLoadingDisciplinas] = useState(false);
   const [fornecedorNome, setFornecedorNome] = useState("");
+  const [fornecedorSearch, setFornecedorSearch] = useState("");
   const [fornecedoresApi, setFornecedoresApi] = useState<{ id: number; nome: string }[]>([]);
   const [loadingFornecedores, setLoadingFornecedores] = useState(false);
   const [descricao, setDescricao] = useState("");
