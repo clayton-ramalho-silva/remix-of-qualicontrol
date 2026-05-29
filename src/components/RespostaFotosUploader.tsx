@@ -23,8 +23,8 @@ export default function RespostaFotosUploader({ fotos, onChange, max }: Props) {
 
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
-    const slotsLeft = max - fotos.length;
-    if (slotsLeft <= 0) {
+    const slotsLeft = typeof max === "number" ? max - fotos.length : files.length;
+    if (typeof max === "number" && slotsLeft <= 0) {
       toast.error(`Máximo de ${max} fotos por item`);
       return;
     }
