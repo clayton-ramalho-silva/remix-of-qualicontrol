@@ -17,7 +17,7 @@ type Props = {
   max?: number;
 };
 
-export default function RespostaFotosUploader({ fotos, onChange, max = 5 }: Props) {
+export default function RespostaFotosUploader({ fotos, onChange, max }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
