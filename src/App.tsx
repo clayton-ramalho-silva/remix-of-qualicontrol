@@ -39,6 +39,7 @@ import Aprovacoes from "./pages/Aprovacoes";
 import ChecklistList from "./pages/ChecklistList";
 import ChecklistEditor from "./pages/ChecklistEditor";
 import Sistema from "./pages/Sistema";
+import Contas from "./pages/Contas";
 
 function ProtectedShell() {
   const { user, loading } = useAuth();
@@ -112,6 +113,7 @@ function ProtectedShell() {
         <Route path="/plantas" component={Plantas} />
         <Route path="/plantas/:id" component={PlantaView} />
         <Route path="/usuarios" component={Usuarios} />
+        <Route path="/contas" component={Contas} />
         <Route path="/administracao" component={Administracao} />
         <Route path="/alocacao" component={Alocacao} />
         <Route path="/sistema" component={Sistema} />

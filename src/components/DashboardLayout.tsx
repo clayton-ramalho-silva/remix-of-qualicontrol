@@ -60,8 +60,8 @@ import { trpc } from "@/lib/trpc";
 const AW_LOGO_WHITE = "https://d2xsxph8kpxj0f.cloudfront.net/310519663403343148/3awzRPTf7NtQjpo8LEDXgX/Logo athie l wohnrath_White_462306ea.png";
 const AW_LOGO_BLACK = "https://d2xsxph8kpxj0f.cloudfront.net/310519663403343148/3awzRPTf7NtQjpo8LEDXgX/Logo athie l wohnrath_Black_c476567f.png";
 
-type NavLeaf = { icon: typeof LayoutDashboard; label: string; path: string; badgeKey?: "planosPendentes" };
-type NavGroup = { group: true; icon: typeof LayoutDashboard; label: string; basePath: string; children: NavLeaf[] };
+type NavLeaf = { icon: typeof LayoutDashboard; label: string; path: string; badgeKey?: "planosPendentes"; adminOnly?: boolean };
+type NavGroup = { group: true; icon: typeof LayoutDashboard; label: string; basePath: string; children: NavLeaf[]; adminOnly?: boolean };
 type NavSeparator = { separator: true };
 type MenuItem = NavLeaf | NavGroup | NavSeparator;
 
@@ -100,6 +100,7 @@ const menuItems: MenuItem[] = [
   { icon: Building2, label: "Obras", path: "/obras" },
   { icon: Truck, label: "Fornecedores", path: "/fornecedores" },
   { icon: Users, label: "Usuários", path: "/usuarios" },
+  { icon: ShieldCheck, label: "Contas", path: "/contas", adminOnly: true },
   { icon: Settings, label: "Administração", path: "/administracao" },
   { icon: Network, label: "Sistema", path: "/sistema" },
 ];
