@@ -11,7 +11,7 @@ const ICONS = {
 } as const;
 
 export default function VerticalSwitcher() {
-  const { vertical, setVertical } = useVertical();
+  const { vertical, setVertical, isAllowed } = useVertical();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
 
