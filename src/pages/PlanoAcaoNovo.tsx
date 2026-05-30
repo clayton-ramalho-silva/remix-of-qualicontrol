@@ -21,6 +21,8 @@ const VERTICAIS = ["vistoria", "qualidade", "qsms", "checklist"] as const;
 
 export default function PlanoAcaoNovo() {
   const [, navigate] = useLocation();
+  const { user } = useAuth();
+  const allowedVerticais = (user?.verticais && user.verticais.length ? user.verticais : ["qualidade", "checklist", "qsms", "vistoria"]) as string[];
   const utils = trpc.useUtils();
   const { data: desvios } = trpc.desvios.list.useQuery();
   const { data: obras } = trpc.obras.list.useQuery();
