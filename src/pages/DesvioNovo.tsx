@@ -386,10 +386,10 @@ export default function DesvioNovo() {
                 <Select value={vertical} onValueChange={v => setVertical(v as any)}>
                   <SelectTrigger><SelectValue placeholder="Selecione a vertical..." /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="qualidade">Qualidade</SelectItem>
-                    <SelectItem value="checklist">Checklist</SelectItem>
-                     <SelectItem value="qsms">QSMS</SelectItem>
-                    <SelectItem value="vistoria">Vistoria</SelectItem>
+                    <SelectItem value="qualidade" disabled={!allowedVerticais.includes("qualidade")}>Qualidade{!allowedVerticais.includes("qualidade") && " (sem permissão)"}</SelectItem>
+                    <SelectItem value="checklist" disabled={!allowedVerticais.includes("checklist")}>Checklist{!allowedVerticais.includes("checklist") && " (sem permissão)"}</SelectItem>
+                    <SelectItem value="qsms" disabled={!allowedVerticais.includes("qsms")}>QSMS{!allowedVerticais.includes("qsms") && " (sem permissão)"}</SelectItem>
+                    <SelectItem value="vistoria" disabled={!allowedVerticais.includes("vistoria")}>Vistoria{!allowedVerticais.includes("vistoria") && " (sem permissão)"}</SelectItem>
                   </SelectContent>
                 </Select>
               </Field>
