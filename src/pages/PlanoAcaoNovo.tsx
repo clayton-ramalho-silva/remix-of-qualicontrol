@@ -161,7 +161,7 @@ export default function PlanoAcaoNovo() {
                 <Select value={vertical} onValueChange={setVertical}>
                   <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
-                    {VERTICAIS.map(v => <SelectItem key={v} value={v}>{VERTICAL_LABELS[v]}</SelectItem>)}
+                    {VERTICAIS.map(v => <SelectItem key={v} value={v} disabled={!allowedVerticais.includes(v)}>{VERTICAL_LABELS[v]}{!allowedVerticais.includes(v) && " (sem permissão)"}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
