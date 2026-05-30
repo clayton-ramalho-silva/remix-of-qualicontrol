@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useRoute } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useDraftAutosave, loadDraft } from "@/hooks/useDraftAutosave";
 
 const CLASSIFICACOES = [
   { value: "incidente", label: "Incidente (quase acidente)" },
