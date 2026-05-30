@@ -99,8 +99,7 @@ const menuItems: MenuItem[] = [
   { icon: CalendarDays, label: "Alocação", path: "/alocacao" },
   { icon: Building2, label: "Obras", path: "/obras" },
   { icon: Truck, label: "Fornecedores", path: "/fornecedores" },
-  { icon: Users, label: "Usuários", path: "/usuarios" },
-  { icon: ShieldCheck, label: "Contas", path: "/contas", adminOnly: true },
+  { icon: Users, label: "Usuários", path: "/contas", adminOnly: true },
   { icon: Settings, label: "Administração", path: "/administracao" },
   { icon: Network, label: "Sistema", path: "/sistema" },
 ];
