@@ -99,6 +99,9 @@ Deno.serve(async (req) => {
           telefone: m?.telefone ?? null,
           cargo: m?.cargo ?? null,
           obra_ids: Array.isArray(m?.obra_ids) ? m.obra_ids : [],
+          verticais: Array.isArray(m?.verticais)
+            ? (m.verticais as any[]).filter((x: any) => VALID_VERTICAIS.includes(x))
+            : VALID_VERTICAIS.slice(),
           ativo: m?.ativo ?? 1,
         };
       });
