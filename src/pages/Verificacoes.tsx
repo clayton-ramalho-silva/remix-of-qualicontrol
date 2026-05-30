@@ -92,17 +92,23 @@ export default function Verificacoes({
       {/* Lista de Verificações */}
       {isLoading ? (
         <div className="text-center py-12 text-slate-500">Carregando verificações...</div>
-      ) : !verificacoes?.length ? (
+      ) : !visiveis.length ? (
         <Card>
           <CardContent className="py-12 text-center">
             <ClipboardList className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-slate-600">Nenhuma verificação encontrada</h3>
-             <p className="text-slate-400 mt-1">Clique em "Nova Vistoria" para iniciar o primeiro checklist</p>
+            <h3 className="text-lg font-medium text-slate-600">
+              {verificacoes?.length ? "Nenhuma verificação finalizada" : "Nenhuma verificação encontrada"}
+            </h3>
+            <p className="text-slate-400 mt-1">
+              {verificacoes?.length
+                ? 'Clique em "Mostrar rascunhos" para ver as parciais.'
+                : 'Clique em "Nova Verificação" para iniciar o primeiro checklist'}
+            </p>
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4">
-          {verificacoes.map(v => (
+          {visiveis.map((v: any) => (
             <Card key={v.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`${rotaBase}/${v.id}`)}>
               <CardContent className="p-4 sm:p-6 overflow-hidden">
                 <div className="flex items-center justify-between gap-3 min-w-0">
@@ -113,6 +119,9 @@ export default function Verificacoes({
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap min-w-0">
                         <h3 className="font-semibold text-slate-900 truncate max-w-full">{getObraNome(v.obraId)}</h3>
+                        {v.status === "rascunho" && (
+                          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Rascunho</Badge>
+                        )}
                         <Badge className={statusColors[v.statusGeral || ""] || "bg-slate-100 text-slate-600"}>
                           {statusIcon(v.statusGeral)} {v.statusGeral || "—"}
                         </Badge>
