@@ -15,9 +15,10 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Building2, Loader2, Mail, Phone, Plus, Search, Shield, Trash2, UserCog, Users,
-  UserCheck, Briefcase, Layers,
+  UserCheck, Briefcase, Layers, HelpCircle,
 } from "lucide-react";
 
 type AppRole = "admin" | "user" | "aprovador_gerenciadora" | "aprovador_arquitetura";
