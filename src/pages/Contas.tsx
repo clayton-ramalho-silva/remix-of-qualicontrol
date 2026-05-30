@@ -59,6 +59,7 @@ type Account = {
   telefone: string | null;
   cargo: CargoValue | null;
   obra_ids: number[];
+  verticais: VerticalKey[];
   ativo: number;
 };
 
