@@ -58,15 +58,19 @@ export default function VerticalSwitcher() {
       <div className="grid grid-cols-2 gap-1">
         {options.map(({ id, label, Icon }) => {
           const active = vertical === id;
+          const disabled = id !== "all" && !isAllowed(id);
           return (
             <button
               key={id}
-              onClick={() => setVertical(id)}
+              onClick={() => !disabled && setVertical(id)}
+              disabled={disabled}
+              title={disabled ? `${label} (sem permissão)` : label}
               className={cn(
                 "flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium transition-colors",
                 active
                   ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                disabled && "opacity-40 cursor-not-allowed hover:bg-transparent hover:text-sidebar-foreground/70"
               )}
             >
               <Icon className="h-3.5 w-3.5 shrink-0" />
