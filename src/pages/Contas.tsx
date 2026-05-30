@@ -272,6 +272,26 @@ export default function Contas() {
       </div>
 
       <div>
+        <Label>Verticais permitidas *</Label>
+        <p className="text-xs text-muted-foreground mb-2">O usuário só poderá selecionar/acessar as verticais marcadas. Admins têm acesso a todas automaticamente.</p>
+        <div className="grid grid-cols-2 gap-2 rounded-md border border-border p-3">
+          {VERTICAIS_OPTIONS.map((v) => (
+            <label key={v.value} className="flex items-center gap-2 cursor-pointer">
+              <Checkbox
+                checked={fVerticais.has(v.value)}
+                onCheckedChange={() => setFVerticais((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(v.value)) next.delete(v.value); else next.add(v.value);
+                  return next;
+                })}
+              />
+              <span className="text-sm">{v.label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div>
         <Label>Permissões especiais</Label>
         <div className="space-y-2 mt-2 rounded-md border border-border p-3">
           {ROLE_OPTIONS.map((r) => (
