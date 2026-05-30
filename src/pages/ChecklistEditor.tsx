@@ -141,6 +141,7 @@ export default function ChecklistEditor() {
         setGo((ent as any).go || "");
         setCondicao((ent as any).condicao);
         setTotalItens(String((ent as any).total_itens || ""));
+        serverLoadedAtRef.current = new Date((ent as any).updated_at || (ent as any).created_at || (ent as any).data_vistoria || 0).getTime();
       }
       const { data: its } = await supabase
         .from("checklist_entrega_itens").select("*").eq("entrega_id", id).order("ordem");
@@ -169,9 +170,64 @@ export default function ChecklistEditor() {
         ordem: i.ordem,
         fotos: fotosByItem[i.id] || [],
       })));
+
+      // Restaura rascunho local mais recente que o servidor
+      if (!restoredRef.current) {
+        const d: any = loadDraft(`draft:checklist-edit:${id}`);
+        if (d && (d.__savedAt ?? 0) > serverLoadedAtRef.current) {
+          if (d.obraId !== undefined) setObraId(d.obraId);
+          if (d.dataVistoria) setDataVistoria(d.dataVistoria);
+          if (d.metragem !== undefined) setMetragem(d.metragem);
+          if (d.gc !== undefined) setGc(d.gc);
+          if (d.go !== undefined) setGo(d.go);
+          if (d.condicao) setCondicao(d.condicao);
+          if (d.totalItens !== undefined) setTotalItens(d.totalItens);
+          if (Array.isArray(d.items)) setItems(d.items);
+          setTimeout(() => toast.success("Rascunho recuperado", { description: "Continuamos de onde você parou." }), 100);
+        }
+        restoredRef.current = true;
+      }
       setLoading(false);
     })();
   }, [isEdit, id]);
+
+  // Restauração de rascunho em modo NOVO (procura o mais recente sem obra/data específica)
+  useEffect(() => {
+    if (isEdit) return;
+    if (restoredRef.current) return;
+    const candidates: string[] = [];
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith("draft:checklist-novo:")) candidates.push(k);
+      }
+    } catch { /* ignore */ }
+    let best: any = null;
+    for (const k of candidates) {
+      const d: any = loadDraft(k);
+      if (d && (!best || (d.__savedAt ?? 0) > (best.__savedAt ?? 0))) best = d;
+    }
+    if (best) {
+      if (best.obraId !== undefined) setObraId(best.obraId);
+      if (best.dataVistoria) setDataVistoria(best.dataVistoria);
+      if (best.metragem !== undefined) setMetragem(best.metragem);
+      if (best.gc !== undefined) setGc(best.gc);
+      if (best.go !== undefined) setGo(best.go);
+      if (best.condicao) setCondicao(best.condicao);
+      if (best.totalItens !== undefined) setTotalItens(best.totalItens);
+      if (Array.isArray(best.items)) setItems(best.items);
+      setTimeout(() => toast.success("Rascunho recuperado", { description: "Continuamos de onde você parou." }), 100);
+    }
+    restoredRef.current = true;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto-save em localStorage
+  const { clearDraft: clearDraftFn, markClean } = useDraftAutosave({
+    key: draftKey,
+    data: { obraId, dataVistoria, metragem, gc, go, condicao, totalItens, items },
+    enabled: !loading,
+  });
 
   // Print on load
   useEffect(() => {
