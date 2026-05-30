@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useDraftAutosave, loadDraft } from "@/hooks/useDraftAutosave";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { supabase } from "@/integrations/supabase/client";
