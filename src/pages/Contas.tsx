@@ -15,9 +15,10 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Building2, Loader2, Mail, Phone, Plus, Search, Shield, Trash2, UserCog, Users,
-  UserCheck, Briefcase, Layers,
+  UserCheck, Briefcase, Layers, HelpCircle,
 } from "lucide-react";
 
 type AppRole = "admin" | "user" | "aprovador_gerenciadora" | "aprovador_arquitetura";
@@ -322,11 +323,22 @@ export default function Contas() {
           <Input id="acc-email" type="email" value={fEmail} onChange={(e) => setFEmail(e.target.value)} placeholder="email@empresa.com" />
         </div>
         <div>
-          <Label htmlFor="acc-pw">{editing ? "Nova senha (opcional — deixe em branco para não alterar)" : "Senha *"}</Label>
+          <div className="flex items-center gap-1.5">
+            <Label htmlFor="acc-pw">{editing ? "Nova senha (opcional)" : "Senha *"}</Label>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button type="button" className="text-muted-foreground hover:text-foreground" aria-label="Regras da senha">
+                  <HelpCircle className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs text-xs">
+                {editing
+                  ? "Deixe em branco para manter a senha atual. Se preencher: mínimo 8 caracteres, combinando letras maiúsculas, minúsculas, números e símbolos. Senhas comuns (ex.: 123456) serão rejeitadas por segurança."
+                  : "Mínimo 8 caracteres. Combine letras maiúsculas, minúsculas, números e símbolos. Senhas comuns (ex.: 123456, senha123) serão rejeitadas por segurança."}
+              </TooltipContent>
+            </Tooltip>
+          </div>
           <Input id="acc-pw" type="text" value={fPassword} onChange={(e) => setFPassword(e.target.value)} placeholder="Ex.: Obra#2026!" autoComplete="new-password" />
-          <p className="text-xs text-muted-foreground mt-1">
-            Mínimo 8 caracteres. Combine letras maiúsculas, minúsculas, números e símbolos. Senhas comuns (ex.: 123456, senha123) serão rejeitadas por segurança.
-          </p>
         </div>
       </div>
 
