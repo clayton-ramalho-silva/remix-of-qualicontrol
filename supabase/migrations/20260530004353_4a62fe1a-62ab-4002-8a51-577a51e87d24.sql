@@ -1,0 +1,1 @@
+ALTER TABLE public.membros_equipe ADD COLUMN IF NOT EXISTS verticais jsonb NOT NULL DEFAULT '["qualidade","checklist","qsms","vistoria"]'::jsonb;

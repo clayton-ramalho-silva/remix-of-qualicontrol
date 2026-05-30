@@ -849,6 +849,7 @@ export type Database = {
           telefone: string | null
           updated_at: string
           user_id: string | null
+          verticais: Json
         }
         Insert: {
           ativo?: number
@@ -861,6 +862,7 @@ export type Database = {
           telefone?: string | null
           updated_at?: string
           user_id?: string | null
+          verticais?: Json
         }
         Update: {
           ativo?: number
@@ -873,6 +875,7 @@ export type Database = {
           telefone?: string | null
           updated_at?: string
           user_id?: string | null
+          verticais?: Json
         }
         Relationships: []
       }
