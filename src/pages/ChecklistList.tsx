@@ -35,6 +35,7 @@ export default function ChecklistList() {
   const [loading, setLoading] = useState(true);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [mostrarRascunhos, setMostrarRascunhos] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -52,6 +53,9 @@ export default function ChecklistList() {
   }
 
   useEffect(() => { load(); }, []);
+
+  const rascunhoCount = rows.filter((r) => r.status === "rascunho").length;
+  const visibleRows = mostrarRascunhos ? rows : rows.filter((r) => r.status !== "rascunho");
 
   async function handleDelete() {
     if (confirmDeleteId === null) return;
