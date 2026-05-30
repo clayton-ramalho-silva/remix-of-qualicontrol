@@ -278,7 +278,7 @@ export default function Contas() {
     if (!result) return;
     const { data, error } = result;
     if (error || (data as any)?.error) {
-      toast.error((error?.message || (data as any)?.error) ?? "Erro");
+      toast.error(humanizeError(((data as any)?.error) || error?.message || "Erro ao configurar admins"));
       return;
     }
     toast.success("Admins iniciais configurados");
