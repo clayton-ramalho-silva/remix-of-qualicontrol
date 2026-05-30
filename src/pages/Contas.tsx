@@ -232,49 +232,29 @@ export default function Contas() {
           <Input id="acc-email" type="email" value={fEmail} onChange={(e) => setFEmail(e.target.value)} placeholder="email@empresa.com" />
         </div>
         <div>
+          <Label htmlFor="acc-pw">{editing ? "Nova senha (deixe vazio para manter)" : "Senha *"}</Label>
+          <Input id="acc-pw" type="text" value={fPassword} onChange={(e) => setFPassword(e.target.value)} placeholder="Mín. 6 caracteres" autoComplete="new-password" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label>Cargo *</Label>
+          <Select value={fCargo} onValueChange={(v) => setFCargo(v as CargoValue)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {CARGOS.map((c) => (
+                <SelectItem key={c.value} value={c.value}>
+                  <span className="flex items-center gap-2"><c.icon className="h-4 w-4" />{c.label}</span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
           <Label htmlFor="acc-tel">Telefone</Label>
           <Input id="acc-tel" value={fTelefone} onChange={(e) => setFTelefone(e.target.value)} placeholder="(11) 99999-0000" />
         </div>
-      </div>
-
-      <div>
-        <Label>Cargo *</Label>
-        <Select value={fCargo} onValueChange={(v) => setFCargo(v as CargoValue)}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {CARGOS.map((c) => (
-              <SelectItem key={c.value} value={c.value}>
-                <span className="flex items-center gap-2"><c.icon className="h-4 w-4" />{c.label}</span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div>
-        <Label>Obras vinculadas</Label>
-        <div className="flex flex-wrap gap-2 max-h-[200px] overflow-y-auto rounded-md border border-border p-2 mt-1">
-          {obras.map((o) => (
-            <button
-              key={o.id}
-              type="button"
-              onClick={() => toggleObra(o.id)}
-              className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                fObras.includes(o.id)
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
-              }`}
-            >
-              <Building2 className="h-3 w-3 inline mr-1" />{o.nome}
-            </button>
-          ))}
-          {obras.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma obra cadastrada</p>}
-        </div>
-      </div>
-
-      <div>
-        <Label htmlFor="acc-pw">{editing ? "Nova palavra-passe (deixe vazio para manter)" : "Palavra-passe *"}</Label>
-        <Input id="acc-pw" type="text" value={fPassword} onChange={(e) => setFPassword(e.target.value)} placeholder="Mín. 6 caracteres" autoComplete="new-password" />
       </div>
 
       <div>
