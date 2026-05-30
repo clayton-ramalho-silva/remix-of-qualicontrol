@@ -171,7 +171,7 @@ export default function Contas() {
     if (!result) return;
     const { data, error } = result;
     if (error || (data as any)?.error) {
-      toast.error((error?.message || (data as any)?.error) ?? "Erro ao carregar contas");
+      toast.error(humanizeError(((data as any)?.error) || error?.message || "Erro ao carregar contas"));
       return;
     }
     setAccounts((data as any).accounts ?? []);
