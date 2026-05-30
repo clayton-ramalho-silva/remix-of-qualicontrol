@@ -78,8 +78,16 @@ export default function ChecklistEditor() {
 
   const [pickerForItem, setPickerForItem] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
   const [loading, setLoading] = useState(isEdit);
   const printRef = useRef<HTMLDivElement>(null);
+  const restoredRef = useRef(false);
+  const serverLoadedAtRef = useRef(0);
+
+  // Chave do rascunho local: edit usa id; novo usa obra+data como discriminador
+  const draftKey = isEdit
+    ? `draft:checklist-edit:${id}`
+    : `draft:checklist-novo:${obraId || "sem-obra"}:${dataVistoria}`;
 
   // Total de itens = total de desvios da obra selecionada
   useEffect(() => {
