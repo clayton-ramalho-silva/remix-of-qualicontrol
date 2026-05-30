@@ -129,6 +129,7 @@ export default function Contas() {
     setFObras(acc.obra_ids ?? []);
     setFPassword("");
     setFRoles(new Set(acc.roles));
+    setFVerticais(new Set(acc.verticais?.length ? acc.verticais : ["qualidade", "checklist", "qsms", "vistoria"]));
     setDialogOpen(true);
   }
 
