@@ -375,7 +375,15 @@ export default function ChecklistEditor() {
               <Printer className="h-4 w-4 mr-1" /> Imprimir
             </Button>
           )}
-          <Button onClick={handleSave} disabled={saving}>
+          <Button
+            variant="outline"
+            onClick={() => handleSave({ status: "rascunho" })}
+            disabled={saving || savingDraft}
+            title="Salva no servidor como rascunho — não aparece na lista principal"
+          >
+            <FileEdit className="h-4 w-4 mr-1" /> {savingDraft ? "Salvando..." : "Salvar parcial"}
+          </Button>
+          <Button onClick={() => handleSave({ status: "finalizado" })} disabled={saving || savingDraft}>
             <Save className="h-4 w-4 mr-1" /> {saving ? "Salvando..." : "Salvar"}
           </Button>
         </div>
