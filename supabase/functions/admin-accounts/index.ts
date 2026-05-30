@@ -233,6 +233,7 @@ Deno.serve(async (req) => {
       if (telefone !== undefined) membroPatch.telefone = telefone;
       if (cargo !== undefined) membroPatch.cargo = cargo;
       if (obraIds !== undefined) membroPatch.obra_ids = obraIds;
+      if (verticais !== undefined) membroPatch.verticais = verticais;
 
       if (existingMembro?.id) {
         if (Object.keys(membroPatch).length > 0) {
@@ -247,6 +248,7 @@ Deno.serve(async (req) => {
           telefone: telefone ?? null,
           cargo: cargo ?? "tecnico",
           obra_ids: obraIds ?? [],
+          verticais: verticais ?? VALID_VERTICAIS.slice(),
           ativo: 1,
         });
       }
