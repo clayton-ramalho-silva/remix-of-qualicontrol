@@ -139,6 +139,7 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
           fotos: r.fotos || [],
         })),
       });
+      clearDraftFn(); markClean();
       toast.success(`Verificação atualizada! Score: ${result.scores.scoreGeral}% — ${result.scores.statusGeral}`);
       navigate(`${rotaBase}/${id}`);
     } catch (e: any) {
