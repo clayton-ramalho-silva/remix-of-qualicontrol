@@ -219,11 +219,12 @@ export default function Contas() {
   }
 
   async function submit() {
-    if (!fName.trim()) { toast.error("Nome obrigatório"); return; }
-    if (!fEmail.trim()) { toast.error("Email obrigatório"); return; }
-    if (!editing && !fPassword.trim()) { toast.error("Senha obrigatória para novo usuário"); return; }
-    if (fPassword && fPassword.length < 6) { toast.error("Senha mínima 6 caracteres"); return; }
-    if (fVerticais.size === 0 && !fRoles.has("admin")) { toast.error("Selecione pelo menos uma vertical"); return; }
+    if (!fName.trim()) { toast.error("Informe o nome do usuário."); return; }
+    if (!fEmail.trim()) { toast.error("Informe o e-mail do usuário."); return; }
+    if (!editing && !fPassword.trim()) { toast.error("Defina uma senha inicial para o novo usuário."); return; }
+    if (fPassword && fPassword.length < 8) { toast.error("A senha precisa ter pelo menos 8 caracteres. Combine letras, números e símbolos para ficar mais segura."); return; }
+    if (fPassword && /^[0-9]+$/.test(fPassword)) { toast.error("Evite senhas só com números — elas são facilmente descobertas. Misture letras maiúsculas, minúsculas e símbolos."); return; }
+    if (fVerticais.size === 0 && !fRoles.has("admin")) { toast.error("Selecione pelo menos uma vertical para esse usuário."); return; }
 
     setSubmitting(true);
     const payload: any = {
