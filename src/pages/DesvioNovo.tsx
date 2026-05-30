@@ -22,6 +22,7 @@ import { PhotoPickerButton } from "@/components/PhotoPickerButton";
 import PhotoAnnotator from "@/components/PhotoAnnotator";
 import { supabase } from "@/integrations/supabase/client";
 import { compressImage } from "@/lib/image-compress";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 type Foto = {
   file: File;
