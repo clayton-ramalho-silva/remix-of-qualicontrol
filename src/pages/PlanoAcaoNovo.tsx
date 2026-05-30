@@ -42,7 +42,7 @@ export default function PlanoAcaoNovo() {
   const [picker, setPicker] = useState(false);
   // Preventivo
   const [obraId, setObraId] = useState<string>("");
-  const [vertical, setVertical] = useState<string>("");
+  const [vertical, setVertical] = useState<string>(allowedVerticais.length === 1 ? allowedVerticais[0] : "");
   const [categoriaId, setCategoriaId] = useState<string>("");
 
   const create = trpc.planos.create.useMutation();
