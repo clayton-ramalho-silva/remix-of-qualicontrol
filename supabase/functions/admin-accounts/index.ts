@@ -162,6 +162,7 @@ Deno.serve(async (req) => {
             telefone,
             cargo,
             obra_ids: obraIds,
+            verticais,
             ativo: 1,
           })
           .eq("id", existingMembro.id);
@@ -173,6 +174,7 @@ Deno.serve(async (req) => {
           telefone,
           cargo,
           obra_ids: obraIds,
+          verticais,
           ativo: 1,
         });
       }
