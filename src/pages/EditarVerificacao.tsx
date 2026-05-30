@@ -37,9 +37,12 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
   const [submitting, setSubmitting] = useState(false);
 
   const exigeFoto = (verificacao as any)?.categoria === "vistoria";
+  const draftKey = `draft:verificacao-edit:${id}`;
+  const restoredRef = useRef(false);
 
   useEffect(() => {
     if (!verificacao) return;
+    // 1) carrega defaults do servidor
     setDataVistoria(new Date(verificacao.dataVistoria).toISOString().split("T")[0]);
     setNucleo(verificacao.nucleo || "");
     setDiretoria(verificacao.diretoria || "");
@@ -54,7 +57,28 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
       };
     });
     setRespostas(map);
-  }, [verificacao]);
+
+    // 2) se houver rascunho local mais recente, sobrescreve
+    if (!restoredRef.current) {
+      const d: any = loadDraft(draftKey);
+      const serverTime = new Date((verificacao as any).updatedAt || verificacao.dataVistoria).getTime();
+      if (d && (d.__savedAt ?? 0) > serverTime) {
+        if (d.dataVistoria) setDataVistoria(d.dataVistoria);
+        if (d.nucleo !== undefined) setNucleo(d.nucleo);
+        if (d.diretoria !== undefined) setDiretoria(d.diretoria);
+        if (d.observacoes !== undefined) setObservacoes(d.observacoes);
+        if (d.respostas) setRespostas(d.respostas);
+        setTimeout(() => toast.success("Rascunho recuperado", { description: "Continuamos de onde você parou." }), 100);
+      }
+      restoredRef.current = true;
+    }
+  }, [verificacao, draftKey]);
+
+  const { clearDraft: clearDraftFn, markClean } = useDraftAutosave({
+    key: verificacao ? draftKey : null,
+    data: { dataVistoria, nucleo, diretoria, observacoes, respostas },
+    enabled: !!verificacao,
+  });
 
   const setResposta = (itemId: number, resposta: Resposta) => {
     setRespostas(prev => ({
