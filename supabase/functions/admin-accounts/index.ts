@@ -290,11 +290,14 @@ Deno.serve(async (req) => {
         let uid: string;
         if (existing) {
           uid = existing.id;
-          const { error: upErr } = await admin.auth.admin.updateUserById(uid, {
-            password: BOOTSTRAP_PASSWORD,
-            email_confirm: true,
-          });
-          if (upErr) { results.push({ email: a.email, ok: false, error: upErr.message }); continue; }
+          // Skip password reset for the caller to avoid invalidating their session
+          if (uid !== callerId) {
+            const { error: upErr } = await admin.auth.admin.updateUserById(uid, {
+              password: BOOTSTRAP_PASSWORD,
+              email_confirm: true,
+            });
+            if (upErr) { results.push({ email: a.email, ok: false, error: upErr.message }); continue; }
+          }
         } else {
           const { data: created, error: createErr } = await admin.auth.admin.createUser({
             email: a.email,
