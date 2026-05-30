@@ -94,7 +94,7 @@ export default function Contas() {
   const invokeAdminAccounts = useCallback(async (body: Record<string, unknown>) => {
     const { data: userData, error: userError } = await supabase.auth.getUser();
     if (userError || !userData.user) {
-      toast.error("Sessão expirada. Entre novamente.");
+      toast.error("Sua sessão expirou. Faça login novamente para continuar.");
       await supabase.auth.signOut();
       window.location.href = "/auth";
       return null;
@@ -103,17 +103,66 @@ export default function Contas() {
     const { data: sessionData } = await supabase.auth.getSession();
     const accessToken = sessionData.session?.access_token;
     if (!accessToken) {
-      toast.error("Sessão expirada. Entre novamente.");
+      toast.error("Sua sessão expirou. Faça login novamente para continuar.");
       await supabase.auth.signOut();
       window.location.href = "/auth";
       return null;
     }
 
-    return supabase.functions.invoke("admin-accounts", {
+    const result = await supabase.functions.invoke("admin-accounts", {
       body,
       headers: { Authorization: `Bearer ${accessToken}` },
     });
+
+    // Quando o status não é 2xx, supabase-js coloca a Response em error.context.
+    // Extraímos o JSON para recuperar a mensagem original do backend.
+    if (result.error && (result.error as any).context instanceof Response) {
+      try {
+        const ctx = (result.error as any).context as Response;
+        const parsed = await ctx.clone().json();
+        if (parsed && typeof parsed === "object") {
+          (result as any).data = parsed;
+        }
+      } catch { /* parse falhou — segue com mensagem genérica */ }
+    }
+    return result;
   }, []);
+
+  function humanizeError(raw: unknown): string {
+    const original = typeof raw === "string" ? raw : ((raw as any)?.message ?? "");
+    const msg = String(original).toLowerCase();
+    if (!msg) return "Algo deu errado. Tente novamente em instantes.";
+
+    // Senhas
+    if (msg.includes("weak") || msg.includes("pwned") || msg.includes("known to be") || msg.includes("easy to guess"))
+      return "Essa senha é muito comum e já apareceu em vazamentos públicos. Escolha uma senha mais forte — use pelo menos 8 caracteres misturando letras maiúsculas, minúsculas, números e um símbolo (ex.: Obra#2026!).";
+    if (msg.includes("password should be at least") || msg.includes("password is too short") || (msg.includes("password") && msg.includes("short")))
+      return "A senha é muito curta. Use no mínimo 8 caracteres, combinando letras, números e símbolos.";
+    if (msg.includes("password"))
+      return "Não foi possível aceitar essa senha. Tente uma combinação mais forte, com letras, números e símbolos.";
+
+    // E-mail
+    if (msg.includes("already registered") || msg.includes("already exists") || msg.includes("duplicate") || msg.includes("user already"))
+      return "Já existe um usuário cadastrado com esse e-mail. Edite o usuário existente ou utilize outro e-mail.";
+    if (msg.includes("invalid") && msg.includes("email"))
+      return "O e-mail informado não é válido. Verifique se está escrito corretamente.";
+    if (msg.includes("email"))
+      return "Houve um problema com o e-mail informado. Verifique e tente novamente.";
+
+    // Autorização / sessão
+    if (msg.includes("unauthorized") || msg.includes("jwt") || msg.includes("session"))
+      return "Sua sessão expirou. Faça login novamente para continuar.";
+    if (msg.includes("forbidden") || msg.includes("admin only"))
+      return "Você não tem permissão para esta ação. Apenas administradores podem gerenciar usuários.";
+
+    // Rede
+    if (msg.includes("failed to fetch") || msg.includes("network"))
+      return "Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.";
+    if (msg.includes("rate") && msg.includes("limit"))
+      return "Muitas tentativas em pouco tempo. Aguarde alguns segundos e tente novamente.";
+
+    return `Não foi possível concluir a operação: ${original}.`;
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
