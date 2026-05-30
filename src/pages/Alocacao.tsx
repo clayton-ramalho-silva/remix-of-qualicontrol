@@ -277,12 +277,15 @@ export default function Alocacao() {
         {verticais.map(v => {
           const Icon = v.icon;
           const active = vertical === v.key;
+          const disabled = !allowedVerticais.includes(v.key);
           return (
             <button
               key={v.key}
               type="button"
-              onClick={() => { setVertical(v.key); setFilterObra("all"); }}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
+              disabled={disabled}
+              title={disabled ? `${v.label} (sem permissão)` : v.label}
+              onClick={() => { if (disabled) return; setVertical(v.key); setFilterObra("all"); }}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"} ${disabled ? "opacity-40 cursor-not-allowed hover:bg-transparent" : ""}`}
             >
               <Icon className="h-4 w-4" />
               {v.label}
