@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useRoute } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useDraftAutosave, loadDraft } from "@/hooks/useDraftAutosave";
 
 const CLASSIFICACOES = [
   { value: "incidente", label: "Incidente (quase acidente)" },
@@ -64,6 +65,9 @@ export default function OcorrenciaEditar() {
   const [observacoes, setObservacoes] = useState("");
   const [salvando, setSalvando] = useState(false);
 
+  const draftKey = id ? `draft:ocorrencia-edit:${id}` : null;
+  const restoredRef = useRef(false);
+
   useEffect(() => {
     if (!ocorrencia) return;
     const o: any = ocorrencia;
@@ -94,7 +98,54 @@ export default function OcorrenciaEditar() {
     setCatEmitida(!!o.cat_emitida);
     setAwfor149Anexada(!!o.awfor149_anexada);
     setObservacoes(o.observacoes || "");
-  }, [ocorrencia]);
+
+    // Restaura rascunho local mais recente que o servidor
+    if (!restoredRef.current && draftKey) {
+      const d: any = loadDraft(draftKey);
+      const serverTime = new Date(o.updated_at || o.created_at || o.dataOcorrencia || 0).getTime();
+      if (d && (d.__savedAt ?? 0) > serverTime) {
+        if (d.obraId !== undefined) setObraId(d.obraId);
+        if (d.dataOcorrencia) setDataOcorrencia(d.dataOcorrencia);
+        if (d.hora !== undefined) setHora(d.hora);
+        if (d.local !== undefined) setLocal(d.local);
+        if (d.endereco !== undefined) setEndereco(d.endereco);
+        if (d.cidade !== undefined) setCidade(d.cidade);
+        if (d.uf !== undefined) setUf(d.uf);
+        if (d.empresaPrincipal !== undefined) setEmpresaPrincipal(d.empresaPrincipal);
+        if (d.cnpjPrincipal !== undefined) setCnpjPrincipal(d.cnpjPrincipal);
+        if (d.empresaSubcontratada !== undefined) setEmpresaSubcontratada(d.empresaSubcontratada);
+        if (d.cnpjSubcontratada !== undefined) setCnpjSubcontratada(d.cnpjSubcontratada);
+        if (d.acidentadoNome !== undefined) setAcidentadoNome(d.acidentadoNome);
+        if (d.acidentadoFuncao !== undefined) setAcidentadoFuncao(d.acidentadoFuncao);
+        if (d.acidentadoIdade !== undefined) setAcidentadoIdade(d.acidentadoIdade);
+        if (d.classificacao !== undefined) setClassificacao(d.classificacao);
+        if (d.descricaoPreliminar !== undefined) setDescricaoPreliminar(d.descricaoPreliminar);
+        if (d.acaoImediata !== undefined) setAcaoImediata(d.acaoImediata);
+        if (d.responsavelPreenchimento !== undefined) setResponsavelPreenchimento(d.responsavelPreenchimento);
+        if (d.responsavelObra !== undefined) setResponsavelObra(d.responsavelObra);
+        if (d.catNumero !== undefined) setCatNumero(d.catNumero);
+        if (d.atestadoDias !== undefined) setAtestadoDias(d.atestadoDias);
+        if (typeof d.catEmitida === "boolean") setCatEmitida(d.catEmitida);
+        if (typeof d.awfor149Anexada === "boolean") setAwfor149Anexada(d.awfor149Anexada);
+        if (d.observacoes !== undefined) setObservacoes(d.observacoes);
+        setTimeout(() => toast.success("Rascunho recuperado", { description: "Continuamos de onde você parou." }), 100);
+      }
+      restoredRef.current = true;
+    }
+  }, [ocorrencia, draftKey]);
+
+  const { clearDraft: clearDraftFn, markClean } = useDraftAutosave({
+    key: ocorrencia ? draftKey : null,
+    data: {
+      obraId, dataOcorrencia, hora, local, endereco, cidade, uf,
+      empresaPrincipal, cnpjPrincipal, empresaSubcontratada, cnpjSubcontratada,
+      acidentadoNome, acidentadoFuncao, acidentadoIdade,
+      classificacao, descricaoPreliminar, acaoImediata,
+      responsavelPreenchimento, responsavelObra,
+      catNumero, atestadoDias, catEmitida, awfor149Anexada, observacoes,
+    },
+    enabled: !!ocorrencia,
+  });
 
   async function salvar() {
     const parsed = schema.safeParse({
@@ -132,6 +183,7 @@ export default function OcorrenciaEditar() {
       } as any);
       await utils.ocorrencias.getById.invalidate({ id });
       await utils.ocorrencias.list.invalidate();
+      clearDraftFn(); markClean();
       toast.success("Ocorrência atualizada");
       navigate(`/qsms/ocorrencias/${id}`);
     } catch (e: any) {

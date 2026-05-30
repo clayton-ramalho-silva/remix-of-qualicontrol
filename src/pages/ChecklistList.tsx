@@ -19,6 +19,7 @@ type Row = {
   go: string | null;
   condicao: "ruim" | "regular" | "otima";
   total_itens: number;
+  status: "rascunho" | "finalizado" | null;
   obra: { codigo: string; nome: string } | null;
 };
 
@@ -34,6 +35,7 @@ export default function ChecklistList() {
   const [loading, setLoading] = useState(true);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [mostrarRascunhos, setMostrarRascunhos] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -52,6 +54,9 @@ export default function ChecklistList() {
 
   useEffect(() => { load(); }, []);
 
+  const rascunhoCount = rows.filter((r) => r.status === "rascunho").length;
+  const visibleRows = mostrarRascunhos ? rows : rows.filter((r) => r.status !== "rascunho");
+
   async function handleDelete() {
     if (confirmDeleteId === null) return;
     setDeleting(true);
@@ -68,24 +73,37 @@ export default function ChecklistList() {
 
   return (
     <div className="space-y-4 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <ListChecks className="h-6 w-6 text-primary" /> Checklist de Vistoria de Entrega
           </h1>
           <p className="text-sm text-muted-foreground mt-1">Relatórios de entrega de obra por disciplina</p>
         </div>
-        <Button onClick={() => navigate("/checklists/novo")}>
-          <Plus className="h-4 w-4 mr-1" /> Novo Checklist
-        </Button>
+        <div className="flex items-center gap-2">
+          {rascunhoCount > 0 && (
+            <Button
+              variant={mostrarRascunhos ? "default" : "outline"}
+              size="sm"
+              onClick={() => setMostrarRascunhos((v) => !v)}
+            >
+              {mostrarRascunhos ? "Ocultar rascunhos" : `Mostrar rascunhos (${rascunhoCount})`}
+            </Button>
+          )}
+          <Button onClick={() => navigate("/checklists/novo")}>
+            <Plus className="h-4 w-4 mr-1" /> Novo Checklist
+          </Button>
+        </div>
       </div>
 
       <Card>
         <CardContent className="p-0">
           {loading ? (
             <div className="py-12 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" /></div>
-          ) : rows.length === 0 ? (
-            <p className="py-12 text-center text-sm text-muted-foreground">Nenhum checklist cadastrado.</p>
+          ) : visibleRows.length === 0 ? (
+            <p className="py-12 text-center text-sm text-muted-foreground">
+              {rows.length === 0 ? "Nenhum checklist cadastrado." : "Nenhum checklist finalizado. Clique em \"Mostrar rascunhos\" para ver os parciais."}
+            </p>
           ) : (
             <table className="w-full text-sm">
               <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
@@ -100,9 +118,16 @@ export default function ChecklistList() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r) => (
+                {visibleRows.map((r) => (
                   <tr key={r.id} className="border-t hover:bg-muted/20">
-                    <td className="p-3">{r.obra ? `${r.obra.codigo} — ${r.obra.nome}` : "-"}</td>
+                    <td className="p-3">
+                      <div className="flex items-center gap-2">
+                        <span>{r.obra ? `${r.obra.codigo} — ${r.obra.nome}` : "-"}</span>
+                        {r.status === "rascunho" && (
+                          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Rascunho</Badge>
+                        )}
+                      </div>
+                    </td>
                     <td className="p-3">{new Date(r.data_vistoria).toLocaleDateString("pt-BR")}</td>
                     <td className="p-3">{r.metragem_m2 ? `${r.metragem_m2} m²` : "-"}</td>
                     <td className="p-3 text-xs">
@@ -116,7 +141,9 @@ export default function ChecklistList() {
                     </td>
                     <td className="p-3">{r.total_itens}</td>
                     <td className="p-3 text-right space-x-1">
-                      <Button size="sm" variant="ghost" onClick={() => navigate(`/checklists/${r.id}`)}>
+                      <Button size="sm" variant="ghost" onClick={() => navigate(`/checklists/${r.id}`)}
+                        title={r.status === "rascunho" ? "Continuar preenchendo" : "Editar"}
+                      >
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button size="sm" variant="ghost" onClick={() => navigate(`/checklists/${r.id}?print=1`)}>

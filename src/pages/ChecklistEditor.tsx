@@ -11,9 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   ArrowLeft, Save, Plus, Trash2, ChevronDown, ChevronUp,
-  CheckCircle2, AlertTriangle, XCircle, ImagePlus, Printer, Loader2,
+  CheckCircle2, AlertTriangle, XCircle, ImagePlus, Printer, Loader2, FileEdit,
 } from "lucide-react";
 import FotosDesvioPicker, { type FotoEscolhida } from "@/components/checklist/FotosDesvioPicker";
+import { useDraftAutosave, loadDraft } from "@/hooks/useDraftAutosave";
 
 type Avaliacao = "ok" | "atencao" | "critico";
 type Condicao = "ruim" | "regular" | "otima";
@@ -77,8 +78,16 @@ export default function ChecklistEditor() {
 
   const [pickerForItem, setPickerForItem] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
   const [loading, setLoading] = useState(isEdit);
   const printRef = useRef<HTMLDivElement>(null);
+  const restoredRef = useRef(false);
+  const serverLoadedAtRef = useRef(0);
+
+  // Chave do rascunho local: edit usa id; novo usa obra+data como discriminador
+  const draftKey = isEdit
+    ? `draft:checklist-edit:${id}`
+    : `draft:checklist-novo:${obraId || "sem-obra"}:${dataVistoria}`;
 
   // Total de itens = total de desvios da obra selecionada
   useEffect(() => {
@@ -132,6 +141,7 @@ export default function ChecklistEditor() {
         setGo((ent as any).go || "");
         setCondicao((ent as any).condicao);
         setTotalItens(String((ent as any).total_itens || ""));
+        serverLoadedAtRef.current = new Date((ent as any).updated_at || (ent as any).created_at || (ent as any).data_vistoria || 0).getTime();
       }
       const { data: its } = await supabase
         .from("checklist_entrega_itens").select("*").eq("entrega_id", id).order("ordem");
@@ -160,9 +170,64 @@ export default function ChecklistEditor() {
         ordem: i.ordem,
         fotos: fotosByItem[i.id] || [],
       })));
+
+      // Restaura rascunho local mais recente que o servidor
+      if (!restoredRef.current) {
+        const d: any = loadDraft(`draft:checklist-edit:${id}`);
+        if (d && (d.__savedAt ?? 0) > serverLoadedAtRef.current) {
+          if (d.obraId !== undefined) setObraId(d.obraId);
+          if (d.dataVistoria) setDataVistoria(d.dataVistoria);
+          if (d.metragem !== undefined) setMetragem(d.metragem);
+          if (d.gc !== undefined) setGc(d.gc);
+          if (d.go !== undefined) setGo(d.go);
+          if (d.condicao) setCondicao(d.condicao);
+          if (d.totalItens !== undefined) setTotalItens(d.totalItens);
+          if (Array.isArray(d.items)) setItems(d.items);
+          setTimeout(() => toast.success("Rascunho recuperado", { description: "Continuamos de onde você parou." }), 100);
+        }
+        restoredRef.current = true;
+      }
       setLoading(false);
     })();
   }, [isEdit, id]);
+
+  // Restauração de rascunho em modo NOVO (procura o mais recente sem obra/data específica)
+  useEffect(() => {
+    if (isEdit) return;
+    if (restoredRef.current) return;
+    const candidates: string[] = [];
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith("draft:checklist-novo:")) candidates.push(k);
+      }
+    } catch { /* ignore */ }
+    let best: any = null;
+    for (const k of candidates) {
+      const d: any = loadDraft(k);
+      if (d && (!best || (d.__savedAt ?? 0) > (best.__savedAt ?? 0))) best = d;
+    }
+    if (best) {
+      if (best.obraId !== undefined) setObraId(best.obraId);
+      if (best.dataVistoria) setDataVistoria(best.dataVistoria);
+      if (best.metragem !== undefined) setMetragem(best.metragem);
+      if (best.gc !== undefined) setGc(best.gc);
+      if (best.go !== undefined) setGo(best.go);
+      if (best.condicao) setCondicao(best.condicao);
+      if (best.totalItens !== undefined) setTotalItens(best.totalItens);
+      if (Array.isArray(best.items)) setItems(best.items);
+      setTimeout(() => toast.success("Rascunho recuperado", { description: "Continuamos de onde você parou." }), 100);
+    }
+    restoredRef.current = true;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto-save em localStorage
+  const { clearDraft: clearDraftFn, markClean } = useDraftAutosave({
+    key: draftKey,
+    data: { obraId, dataVistoria, metragem, gc, go, condicao, totalItens, items },
+    enabled: !loading,
+  });
 
   // Print on load
   useEffect(() => {
@@ -200,9 +265,11 @@ export default function ChecklistEditor() {
     return equipesByForn[fornecedor_nome.toLowerCase()] || [];
   }
 
-  async function handleSave(): Promise<number | null> {
+  async function handleSave(opts?: { status?: "rascunho" | "finalizado" }): Promise<number | null> {
+    const status = opts?.status ?? "finalizado";
+    const isDraft = status === "rascunho";
     if (!obraId) { toast.error("Selecione uma obra"); return null; }
-    setSaving(true);
+    if (isDraft) setSavingDraft(true); else setSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const payload: any = {
@@ -212,6 +279,7 @@ export default function ChecklistEditor() {
         gc: gc || null, go: go || null,
         condicao,
         total_itens: totalItens ? Number(totalItens) : 0,
+        status,
       };
       let entregaId = id;
       if (isEdit && id) {
@@ -267,14 +335,21 @@ export default function ChecklistEditor() {
           );
         }
       }
-      toast.success("Checklist salvo!");
-      if (!isEdit && entregaId) navigate(`/checklists/${entregaId}`);
+      if (isDraft) {
+        toast.success("Rascunho salvo no servidor", { description: "Você pode continuar depois." });
+        // Acabou de criar via "Salvar parcial" → redireciona pro modo edit
+        if (!isEdit && entregaId) navigate(`/checklists/${entregaId}`);
+      } else {
+        clearDraftFn(); markClean();
+        toast.success("Checklist salvo!");
+        if (!isEdit && entregaId) navigate(`/checklists/${entregaId}`);
+      }
       return entregaId;
     } catch (e: any) {
       toast.error(e.message || "Erro ao salvar");
       return null;
     } finally {
-      setSaving(false);
+      if (isDraft) setSavingDraft(false); else setSaving(false);
     }
   }
 
@@ -300,7 +375,15 @@ export default function ChecklistEditor() {
               <Printer className="h-4 w-4 mr-1" /> Imprimir
             </Button>
           )}
-          <Button onClick={handleSave} disabled={saving}>
+          <Button
+            variant="outline"
+            onClick={() => handleSave({ status: "rascunho" })}
+            disabled={saving || savingDraft}
+            title="Salva no servidor como rascunho — não aparece na lista principal"
+          >
+            <FileEdit className="h-4 w-4 mr-1" /> {savingDraft ? "Salvando..." : "Salvar parcial"}
+          </Button>
+          <Button onClick={() => handleSave({ status: "finalizado" })} disabled={saving || savingDraft}>
             <Save className="h-4 w-4 mr-1" /> {saving ? "Salvando..." : "Salvar"}
           </Button>
         </div>
