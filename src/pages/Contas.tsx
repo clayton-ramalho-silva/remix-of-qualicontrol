@@ -322,8 +322,11 @@ export default function Contas() {
           <Input id="acc-email" type="email" value={fEmail} onChange={(e) => setFEmail(e.target.value)} placeholder="email@empresa.com" />
         </div>
         <div>
-          <Label htmlFor="acc-pw">{editing ? "Nova senha (deixe vazio para manter)" : "Senha *"}</Label>
-          <Input id="acc-pw" type="text" value={fPassword} onChange={(e) => setFPassword(e.target.value)} placeholder="Mín. 6 caracteres" autoComplete="new-password" />
+          <Label htmlFor="acc-pw">{editing ? "Nova senha (opcional — deixe em branco para não alterar)" : "Senha *"}</Label>
+          <Input id="acc-pw" type="text" value={fPassword} onChange={(e) => setFPassword(e.target.value)} placeholder="Ex.: Obra#2026!" autoComplete="new-password" />
+          <p className="text-xs text-muted-foreground mt-1">
+            Mínimo 8 caracteres. Combine letras maiúsculas, minúsculas, números e símbolos. Senhas comuns (ex.: 123456, senha123) serão rejeitadas por segurança.
+          </p>
         </div>
       </div>
 
