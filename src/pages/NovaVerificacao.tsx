@@ -231,6 +231,7 @@ export default function NovaVerificacao({
           fotos: r.fotos || [],
         })),
       });
+      clearDraftFn(); markClean();
       toast.success(`Verificação salva! Score geral: ${result.scores.scoreGeral}% — ${result.scores.statusGeral}`);
       navigate(`${rotaBase}/${result.id}`);
     } catch (e: any) {
