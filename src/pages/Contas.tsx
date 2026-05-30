@@ -150,6 +150,7 @@ export default function Contas() {
     if (!fEmail.trim()) { toast.error("Email obrigatório"); return; }
     if (!editing && !fPassword.trim()) { toast.error("Senha obrigatória para novo usuário"); return; }
     if (fPassword && fPassword.length < 6) { toast.error("Senha mínima 6 caracteres"); return; }
+    if (fVerticais.size === 0 && !fRoles.has("admin")) { toast.error("Selecione pelo menos uma vertical"); return; }
 
     setSubmitting(true);
     const payload: any = {
@@ -160,6 +161,7 @@ export default function Contas() {
       cargo: fCargo,
       obra_ids: fObras,
       roles: [...fRoles],
+      verticais: [...fVerticais],
     };
     if (editing) payload.id = editing.id;
     if (fPassword) payload.password = fPassword;
