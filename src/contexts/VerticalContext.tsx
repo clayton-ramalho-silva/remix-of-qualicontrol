@@ -80,11 +80,19 @@ type VerticalContextValue = {
   setVertical: (v: VerticalFilter) => void;
   config: VerticalConfig | null;
   isAll: boolean;
+  allowedVerticais: Vertical[];
+  isAllowed: (v: Vertical) => boolean;
 };
 
 const VerticalContext = createContext<VerticalContextValue | undefined>(undefined);
 
 export function VerticalProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  const allowedVerticais = useMemo<Vertical[]>(
+    () => (user?.verticais && user.verticais.length ? user.verticais : VERTICAL_LIST),
+    [user?.verticais]
+  );
+
   const [vertical, setVerticalState] = useState<VerticalFilter>(() => {
     const saved = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
     if (
@@ -99,17 +107,29 @@ export function VerticalProvider({ children }: { children: ReactNode }) {
     return "all";
   });
 
+  // If selected vertical is not allowed, fallback to first allowed (or "all" when many)
+  useEffect(() => {
+    if (vertical !== "all" && !allowedVerticais.includes(vertical)) {
+      setVerticalState(allowedVerticais[0] ?? "all");
+    }
+  }, [allowedVerticais, vertical]);
+
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, vertical);
   }, [vertical]);
 
-  const setVertical = (v: VerticalFilter) => setVerticalState(v);
+  const setVertical = (v: VerticalFilter) => {
+    if (v !== "all" && !allowedVerticais.includes(v)) return;
+    setVerticalState(v);
+  };
 
   const value: VerticalContextValue = {
     vertical,
     setVertical,
     config: vertical === "all" ? null : VERTICAL_CONFIG[vertical],
     isAll: vertical === "all",
+    allowedVerticais,
+    isAllowed: (v: Vertical) => allowedVerticais.includes(v),
   };
 
   return <VerticalContext.Provider value={value}>{children}</VerticalContext.Provider>;
