@@ -37,6 +37,14 @@ const CARGOS = [
   { value: "tecnico", label: "Técnico", icon: UserCheck, color: "bg-gray-100 text-gray-700" },
 ] as const;
 type CargoValue = typeof CARGOS[number]["value"];
+
+type VerticalKey = "qualidade" | "checklist" | "qsms" | "vistoria";
+const VERTICAIS_OPTIONS: { value: VerticalKey; label: string }[] = [
+  { value: "qualidade", label: "Qualidade" },
+  { value: "checklist", label: "Checklist" },
+  { value: "qsms", label: "QSMS" },
+  { value: "vistoria", label: "Vistoria" },
+];
 const getCargoInfo = (c: string) => CARGOS.find((x) => x.value === c) || { value: c, label: c, icon: Users, color: "bg-gray-100 text-gray-700" };
 
 type Account = {
