@@ -52,6 +52,8 @@ const HINTS = {
 export default function DesvioNovo() {
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
+  const { user } = useAuth();
+  const allowedVerticais = (user?.verticais && user.verticais.length ? user.verticais : ["qualidade", "checklist", "qsms", "vistoria"]) as Array<"qualidade" | "checklist" | "qsms" | "vistoria">;
   const { data: obrasAll } = trpc.obras.list.useQuery();
   // O filtro real por vertical é feito abaixo, depois que `vertical` for definido.
   const { data: fornecedoresDb } = trpc.fornecedores.list.useQuery();
@@ -64,7 +66,7 @@ export default function DesvioNovo() {
   const [contextCollapsed, setContextCollapsed] = useState(false);
   const [obraId, setObraId] = useState("");
   const [ambiente, setAmbiente] = useState("");
-  const [vertical, setVertical] = useState<"" | "qualidade" | "checklist" | "qsms" | "vistoria">("");
+  const [vertical, setVertical] = useState<"" | "qualidade" | "checklist" | "qsms" | "vistoria">(allowedVerticais.length === 1 ? allowedVerticais[0] : "");
   const coverColByVertical = {
     qualidade: "cobertura_qualidade",
     checklist: "cobertura_checklist",
