@@ -11,9 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   ArrowLeft, Save, Plus, Trash2, ChevronDown, ChevronUp,
-  CheckCircle2, AlertTriangle, XCircle, ImagePlus, Printer, Loader2,
+  CheckCircle2, AlertTriangle, XCircle, ImagePlus, Printer, Loader2, FileEdit,
 } from "lucide-react";
 import FotosDesvioPicker, { type FotoEscolhida } from "@/components/checklist/FotosDesvioPicker";
+import { useDraftAutosave, loadDraft } from "@/hooks/useDraftAutosave";
 
 type Avaliacao = "ok" | "atencao" | "critico";
 type Condicao = "ruim" | "regular" | "otima";
