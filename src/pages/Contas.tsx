@@ -89,6 +89,7 @@ export default function Contas() {
   const [fObras, setFObras] = useState<number[]>([]);
   const [fPassword, setFPassword] = useState("");
   const [fRoles, setFRoles] = useState<Set<AppRole>>(new Set());
+  const [fVerticais, setFVerticais] = useState<Set<VerticalKey>>(new Set(["qualidade", "checklist", "qsms", "vistoria"]));
 
   const load = useCallback(async () => {
     setLoading(true);
