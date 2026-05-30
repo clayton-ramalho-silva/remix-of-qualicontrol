@@ -91,18 +91,42 @@ export default function Contas() {
   const [fRoles, setFRoles] = useState<Set<AppRole>>(new Set());
   const [fVerticais, setFVerticais] = useState<Set<VerticalKey>>(new Set(["qualidade", "checklist", "qsms", "vistoria"]));
 
+  const invokeAdminAccounts = useCallback(async (body: Record<string, unknown>) => {
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError || !userData.user) {
+      toast.error("Sessão expirada. Entre novamente.");
+      await supabase.auth.signOut();
+      window.location.href = "/auth";
+      return null;
+    }
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData.session?.access_token;
+    if (!accessToken) {
+      toast.error("Sessão expirada. Entre novamente.");
+      await supabase.auth.signOut();
+      window.location.href = "/auth";
+      return null;
+    }
+
+    return supabase.functions.invoke("admin-accounts", {
+      body,
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+  }, []);
+
   const load = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase.functions.invoke("admin-accounts", {
-      body: { action: "list" },
-    });
+    const result = await invokeAdminAccounts({ action: "list" });
     setLoading(false);
+    if (!result) return;
+    const { data, error } = result;
     if (error || (data as any)?.error) {
       toast.error((error?.message || (data as any)?.error) ?? "Erro ao carregar contas");
       return;
     }
     setAccounts((data as any).accounts ?? []);
-  }, []);
+  }, [invokeAdminAccounts]);
 
   useEffect(() => {
     if (!authLoading && isAdmin) load();
@@ -166,8 +190,10 @@ export default function Contas() {
     if (editing) payload.id = editing.id;
     if (fPassword) payload.password = fPassword;
 
-    const { data, error } = await supabase.functions.invoke("admin-accounts", { body: payload });
+    const result = await invokeAdminAccounts(payload);
     setSubmitting(false);
+    if (!result) return;
+    const { data, error } = result;
     if (error || (data as any)?.error) {
       toast.error((error?.message || (data as any)?.error) ?? "Erro ao guardar");
       return;
@@ -182,10 +208,10 @@ export default function Contas() {
   async function confirmDelete() {
     if (!deleteTarget) return;
     setSubmitting(true);
-    const { data, error } = await supabase.functions.invoke("admin-accounts", {
-      body: { action: "delete", id: deleteTarget.id },
-    });
+    const result = await invokeAdminAccounts({ action: "delete", id: deleteTarget.id });
     setSubmitting(false);
+    if (!result) return;
+    const { data, error } = result;
     if (error || (data as any)?.error) {
       toast.error((error?.message || (data as any)?.error) ?? "Erro ao eliminar");
       return;
@@ -197,10 +223,10 @@ export default function Contas() {
 
   async function bootstrapAdmins() {
     setBootstrapping(true);
-    const { data, error } = await supabase.functions.invoke("admin-accounts", {
-      body: { action: "bootstrap_admins" },
-    });
+    const result = await invokeAdminAccounts({ action: "bootstrap_admins" });
     setBootstrapping(false);
+    if (!result) return;
+    const { data, error } = result;
     if (error || (data as any)?.error) {
       toast.error((error?.message || (data as any)?.error) ?? "Erro");
       return;
