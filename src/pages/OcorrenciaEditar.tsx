@@ -183,6 +183,7 @@ export default function OcorrenciaEditar() {
       } as any);
       await utils.ocorrencias.getById.invalidate({ id });
       await utils.ocorrencias.list.invalidate();
+      clearDraftFn(); markClean();
       toast.success("Ocorrência atualizada");
       navigate(`/qsms/ocorrencias/${id}`);
     } catch (e: any) {
