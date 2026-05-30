@@ -53,6 +53,65 @@ export default function OcorrenciaNova() {
   const [fotos, setFotos] = useState<Foto[]>([]);
   const [salvando, setSalvando] = useState(false);
 
+  // Auto-save de rascunho — fotos já uploaded (com fileKey/publicUrl) são preservadas
+  const draftKey = `draft:ocorrencia:${obraId || "novo"}:${dataOcorrencia}:${hora}`;
+  const restoredRef = useRef(false);
+  useEffect(() => {
+    if (restoredRef.current) return;
+    const candidates: string[] = [];
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith("draft:ocorrencia:")) candidates.push(k);
+      }
+    } catch { /* ignore */ }
+    let best: any = null;
+    for (const k of candidates) {
+      const d: any = loadDraft(k);
+      if (d && (!best || (d.__savedAt ?? 0) > (best.__savedAt ?? 0))) best = d;
+    }
+    if (best) {
+      const d = best;
+      if (d.obraId) setObraId(d.obraId);
+      if (d.dataOcorrencia) setDataOcorrencia(d.dataOcorrencia);
+      if (d.hora) setHora(d.hora);
+      if (d.local) setLocal(d.local);
+      if (d.endereco) setEndereco(d.endereco);
+      if (d.cidade) setCidade(d.cidade);
+      if (d.uf) setUf(d.uf);
+      if (d.empresaPrincipal) setEmpresaPrincipal(d.empresaPrincipal);
+      if (d.cnpjPrincipal) setCnpjPrincipal(d.cnpjPrincipal);
+      if (d.empresaSubcontratada) setEmpresaSubcontratada(d.empresaSubcontratada);
+      if (d.cnpjSubcontratada) setCnpjSubcontratada(d.cnpjSubcontratada);
+      if (d.acidentadoNome) setAcidentadoNome(d.acidentadoNome);
+      if (d.acidentadoFuncao) setAcidentadoFuncao(d.acidentadoFuncao);
+      if (d.classificacao) setClassificacao(d.classificacao);
+      if (d.descricaoPreliminar) setDescricaoPreliminar(d.descricaoPreliminar);
+      if (d.acaoImediata) setAcaoImediata(d.acaoImediata);
+      if (d.responsavelPreenchimento) setResponsavelPreenchimento(d.responsavelPreenchimento);
+      if (d.responsavelObra) setResponsavelObra(d.responsavelObra);
+      if (Array.isArray(d.fotos)) {
+        // só recupera fotos já enviadas ao storage (com fileKey)
+        setFotos(d.fotos.filter((f: any) => f.status === "done" && f.fileKey && f.publicUrl));
+      }
+      setTimeout(() => toast.success("Rascunho recuperado", { description: "Continuamos de onde você parou." }), 100);
+    }
+    restoredRef.current = true;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const { clearDraft: clearDraftFn, markClean } = useDraftAutosave({
+    key: draftKey,
+    data: {
+      obraId, dataOcorrencia, hora, local, endereco, cidade, uf,
+      empresaPrincipal, cnpjPrincipal, empresaSubcontratada, cnpjSubcontratada,
+      acidentadoNome, acidentadoFuncao, classificacao, descricaoPreliminar,
+      acaoImediata, responsavelPreenchimento, responsavelObra,
+      // só persiste fotos já enviadas
+      fotos: fotos.filter(f => f.status === "done").map(f => ({ id: f.id, fileKey: f.fileKey, publicUrl: f.publicUrl, previewUrl: f.publicUrl, status: "done" })),
+    },
+  });
+
   async function uploadFoto(f: Foto) {
     if (!f.file) return;
     try {
