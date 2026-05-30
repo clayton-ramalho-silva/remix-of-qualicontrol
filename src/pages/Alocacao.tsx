@@ -103,7 +103,15 @@ const statusMeta: Record<Status, { icon: any; label: string }> = {
 
 export default function Alocacao() {
   const qc = useQueryClient();
-  const [vertical, setVertical] = useState<Vertical>("qualidade");
+  const { user } = useAuth();
+  const allowedVerticais = useMemo<Vertical[]>(
+    () => (user?.verticais && user.verticais.length ? (user.verticais as Vertical[]) : ["qualidade", "checklist", "qsms", "vistoria"]),
+    [user?.verticais]
+  );
+  const [vertical, setVertical] = useState<Vertical>(() => (allowedVerticais[0] ?? "qualidade"));
+  useEffect(() => {
+    if (!allowedVerticais.includes(vertical)) setVertical(allowedVerticais[0] ?? "qualidade");
+  }, [allowedVerticais, vertical]);
   const [refDate, setRefDate] = useState(() => startOfMonth(new Date()));
   const [filterMembro, setFilterMembro] = useState<string>("all");
   const [filterObra, setFilterObra] = useState<string>("all");
