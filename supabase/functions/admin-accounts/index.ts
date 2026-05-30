@@ -193,6 +193,9 @@ Deno.serve(async (req) => {
       const obraIds: number[] | undefined = Array.isArray(body.obra_ids)
         ? body.obra_ids.map((n: any) => Number(n)).filter((n: number) => Number.isFinite(n))
         : undefined;
+      const verticais: Vertical[] | undefined = Array.isArray(body.verticais)
+        ? (body.verticais as any[]).filter((v: any): v is Vertical => VALID_VERTICAIS.includes(v))
+        : undefined;
       const roles: AppRole[] | undefined = Array.isArray(body.roles)
         ? body.roles.filter((r: any) => VALID_ROLES.includes(r))
         : undefined;
