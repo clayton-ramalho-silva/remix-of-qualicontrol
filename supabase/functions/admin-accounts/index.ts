@@ -18,6 +18,9 @@ const VALID_ROLES: AppRole[] = ["admin", "user", "aprovador_gerenciadora", "apro
 type Cargo = "avaliador" | "gerente_obra" | "gerente_contrato" | "nucleo" | "diretoria" | "coordenador" | "tecnico";
 const VALID_CARGOS: Cargo[] = ["avaliador", "gerente_obra", "gerente_contrato", "nucleo", "diretoria", "coordenador", "tecnico"];
 
+type Vertical = "qualidade" | "checklist" | "qsms" | "vistoria";
+const VALID_VERTICAIS: Vertical[] = ["qualidade", "checklist", "qsms", "vistoria"];
+
 const BOOTSTRAP_ADMINS = [
   { email: "flavio@marcasite.com.br", name: "Flavio" },
   { email: "cecilio.perez@awnet.com.br", name: "Cecilio Perez" },
