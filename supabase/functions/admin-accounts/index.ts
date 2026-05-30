@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
       const [{ data: profiles }, { data: roles }, { data: membros }] = await Promise.all([
         admin.from("profiles").select("id, name, email").in("id", safeIds),
         admin.from("user_roles").select("user_id, role").in("user_id", safeIds),
-        admin.from("membros_equipe").select("id, user_id, nome, email, telefone, cargo, obra_ids, ativo").in("user_id", safeIds),
+        admin.from("membros_equipe").select("id, user_id, nome, email, telefone, cargo, obra_ids, verticais, ativo").in("user_id", safeIds),
       ]);
       const profileMap = new Map<string, any>((profiles ?? []).map((p: any) => [p.id, p]));
       const rolesMap = new Map<string, string[]>();
