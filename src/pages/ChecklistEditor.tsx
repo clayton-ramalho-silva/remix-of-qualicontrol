@@ -265,9 +265,11 @@ export default function ChecklistEditor() {
     return equipesByForn[fornecedor_nome.toLowerCase()] || [];
   }
 
-  async function handleSave(): Promise<number | null> {
+  async function handleSave(opts?: { status?: "rascunho" | "finalizado" }): Promise<number | null> {
+    const status = opts?.status ?? "finalizado";
+    const isDraft = status === "rascunho";
     if (!obraId) { toast.error("Selecione uma obra"); return null; }
-    setSaving(true);
+    if (isDraft) setSavingDraft(true); else setSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const payload: any = {
@@ -277,6 +279,7 @@ export default function ChecklistEditor() {
         gc: gc || null, go: go || null,
         condicao,
         total_itens: totalItens ? Number(totalItens) : 0,
+        status,
       };
       let entregaId = id;
       if (isEdit && id) {
@@ -332,14 +335,21 @@ export default function ChecklistEditor() {
           );
         }
       }
-      toast.success("Checklist salvo!");
-      if (!isEdit && entregaId) navigate(`/checklists/${entregaId}`);
+      if (isDraft) {
+        toast.success("Rascunho salvo no servidor", { description: "Você pode continuar depois." });
+        // Acabou de criar via "Salvar parcial" → redireciona pro modo edit
+        if (!isEdit && entregaId) navigate(`/checklists/${entregaId}`);
+      } else {
+        clearDraftFn(); markClean();
+        toast.success("Checklist salvo!");
+        if (!isEdit && entregaId) navigate(`/checklists/${entregaId}`);
+      }
       return entregaId;
     } catch (e: any) {
       toast.error(e.message || "Erro ao salvar");
       return null;
     } finally {
-      setSaving(false);
+      if (isDraft) setSavingDraft(false); else setSaving(false);
     }
   }
 
