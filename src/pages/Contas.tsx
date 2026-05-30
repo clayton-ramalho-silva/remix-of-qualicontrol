@@ -111,6 +111,7 @@ export default function Contas() {
   function resetForm() {
     setFName(""); setFEmail(""); setFTelefone(""); setFCargo("avaliador");
     setFObras([]); setFPassword(""); setFRoles(new Set());
+    setFVerticais(new Set(["qualidade", "checklist", "qsms", "vistoria"]));
   }
 
   function openCreate() {
