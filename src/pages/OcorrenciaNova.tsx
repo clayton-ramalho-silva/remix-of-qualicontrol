@@ -175,6 +175,7 @@ export default function OcorrenciaNova() {
         responsavelPreenchimento, responsavelObra,
         fotos: fotosOk,
       });
+      clearDraftFn(); markClean();
       toast.success("Ocorrência registrada");
       navigate(`/qsms/ocorrencias/${res.id}`);
     } catch (e: any) {
