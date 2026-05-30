@@ -26,7 +26,7 @@ import OcorrenciaNova from "./pages/OcorrenciaNova";
 import OcorrenciaDetalhe from "./pages/OcorrenciaDetalhe";
 import OcorrenciaEditar from "./pages/OcorrenciaEditar";
 import Administracao from "./pages/Administracao";
-import Usuarios from "./pages/Usuarios";
+
 import Plantas from "./pages/Plantas";
 import PlantaView from "./pages/PlantaView";
 import Alocacao from "./pages/Alocacao";
@@ -112,7 +112,7 @@ function ProtectedShell() {
         </Route>
         <Route path="/plantas" component={Plantas} />
         <Route path="/plantas/:id" component={PlantaView} />
-        <Route path="/usuarios" component={Usuarios} />
+        <Route path="/usuarios" component={Contas} />
         <Route path="/contas" component={Contas} />
         <Route path="/administracao" component={Administracao} />
         <Route path="/alocacao" component={Alocacao} />
