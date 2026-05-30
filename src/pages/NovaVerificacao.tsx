@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useDraftAutosave, loadDraft } from "@/hooks/useDraftAutosave";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,6 +59,47 @@ export default function NovaVerificacao({
   const [respostas, setRespostas] = useState<Record<number, RespostaItem>>({});
   const [expandedSections, setExpandedSections] = useState<Record<number, boolean>>({});
   const [submitting, setSubmitting] = useState(false);
+
+  // Auto-save de rascunho — chave por categoria+obra+data
+  const draftKey = `draft:verificacao:${categoria}:${obraId ?? "novo"}:${dataVistoria}`;
+  const restoredRef = useRef(false);
+  useEffect(() => {
+    if (restoredRef.current) return;
+    // procura rascunho mais recente para a categoria (caso obra ainda não escolhida)
+    const candidates: string[] = [];
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(`draft:verificacao:${categoria}:`)) candidates.push(k);
+      }
+    } catch { /* ignore */ }
+    let best: { key: string; savedAt: number; data: any } | null = null;
+    for (const k of candidates) {
+      const d: any = loadDraft(k);
+      if (d && (!best || (d.__savedAt ?? 0) > best.savedAt)) best = { key: k, savedAt: d.__savedAt ?? 0, data: d };
+    }
+    if (best && best.data) {
+      const d = best.data;
+      if (d.obraId != null) setObraId(d.obraId);
+      if (d.avaliadorId) setAvaliadorId(d.avaliadorId);
+      if (d.dataVistoria) setDataVistoria(d.dataVistoria);
+      if (d.goNome) setGoNome(d.goNome);
+      if (d.gcNome) setGcNome(d.gcNome);
+      if (d.nucleo) setNucleo(d.nucleo);
+      if (d.diretoria) setDiretoria(d.diretoria);
+      if (d.observacoes) setObservacoes(d.observacoes);
+      if (d.respostas) setRespostas(d.respostas);
+      restoredRef.current = true;
+      setTimeout(() => toast.success("Rascunho recuperado", { description: "Continuamos de onde você parou." }), 100);
+    }
+    restoredRef.current = true;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const { clearDraft: clearDraftFn, markClean } = useDraftAutosave({
+    key: draftKey,
+    data: { obraId, avaliadorId, dataVistoria, goNome, gcNome, nucleo, diretoria, observacoes, respostas },
+  });
 
   // Filtrar membros por cargo
   const avaliadores = membros?.filter(m => m.cargo === "avaliador" && m.ativo) || [];
@@ -189,6 +231,7 @@ export default function NovaVerificacao({
           fotos: r.fotos || [],
         })),
       });
+      clearDraftFn(); markClean();
       toast.success(`Verificação salva! Score geral: ${result.scores.scoreGeral}% — ${result.scores.statusGeral}`);
       navigate(`${rotaBase}/${result.id}`);
     } catch (e: any) {

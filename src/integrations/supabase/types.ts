@@ -221,6 +221,7 @@ export type Database = {
           id: number
           metragem_m2: number | null
           obra_id: number
+          status: string
           total_itens: number
           updated_at: string
         }
@@ -235,6 +236,7 @@ export type Database = {
           id?: number
           metragem_m2?: number | null
           obra_id: number
+          status?: string
           total_itens?: number
           updated_at?: string
         }
@@ -249,6 +251,7 @@ export type Database = {
           id?: number
           metragem_m2?: number | null
           obra_id?: number
+          status?: string
           total_itens?: number
           updated_at?: string
         }
@@ -1328,6 +1331,7 @@ export type Database = {
           endereco: string | null
           hora: string | null
           id: number
+          is_rascunho: number
           local_ocorrencia: string | null
           obra_id: number
           observacoes: string | null
@@ -1364,6 +1368,7 @@ export type Database = {
           endereco?: string | null
           hora?: string | null
           id?: number
+          is_rascunho?: number
           local_ocorrencia?: string | null
           obra_id: number
           observacoes?: string | null
@@ -1400,6 +1405,7 @@ export type Database = {
           endereco?: string | null
           hora?: string | null
           id?: number
+          is_rascunho?: number
           local_ocorrencia?: string | null
           obra_id?: number
           observacoes?: string | null
@@ -1671,6 +1677,30 @@ export type Database = {
         }
         Relationships: []
       }
+      storage_orphans: {
+        Row: {
+          bucket: string
+          deleted_at: string | null
+          detected_at: string
+          file_key: string
+          id: number
+        }
+        Insert: {
+          bucket: string
+          deleted_at?: string | null
+          detected_at?: string
+          file_key: string
+          id?: number
+        }
+        Update: {
+          bucket?: string
+          deleted_at?: string | null
+          detected_at?: string
+          file_key?: string
+          id?: number
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1781,6 +1811,7 @@ export type Database = {
           score_cronograma: number | null
           score_geral: number | null
           score_qualidade: number | null
+          status: string
           status_condicao: string | null
           status_cronograma: string | null
           status_geral: string | null
@@ -1803,6 +1834,7 @@ export type Database = {
           score_cronograma?: number | null
           score_geral?: number | null
           score_qualidade?: number | null
+          status?: string
           status_condicao?: string | null
           status_cronograma?: string | null
           status_geral?: string | null
@@ -1825,6 +1857,7 @@ export type Database = {
           score_cronograma?: number | null
           score_geral?: number | null
           score_qualidade?: number | null
+          status?: string
           status_condicao?: string | null
           status_cronograma?: string | null
           status_geral?: string | null
