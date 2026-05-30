@@ -19,6 +19,7 @@ type Row = {
   go: string | null;
   condicao: "ruim" | "regular" | "otima";
   total_itens: number;
+  status: "rascunho" | "finalizado" | null;
   obra: { codigo: string; nome: string } | null;
 };
 
