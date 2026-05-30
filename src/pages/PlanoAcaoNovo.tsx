@@ -12,6 +12,7 @@ import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { ArrowLeft, Target, Search, X, Link2, Loader2, Wrench, ShieldCheck } from "lucide-react";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 const VERTICAL_LABELS: Record<string, string> = {
   qualidade: "Qualidade", checklist: "Checklist", qsms: "QSMS", vistoria: "Vistoria",
