@@ -94,7 +94,7 @@ export default function Contas() {
   const invokeAdminAccounts = useCallback(async (body: Record<string, unknown>) => {
     const { data: userData, error: userError } = await supabase.auth.getUser();
     if (userError || !userData.user) {
-      toast.error("Sessão expirada. Entre novamente.");
+      toast.error("Sua sessão expirou. Faça login novamente para continuar.");
       await supabase.auth.signOut();
       window.location.href = "/auth";
       return null;
@@ -103,17 +103,66 @@ export default function Contas() {
     const { data: sessionData } = await supabase.auth.getSession();
     const accessToken = sessionData.session?.access_token;
     if (!accessToken) {
-      toast.error("Sessão expirada. Entre novamente.");
+      toast.error("Sua sessão expirou. Faça login novamente para continuar.");
       await supabase.auth.signOut();
       window.location.href = "/auth";
       return null;
     }
 
-    return supabase.functions.invoke("admin-accounts", {
+    const result = await supabase.functions.invoke("admin-accounts", {
       body,
       headers: { Authorization: `Bearer ${accessToken}` },
     });
+
+    // Quando o status não é 2xx, supabase-js coloca a Response em error.context.
+    // Extraímos o JSON para recuperar a mensagem original do backend.
+    if (result.error && (result.error as any).context instanceof Response) {
+      try {
+        const ctx = (result.error as any).context as Response;
+        const parsed = await ctx.clone().json();
+        if (parsed && typeof parsed === "object") {
+          (result as any).data = parsed;
+        }
+      } catch { /* parse falhou — segue com mensagem genérica */ }
+    }
+    return result;
   }, []);
+
+  function humanizeError(raw: unknown): string {
+    const original = typeof raw === "string" ? raw : ((raw as any)?.message ?? "");
+    const msg = String(original).toLowerCase();
+    if (!msg) return "Algo deu errado. Tente novamente em instantes.";
+
+    // Senhas
+    if (msg.includes("weak") || msg.includes("pwned") || msg.includes("known to be") || msg.includes("easy to guess"))
+      return "Essa senha é muito comum e já apareceu em vazamentos públicos. Escolha uma senha mais forte — use pelo menos 8 caracteres misturando letras maiúsculas, minúsculas, números e um símbolo (ex.: Obra#2026!).";
+    if (msg.includes("password should be at least") || msg.includes("password is too short") || (msg.includes("password") && msg.includes("short")))
+      return "A senha é muito curta. Use no mínimo 8 caracteres, combinando letras, números e símbolos.";
+    if (msg.includes("password"))
+      return "Não foi possível aceitar essa senha. Tente uma combinação mais forte, com letras, números e símbolos.";
+
+    // E-mail
+    if (msg.includes("already registered") || msg.includes("already exists") || msg.includes("duplicate") || msg.includes("user already"))
+      return "Já existe um usuário cadastrado com esse e-mail. Edite o usuário existente ou utilize outro e-mail.";
+    if (msg.includes("invalid") && msg.includes("email"))
+      return "O e-mail informado não é válido. Verifique se está escrito corretamente.";
+    if (msg.includes("email"))
+      return "Houve um problema com o e-mail informado. Verifique e tente novamente.";
+
+    // Autorização / sessão
+    if (msg.includes("unauthorized") || msg.includes("jwt") || msg.includes("session"))
+      return "Sua sessão expirou. Faça login novamente para continuar.";
+    if (msg.includes("forbidden") || msg.includes("admin only"))
+      return "Você não tem permissão para esta ação. Apenas administradores podem gerenciar usuários.";
+
+    // Rede
+    if (msg.includes("failed to fetch") || msg.includes("network"))
+      return "Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.";
+    if (msg.includes("rate") && msg.includes("limit"))
+      return "Muitas tentativas em pouco tempo. Aguarde alguns segundos e tente novamente.";
+
+    return `Não foi possível concluir a operação: ${original}.`;
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -122,7 +171,7 @@ export default function Contas() {
     if (!result) return;
     const { data, error } = result;
     if (error || (data as any)?.error) {
-      toast.error((error?.message || (data as any)?.error) ?? "Erro ao carregar contas");
+      toast.error(humanizeError(((data as any)?.error) || error?.message || "Erro ao carregar contas"));
       return;
     }
     setAccounts((data as any).accounts ?? []);
@@ -170,11 +219,12 @@ export default function Contas() {
   }
 
   async function submit() {
-    if (!fName.trim()) { toast.error("Nome obrigatório"); return; }
-    if (!fEmail.trim()) { toast.error("Email obrigatório"); return; }
-    if (!editing && !fPassword.trim()) { toast.error("Senha obrigatória para novo usuário"); return; }
-    if (fPassword && fPassword.length < 6) { toast.error("Senha mínima 6 caracteres"); return; }
-    if (fVerticais.size === 0 && !fRoles.has("admin")) { toast.error("Selecione pelo menos uma vertical"); return; }
+    if (!fName.trim()) { toast.error("Informe o nome do usuário."); return; }
+    if (!fEmail.trim()) { toast.error("Informe o e-mail do usuário."); return; }
+    if (!editing && !fPassword.trim()) { toast.error("Defina uma senha inicial para o novo usuário."); return; }
+    if (fPassword && fPassword.length < 8) { toast.error("A senha precisa ter pelo menos 8 caracteres. Combine letras, números e símbolos para ficar mais segura."); return; }
+    if (fPassword && /^[0-9]+$/.test(fPassword)) { toast.error("Evite senhas só com números — elas são facilmente descobertas. Misture letras maiúsculas, minúsculas e símbolos."); return; }
+    if (fVerticais.size === 0 && !fRoles.has("admin")) { toast.error("Selecione pelo menos uma vertical para esse usuário."); return; }
 
     setSubmitting(true);
     const payload: any = {
@@ -195,7 +245,7 @@ export default function Contas() {
     if (!result) return;
     const { data, error } = result;
     if (error || (data as any)?.error) {
-      toast.error((error?.message || (data as any)?.error) ?? "Erro ao guardar");
+      toast.error(humanizeError(((data as any)?.error) || error?.message || "Erro ao guardar"));
       return;
     }
     toast.success(editing ? "Usuário atualizado" : "Usuário criado");
@@ -213,7 +263,7 @@ export default function Contas() {
     if (!result) return;
     const { data, error } = result;
     if (error || (data as any)?.error) {
-      toast.error((error?.message || (data as any)?.error) ?? "Erro ao eliminar");
+      toast.error(humanizeError(((data as any)?.error) || error?.message || "Erro ao eliminar"));
       return;
     }
     toast.success("Usuário eliminado");
@@ -228,7 +278,7 @@ export default function Contas() {
     if (!result) return;
     const { data, error } = result;
     if (error || (data as any)?.error) {
-      toast.error((error?.message || (data as any)?.error) ?? "Erro");
+      toast.error(humanizeError(((data as any)?.error) || error?.message || "Erro ao configurar admins"));
       return;
     }
     toast.success("Admins iniciais configurados");
@@ -272,8 +322,11 @@ export default function Contas() {
           <Input id="acc-email" type="email" value={fEmail} onChange={(e) => setFEmail(e.target.value)} placeholder="email@empresa.com" />
         </div>
         <div>
-          <Label htmlFor="acc-pw">{editing ? "Nova senha (deixe vazio para manter)" : "Senha *"}</Label>
-          <Input id="acc-pw" type="text" value={fPassword} onChange={(e) => setFPassword(e.target.value)} placeholder="Mín. 6 caracteres" autoComplete="new-password" />
+          <Label htmlFor="acc-pw">{editing ? "Nova senha (opcional — deixe em branco para não alterar)" : "Senha *"}</Label>
+          <Input id="acc-pw" type="text" value={fPassword} onChange={(e) => setFPassword(e.target.value)} placeholder="Ex.: Obra#2026!" autoComplete="new-password" />
+          <p className="text-xs text-muted-foreground mt-1">
+            Mínimo 8 caracteres. Combine letras maiúsculas, minúsculas, números e símbolos. Senhas comuns (ex.: 123456, senha123) serão rejeitadas por segurança.
+          </p>
         </div>
       </div>
 
