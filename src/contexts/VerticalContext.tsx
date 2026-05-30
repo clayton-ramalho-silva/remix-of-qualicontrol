@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, useMemo } from "react";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 export type Vertical = "qualidade" | "checklist" | "qsms" | "vistoria";
 export type VerticalFilter = Vertical | "all";
