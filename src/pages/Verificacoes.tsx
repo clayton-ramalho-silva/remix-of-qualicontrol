@@ -36,6 +36,7 @@ export default function Verificacoes({
   const [, navigate] = useLocation();
   const { data: obras } = trpc.obras.list.useQuery();
   const [obraFilter, setObraFilter] = useState<string>("all");
+  const [mostrarRascunhos, setMostrarRascunhos] = useState(false);
   const { data: verificacoes, isLoading } = trpc.verificacoes.list.useQuery({
     ...(obraFilter !== "all" ? { obraId: Number(obraFilter) } : {}),
     categoria,
@@ -45,6 +46,11 @@ export default function Verificacoes({
     const obra = obras?.find(o => o.id === obraId);
     return obra ? `${obra.codigo} — ${obra.nome}` : `Obra #${obraId}`;
   };
+
+  const rascunhoCount = (verificacoes || []).filter((v: any) => v.status === "rascunho").length;
+  const visiveis = (verificacoes || []).filter((v: any) =>
+    mostrarRascunhos ? true : v.status !== "rascunho"
+  );
 
   return (
     <div className="space-y-6">
@@ -62,8 +68,8 @@ export default function Verificacoes({
         </Button>
       </div>
 
-      {/* Filtro */}
-      <div className="flex gap-4">
+      {/* Filtros */}
+      <div className="flex gap-3 flex-wrap items-center">
         <ObraSelect
           obras={obras}
           value={obraFilter}
@@ -72,6 +78,15 @@ export default function Verificacoes({
           placeholder="Filtrar por obra..."
           className="w-full sm:w-[300px]"
         />
+        {rascunhoCount > 0 && (
+          <Button
+            variant={mostrarRascunhos ? "default" : "outline"}
+            size="sm"
+            onClick={() => setMostrarRascunhos((v) => !v)}
+          >
+            {mostrarRascunhos ? "Ocultar rascunhos" : `Mostrar rascunhos (${rascunhoCount})`}
+          </Button>
+        )}
       </div>
 
       {/* Lista de Verificações */}
