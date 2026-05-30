@@ -11,7 +11,7 @@ const ICONS = {
 } as const;
 
 export default function VerticalSwitcher() {
-  const { vertical, setVertical } = useVertical();
+  const { vertical, setVertical, isAllowed } = useVertical();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
 
@@ -26,16 +26,19 @@ export default function VerticalSwitcher() {
       <div className="flex flex-col items-center gap-1 px-1 py-2 border-b border-sidebar-border/40">
         {options.map(({ id, label, Icon }) => {
           const active = vertical === id;
+          const disabled = id !== "all" && !isAllowed(id);
           return (
             <button
               key={id}
-              onClick={() => setVertical(id)}
-              title={label}
+              onClick={() => !disabled && setVertical(id)}
+              disabled={disabled}
+              title={disabled ? `${label} (sem permissão)` : label}
               className={cn(
                 "h-8 w-8 flex items-center justify-center rounded-md transition-colors",
                 active
                   ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                  : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                disabled && "opacity-40 cursor-not-allowed hover:bg-transparent hover:text-sidebar-foreground/60"
               )}
               aria-label={label}
             >
@@ -55,15 +58,19 @@ export default function VerticalSwitcher() {
       <div className="grid grid-cols-2 gap-1">
         {options.map(({ id, label, Icon }) => {
           const active = vertical === id;
+          const disabled = id !== "all" && !isAllowed(id);
           return (
             <button
               key={id}
-              onClick={() => setVertical(id)}
+              onClick={() => !disabled && setVertical(id)}
+              disabled={disabled}
+              title={disabled ? `${label} (sem permissão)` : label}
               className={cn(
                 "flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium transition-colors",
                 active
                   ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                disabled && "opacity-40 cursor-not-allowed hover:bg-transparent hover:text-sidebar-foreground/70"
               )}
             >
               <Icon className="h-3.5 w-3.5 shrink-0" />

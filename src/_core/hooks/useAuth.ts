@@ -7,12 +7,16 @@ type UseAuthOptions = {
   redirectPath?: string;
 };
 
+export type Vertical = "qualidade" | "checklist" | "qsms" | "vistoria";
+const ALL_VERTICAIS: Vertical[] = ["qualidade", "checklist", "qsms", "vistoria"];
+
 export type AuthUser = {
   id: string;
   name: string | null;
   email: string | null;
   role: "admin" | "user";
   roles: string[];
+  verticais: Vertical[];
 };
 
 export function useAuth(options?: UseAuthOptions) {
@@ -26,18 +30,25 @@ export function useAuth(options?: UseAuthOptions) {
       setUser(null);
       return;
     }
-    const [{ data: profile }, { data: roles }] = await Promise.all([
+    const [{ data: profile }, { data: roles }, { data: membro }] = await Promise.all([
       supabase.from("profiles").select("id, name, email").eq("id", sUser.id).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", sUser.id),
+      supabase.from("membros_equipe").select("verticais").eq("user_id", sUser.id).maybeSingle(),
     ]);
     const isAdmin = (roles ?? []).some((r: { role: string }) => r.role === "admin");
     const allRoles = (roles ?? []).map((r: { role: string }) => r.role);
+    const rawV = (membro as any)?.verticais;
+    const parsedV: Vertical[] = Array.isArray(rawV)
+      ? (rawV as any[]).filter((v): v is Vertical => ALL_VERTICAIS.includes(v as Vertical))
+      : [];
+    const verticais: Vertical[] = isAdmin ? ALL_VERTICAIS : (parsedV.length ? parsedV : ALL_VERTICAIS);
     setUser({
       id: sUser.id,
       name: profile?.name ?? sUser.email ?? null,
       email: profile?.email ?? sUser.email ?? null,
       role: isAdmin ? "admin" : "user",
       roles: allRoles,
+      verticais,
     });
   }, []);
 

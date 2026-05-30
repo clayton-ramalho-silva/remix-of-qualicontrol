@@ -37,6 +37,14 @@ const CARGOS = [
   { value: "tecnico", label: "Técnico", icon: UserCheck, color: "bg-gray-100 text-gray-700" },
 ] as const;
 type CargoValue = typeof CARGOS[number]["value"];
+
+type VerticalKey = "qualidade" | "checklist" | "qsms" | "vistoria";
+const VERTICAIS_OPTIONS: { value: VerticalKey; label: string }[] = [
+  { value: "qualidade", label: "Qualidade" },
+  { value: "checklist", label: "Checklist" },
+  { value: "qsms", label: "QSMS" },
+  { value: "vistoria", label: "Vistoria" },
+];
 const getCargoInfo = (c: string) => CARGOS.find((x) => x.value === c) || { value: c, label: c, icon: Users, color: "bg-gray-100 text-gray-700" };
 
 type Account = {
@@ -51,6 +59,7 @@ type Account = {
   telefone: string | null;
   cargo: CargoValue | null;
   obra_ids: number[];
+  verticais: VerticalKey[];
   ativo: number;
 };
 
@@ -80,6 +89,7 @@ export default function Contas() {
   const [fObras, setFObras] = useState<number[]>([]);
   const [fPassword, setFPassword] = useState("");
   const [fRoles, setFRoles] = useState<Set<AppRole>>(new Set());
+  const [fVerticais, setFVerticais] = useState<Set<VerticalKey>>(new Set(["qualidade", "checklist", "qsms", "vistoria"]));
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -101,6 +111,7 @@ export default function Contas() {
   function resetForm() {
     setFName(""); setFEmail(""); setFTelefone(""); setFCargo("avaliador");
     setFObras([]); setFPassword(""); setFRoles(new Set());
+    setFVerticais(new Set(["qualidade", "checklist", "qsms", "vistoria"]));
   }
 
   function openCreate() {
@@ -118,6 +129,7 @@ export default function Contas() {
     setFObras(acc.obra_ids ?? []);
     setFPassword("");
     setFRoles(new Set(acc.roles));
+    setFVerticais(new Set(acc.verticais?.length ? acc.verticais : ["qualidade", "checklist", "qsms", "vistoria"]));
     setDialogOpen(true);
   }
 
@@ -138,6 +150,7 @@ export default function Contas() {
     if (!fEmail.trim()) { toast.error("Email obrigatório"); return; }
     if (!editing && !fPassword.trim()) { toast.error("Senha obrigatória para novo usuário"); return; }
     if (fPassword && fPassword.length < 6) { toast.error("Senha mínima 6 caracteres"); return; }
+    if (fVerticais.size === 0 && !fRoles.has("admin")) { toast.error("Selecione pelo menos uma vertical"); return; }
 
     setSubmitting(true);
     const payload: any = {
@@ -148,6 +161,7 @@ export default function Contas() {
       cargo: fCargo,
       obra_ids: fObras,
       roles: [...fRoles],
+      verticais: [...fVerticais],
     };
     if (editing) payload.id = editing.id;
     if (fPassword) payload.password = fPassword;
@@ -254,6 +268,26 @@ export default function Contas() {
         <div>
           <Label htmlFor="acc-tel">Telefone</Label>
           <Input id="acc-tel" value={fTelefone} onChange={(e) => setFTelefone(e.target.value)} placeholder="(11) 99999-0000" />
+        </div>
+      </div>
+
+      <div>
+        <Label>Verticais permitidas *</Label>
+        <p className="text-xs text-muted-foreground mb-2">O usuário só poderá selecionar/acessar as verticais marcadas. Admins têm acesso a todas automaticamente.</p>
+        <div className="grid grid-cols-2 gap-2 rounded-md border border-border p-3">
+          {VERTICAIS_OPTIONS.map((v) => (
+            <label key={v.value} className="flex items-center gap-2 cursor-pointer">
+              <Checkbox
+                checked={fVerticais.has(v.value)}
+                onCheckedChange={() => setFVerticais((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(v.value)) next.delete(v.value); else next.add(v.value);
+                  return next;
+                })}
+              />
+              <span className="text-sm">{v.label}</span>
+            </label>
+          ))}
         </div>
       </div>
 

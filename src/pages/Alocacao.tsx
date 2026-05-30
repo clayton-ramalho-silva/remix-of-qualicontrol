@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { trpc } from "@/lib/trpc";
@@ -102,7 +103,15 @@ const statusMeta: Record<Status, { icon: any; label: string }> = {
 
 export default function Alocacao() {
   const qc = useQueryClient();
-  const [vertical, setVertical] = useState<Vertical>("qualidade");
+  const { user } = useAuth();
+  const allowedVerticais = useMemo<Vertical[]>(
+    () => (user?.verticais && user.verticais.length ? (user.verticais as Vertical[]) : ["qualidade", "checklist", "qsms", "vistoria"]),
+    [user?.verticais]
+  );
+  const [vertical, setVertical] = useState<Vertical>(() => (allowedVerticais[0] ?? "qualidade"));
+  useEffect(() => {
+    if (!allowedVerticais.includes(vertical)) setVertical(allowedVerticais[0] ?? "qualidade");
+  }, [allowedVerticais, vertical]);
   const [refDate, setRefDate] = useState(() => startOfMonth(new Date()));
   const [filterMembro, setFilterMembro] = useState<string>("all");
   const [filterObra, setFilterObra] = useState<string>("all");
@@ -268,12 +277,15 @@ export default function Alocacao() {
         {verticais.map(v => {
           const Icon = v.icon;
           const active = vertical === v.key;
+          const disabled = !allowedVerticais.includes(v.key);
           return (
             <button
               key={v.key}
               type="button"
-              onClick={() => { setVertical(v.key); setFilterObra("all"); }}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
+              disabled={disabled}
+              title={disabled ? `${v.label} (sem permissão)` : v.label}
+              onClick={() => { if (disabled) return; setVertical(v.key); setFilterObra("all"); }}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"} ${disabled ? "opacity-40 cursor-not-allowed hover:bg-transparent" : ""}`}
             >
               <Icon className="h-4 w-4" />
               {v.label}

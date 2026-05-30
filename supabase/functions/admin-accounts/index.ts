@@ -18,6 +18,9 @@ const VALID_ROLES: AppRole[] = ["admin", "user", "aprovador_gerenciadora", "apro
 type Cargo = "avaliador" | "gerente_obra" | "gerente_contrato" | "nucleo" | "diretoria" | "coordenador" | "tecnico";
 const VALID_CARGOS: Cargo[] = ["avaliador", "gerente_obra", "gerente_contrato", "nucleo", "diretoria", "coordenador", "tecnico"];
 
+type Vertical = "qualidade" | "checklist" | "qsms" | "vistoria";
+const VALID_VERTICAIS: Vertical[] = ["qualidade", "checklist", "qsms", "vistoria"];
+
 const BOOTSTRAP_ADMINS = [
   { email: "flavio@marcasite.com.br", name: "Flavio" },
   { email: "cecilio.perez@awnet.com.br", name: "Cecilio Perez" },
@@ -72,7 +75,7 @@ Deno.serve(async (req) => {
       const [{ data: profiles }, { data: roles }, { data: membros }] = await Promise.all([
         admin.from("profiles").select("id, name, email").in("id", safeIds),
         admin.from("user_roles").select("user_id, role").in("user_id", safeIds),
-        admin.from("membros_equipe").select("id, user_id, nome, email, telefone, cargo, obra_ids, ativo").in("user_id", safeIds),
+        admin.from("membros_equipe").select("id, user_id, nome, email, telefone, cargo, obra_ids, verticais, ativo").in("user_id", safeIds),
       ]);
       const profileMap = new Map<string, any>((profiles ?? []).map((p: any) => [p.id, p]));
       const rolesMap = new Map<string, string[]>();
@@ -96,6 +99,9 @@ Deno.serve(async (req) => {
           telefone: m?.telefone ?? null,
           cargo: m?.cargo ?? null,
           obra_ids: Array.isArray(m?.obra_ids) ? m.obra_ids : [],
+          verticais: Array.isArray(m?.verticais)
+            ? (m.verticais as any[]).filter((x: any) => VALID_VERTICAIS.includes(x))
+            : VALID_VERTICAIS.slice(),
           ativo: m?.ativo ?? 1,
         };
       });
@@ -112,6 +118,9 @@ Deno.serve(async (req) => {
       const obraIds: number[] = Array.isArray(body.obra_ids)
         ? body.obra_ids.map((n: any) => Number(n)).filter((n: number) => Number.isFinite(n))
         : [];
+      const verticais: Vertical[] = Array.isArray(body.verticais)
+        ? (body.verticais as any[]).filter((v: any): v is Vertical => VALID_VERTICAIS.includes(v))
+        : VALID_VERTICAIS.slice();
       const roles: AppRole[] = Array.isArray(body.roles)
         ? body.roles.filter((r: any) => VALID_ROLES.includes(r))
         : [];
@@ -153,6 +162,7 @@ Deno.serve(async (req) => {
             telefone,
             cargo,
             obra_ids: obraIds,
+            verticais,
             ativo: 1,
           })
           .eq("id", existingMembro.id);
@@ -164,6 +174,7 @@ Deno.serve(async (req) => {
           telefone,
           cargo,
           obra_ids: obraIds,
+          verticais,
           ativo: 1,
         });
       }
@@ -181,6 +192,9 @@ Deno.serve(async (req) => {
       const cargo = body.cargo !== undefined && VALID_CARGOS.includes(body.cargo) ? (body.cargo as Cargo) : undefined;
       const obraIds: number[] | undefined = Array.isArray(body.obra_ids)
         ? body.obra_ids.map((n: any) => Number(n)).filter((n: number) => Number.isFinite(n))
+        : undefined;
+      const verticais: Vertical[] | undefined = Array.isArray(body.verticais)
+        ? (body.verticais as any[]).filter((v: any): v is Vertical => VALID_VERTICAIS.includes(v))
         : undefined;
       const roles: AppRole[] | undefined = Array.isArray(body.roles)
         ? body.roles.filter((r: any) => VALID_ROLES.includes(r))
@@ -219,6 +233,7 @@ Deno.serve(async (req) => {
       if (telefone !== undefined) membroPatch.telefone = telefone;
       if (cargo !== undefined) membroPatch.cargo = cargo;
       if (obraIds !== undefined) membroPatch.obra_ids = obraIds;
+      if (verticais !== undefined) membroPatch.verticais = verticais;
 
       if (existingMembro?.id) {
         if (Object.keys(membroPatch).length > 0) {
@@ -233,6 +248,7 @@ Deno.serve(async (req) => {
           telefone: telefone ?? null,
           cargo: cargo ?? "tecnico",
           obra_ids: obraIds ?? [],
+          verticais: verticais ?? VALID_VERTICAIS.slice(),
           ativo: 1,
         });
       }

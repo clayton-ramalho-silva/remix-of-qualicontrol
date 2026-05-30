@@ -22,6 +22,7 @@ import { PhotoPickerButton } from "@/components/PhotoPickerButton";
 import PhotoAnnotator from "@/components/PhotoAnnotator";
 import { supabase } from "@/integrations/supabase/client";
 import { compressImage } from "@/lib/image-compress";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 type Foto = {
   file: File;
@@ -51,6 +52,8 @@ const HINTS = {
 export default function DesvioNovo() {
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
+  const { user } = useAuth();
+  const allowedVerticais = (user?.verticais && user.verticais.length ? user.verticais : ["qualidade", "checklist", "qsms", "vistoria"]) as Array<"qualidade" | "checklist" | "qsms" | "vistoria">;
   const { data: obrasAll } = trpc.obras.list.useQuery();
   // O filtro real por vertical é feito abaixo, depois que `vertical` for definido.
   const { data: fornecedoresDb } = trpc.fornecedores.list.useQuery();
@@ -63,7 +66,7 @@ export default function DesvioNovo() {
   const [contextCollapsed, setContextCollapsed] = useState(false);
   const [obraId, setObraId] = useState("");
   const [ambiente, setAmbiente] = useState("");
-  const [vertical, setVertical] = useState<"" | "qualidade" | "checklist" | "qsms" | "vistoria">("");
+  const [vertical, setVertical] = useState<"" | "qualidade" | "checklist" | "qsms" | "vistoria">(allowedVerticais.length === 1 ? allowedVerticais[0] : "");
   const coverColByVertical = {
     qualidade: "cobertura_qualidade",
     checklist: "cobertura_checklist",
@@ -383,10 +386,10 @@ export default function DesvioNovo() {
                 <Select value={vertical} onValueChange={v => setVertical(v as any)}>
                   <SelectTrigger><SelectValue placeholder="Selecione a vertical..." /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="qualidade">Qualidade</SelectItem>
-                    <SelectItem value="checklist">Checklist</SelectItem>
-                     <SelectItem value="qsms">QSMS</SelectItem>
-                    <SelectItem value="vistoria">Vistoria</SelectItem>
+                    <SelectItem value="qualidade" disabled={!allowedVerticais.includes("qualidade")}>Qualidade{!allowedVerticais.includes("qualidade") && " (sem permissão)"}</SelectItem>
+                    <SelectItem value="checklist" disabled={!allowedVerticais.includes("checklist")}>Checklist{!allowedVerticais.includes("checklist") && " (sem permissão)"}</SelectItem>
+                    <SelectItem value="qsms" disabled={!allowedVerticais.includes("qsms")}>QSMS{!allowedVerticais.includes("qsms") && " (sem permissão)"}</SelectItem>
+                    <SelectItem value="vistoria" disabled={!allowedVerticais.includes("vistoria")}>Vistoria{!allowedVerticais.includes("vistoria") && " (sem permissão)"}</SelectItem>
                   </SelectContent>
                 </Select>
               </Field>

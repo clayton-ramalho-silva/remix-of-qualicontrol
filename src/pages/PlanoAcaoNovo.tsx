@@ -12,6 +12,7 @@ import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { ArrowLeft, Target, Search, X, Link2, Loader2, Wrench, ShieldCheck } from "lucide-react";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 const VERTICAL_LABELS: Record<string, string> = {
   qualidade: "Qualidade", checklist: "Checklist", qsms: "QSMS", vistoria: "Vistoria",
@@ -20,6 +21,8 @@ const VERTICAIS = ["vistoria", "qualidade", "qsms", "checklist"] as const;
 
 export default function PlanoAcaoNovo() {
   const [, navigate] = useLocation();
+  const { user } = useAuth();
+  const allowedVerticais = (user?.verticais && user.verticais.length ? user.verticais : ["qualidade", "checklist", "qsms", "vistoria"]) as string[];
   const utils = trpc.useUtils();
   const { data: desvios } = trpc.desvios.list.useQuery();
   const { data: obras } = trpc.obras.list.useQuery();
@@ -39,7 +42,7 @@ export default function PlanoAcaoNovo() {
   const [picker, setPicker] = useState(false);
   // Preventivo
   const [obraId, setObraId] = useState<string>("");
-  const [vertical, setVertical] = useState<string>("");
+  const [vertical, setVertical] = useState<string>(allowedVerticais.length === 1 ? allowedVerticais[0] : "");
   const [categoriaId, setCategoriaId] = useState<string>("");
 
   const create = trpc.planos.create.useMutation();
@@ -158,7 +161,7 @@ export default function PlanoAcaoNovo() {
                 <Select value={vertical} onValueChange={setVertical}>
                   <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
-                    {VERTICAIS.map(v => <SelectItem key={v} value={v}>{VERTICAL_LABELS[v]}</SelectItem>)}
+                    {VERTICAIS.map(v => <SelectItem key={v} value={v} disabled={!allowedVerticais.includes(v)}>{VERTICAL_LABELS[v]}{!allowedVerticais.includes(v) && " (sem permissão)"}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
