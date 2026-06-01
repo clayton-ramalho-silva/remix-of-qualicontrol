@@ -40,6 +40,7 @@ import ChecklistList from "./pages/ChecklistList";
 import ChecklistEditor from "./pages/ChecklistEditor";
 import Sistema from "./pages/Sistema";
 import Contas from "./pages/Contas";
+import Manual from "./pages/Manual";
 
 function ProtectedShell() {
   const { user, loading } = useAuth();
