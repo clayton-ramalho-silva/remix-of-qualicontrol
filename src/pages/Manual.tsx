@@ -6,8 +6,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import {
   BookOpen, Search, LayoutDashboard, ClipboardCheck, HardHat, Siren,
   ListChecks, Target, ShieldCheck, BrainCircuit, FileText, Building2,
-  Truck, Users, Settings, CalendarDays, Map, WifiOff, Camera, Save,
-  LogIn, Smartphone, AlertTriangle, ClipboardList, PlusCircle,
+  Truck, Users, CalendarDays, Map as MapIcon, WifiOff, Camera, Save,
+  LogIn, Smartphone, AlertTriangle,
 } from "lucide-react";
 
 type Topico = {
