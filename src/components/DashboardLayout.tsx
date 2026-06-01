@@ -48,6 +48,7 @@ import {
   ChevronRight,
   ShieldCheck,
   ListChecks,
+  BookOpen,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -102,6 +103,8 @@ const menuItems: MenuItem[] = [
   { icon: Users, label: "Usuários", path: "/contas", adminOnly: true },
   { icon: Settings, label: "Administração", path: "/administracao" },
   { icon: Network, label: "Sistema", path: "/sistema" },
+  { separator: true },
+  { icon: BookOpen, label: "Manual de Uso", path: "/manual" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";

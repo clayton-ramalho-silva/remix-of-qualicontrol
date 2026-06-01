@@ -40,6 +40,7 @@ import ChecklistList from "./pages/ChecklistList";
 import ChecklistEditor from "./pages/ChecklistEditor";
 import Sistema from "./pages/Sistema";
 import Contas from "./pages/Contas";
+import Manual from "./pages/Manual";
 
 function ProtectedShell() {
   const { user, loading } = useAuth();
@@ -117,6 +118,7 @@ function ProtectedShell() {
         <Route path="/administracao" component={Administracao} />
         <Route path="/alocacao" component={Alocacao} />
         <Route path="/sistema" component={Sistema} />
+        <Route path="/manual" component={Manual} />
         <Route component={NotFound} />
       </Switch>
     </DashboardLayout>
