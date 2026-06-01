@@ -220,7 +220,7 @@ const topicos: Topico[] = [
     id: "plantas",
     titulo: "Trabalhar com Plantas",
     modulo: "Plantas",
-    icone: Map,
+    icone: MapIcon,
     tags: ["planta", "pin", "ambiente", "localizacao"],
     passos: [
       { titulo: "Acessar", texto: "Menu → Plantas → selecione a planta." },
