@@ -118,6 +118,7 @@ function ProtectedShell() {
         <Route path="/administracao" component={Administracao} />
         <Route path="/alocacao" component={Alocacao} />
         <Route path="/sistema" component={Sistema} />
+        <Route path="/manual" component={Manual} />
         <Route component={NotFound} />
       </Switch>
     </DashboardLayout>
