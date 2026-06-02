@@ -115,6 +115,78 @@ export default function DesvioNovo() {
   const [registrados, setRegistrados] = useState<{ id: number; descricao: string }[]>([]);
   const [annotatingIdx, setAnnotatingIdx] = useState<number | null>(null);
 
+  // ---------- Auto-save de rascunho (slot único por usuário) ----------
+  // Salva o contexto da inspeção + o desvio atual em preenchimento.
+  // Fotos em upload (sem fileKey) não são persistidas; somente as já enviadas.
+  const draftKey = `draft:desvio:novo`;
+  const restoredRef = useRef(false);
+  const [restoredAt, setRestoredAt] = useState<number | null>(null);
+  useEffect(() => {
+    if (restoredRef.current) return;
+    restoredRef.current = true;
+    const d: any = loadDraft(draftKey);
+    if (!d) return;
+    // Etapa 1
+    if (d.obraId) setObraId(d.obraId);
+    if (d.ambiente) setAmbiente(d.ambiente);
+    if (d.vertical) setVertical(d.vertical);
+    if (d.dataInspecao) setDataInspecao(d.dataInspecao);
+    if (d.plantaId != null) setPlantaId(d.plantaId);
+    if (d.pinX != null) setPinX(d.pinX);
+    if (d.pinY != null) setPinY(d.pinY);
+    if (typeof d.step === "number") setStep(d.step);
+    if (typeof d.contextCollapsed === "boolean") setContextCollapsed(d.contextCollapsed);
+    // Etapa 2
+    if (d.grupoId) setGrupoId(d.grupoId);
+    if (d.disciplinaId) setDisciplinaId(d.disciplinaId);
+    if (d.fornecedorNome) setFornecedorNome(d.fornecedorNome);
+    if (d.descricao) setDescricao(d.descricao);
+    if (d.severidade) setSeveridade(d.severidade);
+    if (d.prazoSugerido) setPrazoSugerido(d.prazoSugerido);
+    if (typeof d.tagCritico === "boolean") setTagCritico(d.tagCritico);
+    if (typeof d.tagDepProjeto === "boolean") setTagDepProjeto(d.tagDepProjeto);
+    if (typeof d.tagPendenteGo === "boolean") setTagPendenteGo(d.tagPendenteGo);
+    if (typeof d.tagGerenciadora === "boolean") setTagGerenciadora(d.tagGerenciadora);
+    if (typeof d.tagArquitetura === "boolean") setTagArquitetura(d.tagArquitetura);
+    if (Array.isArray(d.fotos)) {
+      // só recupera fotos já enviadas ao storage
+      const restored = d.fotos
+        .filter((f: any) => f.status === "done" && f.fileKey && f.publicUrl)
+        .map((f: any) => ({
+          file: new File([], "restored.jpg", { type: "image/jpeg" }),
+          preview: f.publicUrl,
+          fileKey: f.fileKey,
+          publicUrl: f.publicUrl,
+          status: "done" as const,
+        }));
+      setFotos(restored);
+    }
+    if (Array.isArray(d.registrados)) setRegistrados(d.registrados);
+    setRestoredAt(d.__savedAt ?? Date.now());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const { clearDraft: clearDraftFn, markClean } = useDraftAutosave({
+    key: draftKey,
+    data: {
+      step, contextCollapsed,
+      obraId, ambiente, vertical, dataInspecao, plantaId, pinX, pinY,
+      grupoId, disciplinaId, fornecedorNome, descricao, severidade, prazoSugerido,
+      tagCritico, tagDepProjeto, tagPendenteGo, tagGerenciadora, tagArquitetura,
+      fotos: fotos
+        .filter(f => f.status === "done" && f.fileKey && f.publicUrl)
+        .map(f => ({ fileKey: f.fileKey, publicUrl: f.publicUrl, status: "done" })),
+      registrados,
+    },
+  });
+
+  const discardDraft = () => {
+    clearDraftFn();
+    markClean();
+    setRestoredAt(null);
+    window.location.reload();
+  };
+
   // ---------- Helpers ----------
   const obraSelecionada = obras?.find(o => String(o.id) === obraId);
 
