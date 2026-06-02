@@ -369,6 +369,7 @@ export default function ChecklistEditor() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
+      <DraftRestoredBanner savedAt={restoredAt} onDiscard={discardDraft} className="print:hidden" />
       {/* Header bar — hidden on print */}
       <div className="flex items-center justify-between print:hidden">
         <div className="flex items-center gap-2">
