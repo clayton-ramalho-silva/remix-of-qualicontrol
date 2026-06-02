@@ -306,13 +306,16 @@ export default function DesvioNovo() {
   // fornecedores_disciplinas (disciplina selecionada)
   const fornFirstRef = useRef(true);
   useEffect(() => {
+    if (!obraId || !disciplinaId) {
+      setFornecedoresApi([]);
+      return;
+    }
     if (fornFirstRef.current) {
       fornFirstRef.current = false;
     } else {
       setFornecedorNome("");
     }
     setFornecedoresApi([]);
-    if (!obraId || !disciplinaId) return;
 
     let cancelled = false;
     (async () => {
