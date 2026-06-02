@@ -13,6 +13,7 @@ import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { useDraftAutosave, loadDraft } from "@/hooks/useDraftAutosave";
+import DraftRestoredBanner from "@/components/DraftRestoredBanner";
 
 const CLASSIFICACOES = [
   { value: "incidente", label: "Incidente (quase acidente)" },
