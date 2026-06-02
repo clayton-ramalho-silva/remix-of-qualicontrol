@@ -116,7 +116,7 @@ export function useDraftAutosave<T>(opts: DraftAutosaveOptions<T>) {
     if (firstRunRef.current) {
       firstRunRef.current = false;
       // marca lastSaved com o conteúdo inicial pra não disparar dirty no mount
-      lastSavedRef.current = safeStringify({ ...data, __savedAt: 0 });
+      lastSavedRef.current = safeStringify(data);
       return;
     }
     setDirty(true);
