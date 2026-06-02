@@ -9,7 +9,9 @@ import ObraSelect from "@/components/ObraSelect";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useDraftAutosave, loadDraft } from "@/hooks/useDraftAutosave";
+import DraftRestoredBanner from "@/components/DraftRestoredBanner";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import {
