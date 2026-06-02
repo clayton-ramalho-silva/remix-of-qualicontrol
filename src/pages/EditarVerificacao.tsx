@@ -70,7 +70,7 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
         if (d.diretoria !== undefined) setDiretoria(d.diretoria);
         if (d.observacoes !== undefined) setObservacoes(d.observacoes);
         if (d.respostas) setRespostas(d.respostas);
-        setTimeout(() => toast.success("Rascunho recuperado", { description: "Continuamos de onde você parou." }), 100);
+        setRestoredAt(d.__savedAt ?? Date.now());
       }
       restoredRef.current = true;
     }
