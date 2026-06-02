@@ -40,6 +40,7 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
   const exigeFoto = (verificacao as any)?.categoria === "vistoria";
   const draftKey = `draft:verificacao-edit:${id}`;
   const restoredRef = useRef(false);
+  const [restoredAt, setRestoredAt] = useState<number | null>(null);
 
   useEffect(() => {
     if (!verificacao) return;
