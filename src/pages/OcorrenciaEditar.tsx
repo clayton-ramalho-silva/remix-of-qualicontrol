@@ -207,6 +207,7 @@ export default function OcorrenciaEditar() {
 
   return (
     <div className="space-y-6 max-w-4xl">
+      <DraftRestoredBanner savedAt={restoredAt} onDiscard={discardDraft} />
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" onClick={() => navigate(`/qsms/ocorrencias/${id}`)}>
           <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
