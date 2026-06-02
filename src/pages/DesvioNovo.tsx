@@ -396,6 +396,7 @@ export default function DesvioNovo() {
         resetForm();
       } else {
         toast.success(`Inspeção concluída: ${registrados.length + 1} desvio(s) registrado(s)`);
+        clearDraftFn(); markClean();
         setLocation("/desvios");
       }
     } catch (err) {
