@@ -803,6 +803,7 @@ export default function DesvioNovo() {
                     salvarDesvio(false);
                   } else if (registrados.length > 0) {
                     toast.success(`Inspeção concluída: ${registrados.length} desvio(s) registrado(s)`);
+                    clearDraftFn(); markClean();
                     setLocation("/desvios");
                   }
                 }}
