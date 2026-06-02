@@ -130,7 +130,7 @@ export default function OcorrenciaEditar() {
         if (typeof d.catEmitida === "boolean") setCatEmitida(d.catEmitida);
         if (typeof d.awfor149Anexada === "boolean") setAwfor149Anexada(d.awfor149Anexada);
         if (d.observacoes !== undefined) setObservacoes(d.observacoes);
-        setTimeout(() => toast.success("Rascunho recuperado", { description: "Continuamos de onde você parou." }), 100);
+        setRestoredAt(d.__savedAt ?? Date.now());
       }
       restoredRef.current = true;
     }
