@@ -267,15 +267,19 @@ export default function DesvioNovo() {
   // Carrega disciplinas associadas ao grupo selecionado
   const grupoFirstRef = useRef(true);
   useEffect(() => {
-    // Na 1ª execução (após restauração de rascunho), NÃO limpa disciplinaId —
-    // apenas carrega a lista. Em mudanças posteriores do grupo, reseta.
+    // Só consome o "primeiro" quando grupoId é truthy; senão o mount inicial
+    // (grupoId="") consumiria a flag e a restauração subsequente zeraria a
+    // disciplina restaurada.
+    if (!grupoId) {
+      setDisciplinas([]);
+      return;
+    }
     if (grupoFirstRef.current) {
       grupoFirstRef.current = false;
     } else {
       setDisciplinaId("");
     }
     setDisciplinas([]);
-    if (!grupoId) return;
     let cancelled = false;
     (async () => {
       setLoadingDisciplinas(true);
