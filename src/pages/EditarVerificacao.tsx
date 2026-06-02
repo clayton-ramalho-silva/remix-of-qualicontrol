@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useDraftAutosave, loadDraft } from "@/hooks/useDraftAutosave";
+import DraftRestoredBanner from "@/components/DraftRestoredBanner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
