@@ -169,6 +169,7 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
 
   return (
     <div className="space-y-6">
+      <DraftRestoredBanner savedAt={restoredAt} onDiscard={discardDraft} />
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={() => navigate(`${rotaBase}/${id}`)}>
