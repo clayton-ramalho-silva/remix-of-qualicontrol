@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { useDraftAutosave, loadDraft } from "@/hooks/useDraftAutosave";
+import { useDraftAutosave, loadDraft, clearDraft as clearDraftKey } from "@/hooks/useDraftAutosave";
+import DraftRestoredBanner from "@/components/DraftRestoredBanner";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { supabase } from "@/integrations/supabase/client";
