@@ -82,6 +82,13 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
     enabled: !!verificacao,
   });
 
+  const discardDraft = () => {
+    clearDraftFn();
+    markClean();
+    setRestoredAt(null);
+    window.location.reload();
+  };
+
   const setResposta = (itemId: number, resposta: Resposta) => {
     setRespostas(prev => ({
       ...prev,
