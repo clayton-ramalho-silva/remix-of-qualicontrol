@@ -193,22 +193,24 @@ export default function ChecklistEditor() {
     })();
   }, [isEdit, id]);
 
-  // Restauração de rascunho em modo NOVO (procura o mais recente sem obra/data específica)
+  // Restauração de rascunho em modo NOVO (slot único + migração de chaves legacy)
   useEffect(() => {
     if (isEdit) return;
     if (restoredRef.current) return;
-    const candidates: string[] = [];
+    restoredRef.current = true;
+    let best: any = loadDraft(draftKey);
     try {
+      const legacy: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
-        if (k && k.startsWith("draft:checklist-novo:")) candidates.push(k);
+        if (k && k.startsWith("draft:checklist-novo:")) {
+          legacy.push(k);
+          const d: any = loadDraft(k);
+          if (d && (!best || (d.__savedAt ?? 0) > (best.__savedAt ?? 0))) best = d;
+        }
       }
+      legacy.forEach(clearDraftKey);
     } catch { /* ignore */ }
-    let best: any = null;
-    for (const k of candidates) {
-      const d: any = loadDraft(k);
-      if (d && (!best || (d.__savedAt ?? 0) > (best.__savedAt ?? 0))) best = d;
-    }
     if (best) {
       if (best.obraId !== undefined) setObraId(best.obraId);
       if (best.dataVistoria) setDataVistoria(best.dataVistoria);
@@ -218,9 +220,8 @@ export default function ChecklistEditor() {
       if (best.condicao) setCondicao(best.condicao);
       if (best.totalItens !== undefined) setTotalItens(best.totalItens);
       if (Array.isArray(best.items)) setItems(best.items);
-      setTimeout(() => toast.success("Rascunho recuperado", { description: "Continuamos de onde você parou." }), 100);
+      setRestoredAt(best.__savedAt ?? Date.now());
     }
-    restoredRef.current = true;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
