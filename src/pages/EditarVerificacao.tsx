@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useDraftAutosave, loadDraft } from "@/hooks/useDraftAutosave";
+import DraftRestoredBanner from "@/components/DraftRestoredBanner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +40,7 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
   const exigeFoto = (verificacao as any)?.categoria === "vistoria";
   const draftKey = `draft:verificacao-edit:${id}`;
   const restoredRef = useRef(false);
+  const [restoredAt, setRestoredAt] = useState<number | null>(null);
 
   useEffect(() => {
     if (!verificacao) return;
@@ -68,7 +70,7 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
         if (d.diretoria !== undefined) setDiretoria(d.diretoria);
         if (d.observacoes !== undefined) setObservacoes(d.observacoes);
         if (d.respostas) setRespostas(d.respostas);
-        setTimeout(() => toast.success("Rascunho recuperado", { description: "Continuamos de onde você parou." }), 100);
+        setRestoredAt(d.__savedAt ?? Date.now());
       }
       restoredRef.current = true;
     }
@@ -79,6 +81,13 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
     data: { dataVistoria, nucleo, diretoria, observacoes, respostas },
     enabled: !!verificacao,
   });
+
+  const discardDraft = () => {
+    clearDraftFn();
+    markClean();
+    setRestoredAt(null);
+    window.location.reload();
+  };
 
   const setResposta = (itemId: number, resposta: Resposta) => {
     setRespostas(prev => ({
@@ -160,6 +169,7 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
 
   return (
     <div className="space-y-6">
+      <DraftRestoredBanner savedAt={restoredAt} onDiscard={discardDraft} />
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={() => navigate(`${rotaBase}/${id}`)}>

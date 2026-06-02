@@ -13,6 +13,7 @@ import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { useDraftAutosave, loadDraft } from "@/hooks/useDraftAutosave";
+import DraftRestoredBanner from "@/components/DraftRestoredBanner";
 
 const CLASSIFICACOES = [
   { value: "incidente", label: "Incidente (quase acidente)" },
@@ -67,6 +68,7 @@ export default function OcorrenciaEditar() {
 
   const draftKey = id ? `draft:ocorrencia-edit:${id}` : null;
   const restoredRef = useRef(false);
+  const [restoredAt, setRestoredAt] = useState<number | null>(null);
 
   useEffect(() => {
     if (!ocorrencia) return;
@@ -128,7 +130,7 @@ export default function OcorrenciaEditar() {
         if (typeof d.catEmitida === "boolean") setCatEmitida(d.catEmitida);
         if (typeof d.awfor149Anexada === "boolean") setAwfor149Anexada(d.awfor149Anexada);
         if (d.observacoes !== undefined) setObservacoes(d.observacoes);
-        setTimeout(() => toast.success("Rascunho recuperado", { description: "Continuamos de onde você parou." }), 100);
+        setRestoredAt(d.__savedAt ?? Date.now());
       }
       restoredRef.current = true;
     }
@@ -146,6 +148,13 @@ export default function OcorrenciaEditar() {
     },
     enabled: !!ocorrencia,
   });
+
+  const discardDraft = () => {
+    clearDraftFn();
+    markClean();
+    setRestoredAt(null);
+    window.location.reload();
+  };
 
   async function salvar() {
     const parsed = schema.safeParse({
@@ -198,6 +207,7 @@ export default function OcorrenciaEditar() {
 
   return (
     <div className="space-y-6 max-w-4xl">
+      <DraftRestoredBanner savedAt={restoredAt} onDiscard={discardDraft} />
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" onClick={() => navigate(`/qsms/ocorrencias/${id}`)}>
           <ArrowLeft className="h-4 w-4 mr-1" /> Voltar

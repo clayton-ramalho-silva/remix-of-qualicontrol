@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { useDraftAutosave, loadDraft } from "@/hooks/useDraftAutosave";
+import { useDraftAutosave, loadDraft, clearDraft as clearDraftKey } from "@/hooks/useDraftAutosave";
+import DraftRestoredBanner from "@/components/DraftRestoredBanner";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,25 +54,33 @@ export default function OcorrenciaNova() {
   const [fotos, setFotos] = useState<Foto[]>([]);
   const [salvando, setSalvando] = useState(false);
 
-  // Auto-save de rascunho — fotos já uploaded (com fileKey/publicUrl) são preservadas
-  const draftKey = `draft:ocorrencia:${obraId || "novo"}:${dataOcorrencia}:${hora}`;
+  // Auto-save de rascunho — UMA única "vaga" para Nova Ocorrência.
+  // Fotos já uploaded (com fileKey/publicUrl) são preservadas.
+  const draftKey = `draft:ocorrencia:nova`;
   const restoredRef = useRef(false);
+  const [restoredAt, setRestoredAt] = useState<number | null>(null);
   useEffect(() => {
     if (restoredRef.current) return;
-    const candidates: string[] = [];
-    try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k && k.startsWith("draft:ocorrencia:")) candidates.push(k);
-      }
-    } catch { /* ignore */ }
-    let best: any = null;
-    for (const k of candidates) {
-      const d: any = loadDraft(k);
-      if (d && (!best || (d.__savedAt ?? 0) > (best.__savedAt ?? 0))) best = d;
+    restoredRef.current = true;
+    let d: any = loadDraft(draftKey);
+    // Migração: consome rascunhos antigos com chave `draft:ocorrencia:<obra>:<data>:<hora>`
+    if (!d) {
+      try {
+        let best: any = null;
+        const legacy: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith("draft:ocorrencia:") && k !== draftKey && !k.startsWith("draft:ocorrencia-edit:")) {
+            legacy.push(k);
+            const dd: any = loadDraft(k);
+            if (dd && (!best || (dd.__savedAt ?? 0) > (best.__savedAt ?? 0))) best = dd;
+          }
+        }
+        if (best) d = best;
+        legacy.forEach(clearDraftKey);
+      } catch { /* ignore */ }
     }
-    if (best) {
-      const d = best;
+    if (d) {
       if (d.obraId) setObraId(d.obraId);
       if (d.dataOcorrencia) setDataOcorrencia(d.dataOcorrencia);
       if (d.hora) setHora(d.hora);
@@ -91,12 +100,10 @@ export default function OcorrenciaNova() {
       if (d.responsavelPreenchimento) setResponsavelPreenchimento(d.responsavelPreenchimento);
       if (d.responsavelObra) setResponsavelObra(d.responsavelObra);
       if (Array.isArray(d.fotos)) {
-        // só recupera fotos já enviadas ao storage (com fileKey)
         setFotos(d.fotos.filter((f: any) => f.status === "done" && f.fileKey && f.publicUrl));
       }
-      setTimeout(() => toast.success("Rascunho recuperado", { description: "Continuamos de onde você parou." }), 100);
+      setRestoredAt(d.__savedAt ?? Date.now());
     }
-    restoredRef.current = true;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -111,6 +118,13 @@ export default function OcorrenciaNova() {
       fotos: fotos.filter(f => f.status === "done").map(f => ({ id: f.id, fileKey: f.fileKey, publicUrl: f.publicUrl, previewUrl: f.publicUrl, status: "done" })),
     },
   });
+
+  const discardDraft = () => {
+    clearDraftFn();
+    markClean();
+    setRestoredAt(null);
+    window.location.reload();
+  };
 
   async function uploadFoto(f: Foto) {
     if (!f.file) return;
@@ -187,6 +201,7 @@ export default function OcorrenciaNova() {
 
   return (
     <div className="space-y-6 max-w-4xl">
+      <DraftRestoredBanner savedAt={restoredAt} onDiscard={discardDraft} />
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" onClick={() => navigate("/qsms/ocorrencias")}>
           <ArrowLeft className="h-4 w-4 mr-1" /> Voltar

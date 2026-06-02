@@ -14,7 +14,8 @@ import {
   CheckCircle2, AlertTriangle, XCircle, ImagePlus, Printer, Loader2, FileEdit,
 } from "lucide-react";
 import FotosDesvioPicker, { type FotoEscolhida } from "@/components/checklist/FotosDesvioPicker";
-import { useDraftAutosave, loadDraft } from "@/hooks/useDraftAutosave";
+import { useDraftAutosave, loadDraft, clearDraft as clearDraftKey } from "@/hooks/useDraftAutosave";
+import DraftRestoredBanner from "@/components/DraftRestoredBanner";
 
 type Avaliacao = "ok" | "atencao" | "critico";
 type Condicao = "ruim" | "regular" | "otima";
@@ -83,11 +84,12 @@ export default function ChecklistEditor() {
   const printRef = useRef<HTMLDivElement>(null);
   const restoredRef = useRef(false);
   const serverLoadedAtRef = useRef(0);
+  const [restoredAt, setRestoredAt] = useState<number | null>(null);
 
-  // Chave do rascunho local: edit usa id; novo usa obra+data como discriminador
+  // Chave do rascunho local: edit usa id; novo usa slot único.
   const draftKey = isEdit
     ? `draft:checklist-edit:${id}`
-    : `draft:checklist-novo:${obraId || "sem-obra"}:${dataVistoria}`;
+    : `draft:checklist:novo`;
 
   // Total de itens = total de desvios da obra selecionada
   useEffect(() => {
@@ -183,7 +185,7 @@ export default function ChecklistEditor() {
           if (d.condicao) setCondicao(d.condicao);
           if (d.totalItens !== undefined) setTotalItens(d.totalItens);
           if (Array.isArray(d.items)) setItems(d.items);
-          setTimeout(() => toast.success("Rascunho recuperado", { description: "Continuamos de onde você parou." }), 100);
+          setRestoredAt(d.__savedAt ?? Date.now());
         }
         restoredRef.current = true;
       }
@@ -191,22 +193,24 @@ export default function ChecklistEditor() {
     })();
   }, [isEdit, id]);
 
-  // Restauração de rascunho em modo NOVO (procura o mais recente sem obra/data específica)
+  // Restauração de rascunho em modo NOVO (slot único + migração de chaves legacy)
   useEffect(() => {
     if (isEdit) return;
     if (restoredRef.current) return;
-    const candidates: string[] = [];
+    restoredRef.current = true;
+    let best: any = loadDraft(draftKey);
     try {
+      const legacy: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
-        if (k && k.startsWith("draft:checklist-novo:")) candidates.push(k);
+        if (k && k.startsWith("draft:checklist-novo:")) {
+          legacy.push(k);
+          const d: any = loadDraft(k);
+          if (d && (!best || (d.__savedAt ?? 0) > (best.__savedAt ?? 0))) best = d;
+        }
       }
+      legacy.forEach(clearDraftKey);
     } catch { /* ignore */ }
-    let best: any = null;
-    for (const k of candidates) {
-      const d: any = loadDraft(k);
-      if (d && (!best || (d.__savedAt ?? 0) > (best.__savedAt ?? 0))) best = d;
-    }
     if (best) {
       if (best.obraId !== undefined) setObraId(best.obraId);
       if (best.dataVistoria) setDataVistoria(best.dataVistoria);
@@ -216,9 +220,8 @@ export default function ChecklistEditor() {
       if (best.condicao) setCondicao(best.condicao);
       if (best.totalItens !== undefined) setTotalItens(best.totalItens);
       if (Array.isArray(best.items)) setItems(best.items);
-      setTimeout(() => toast.success("Rascunho recuperado", { description: "Continuamos de onde você parou." }), 100);
+      setRestoredAt(best.__savedAt ?? Date.now());
     }
-    restoredRef.current = true;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -228,6 +231,13 @@ export default function ChecklistEditor() {
     data: { obraId, dataVistoria, metragem, gc, go, condicao, totalItens, items },
     enabled: !loading,
   });
+
+  const discardDraft = () => {
+    clearDraftFn();
+    markClean();
+    setRestoredAt(null);
+    window.location.reload();
+  };
 
   // Print on load
   useEffect(() => {
@@ -359,6 +369,7 @@ export default function ChecklistEditor() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
+      <DraftRestoredBanner savedAt={restoredAt} onDiscard={discardDraft} className="print:hidden" />
       {/* Header bar — hidden on print */}
       <div className="flex items-center justify-between print:hidden">
         <div className="flex items-center gap-2">

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { useDraftAutosave, loadDraft } from "@/hooks/useDraftAutosave";
+import { useDraftAutosave, loadDraft, clearDraft as clearDraftKey } from "@/hooks/useDraftAutosave";
+import DraftRestoredBanner from "@/components/DraftRestoredBanner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,26 +61,38 @@ export default function NovaVerificacao({
   const [expandedSections, setExpandedSections] = useState<Record<number, boolean>>({});
   const [submitting, setSubmitting] = useState(false);
 
-  // Auto-save de rascunho — chave por categoria+obra+data
-  const draftKey = `draft:verificacao:${categoria}:${obraId ?? "novo"}:${dataVistoria}`;
+  // Auto-save de rascunho — UMA única "vaga" por categoria (só pode existir
+  // um rascunho de "Nova Verificação de <categoria>" em andamento por vez).
+  const draftKey = `draft:verificacao:${categoria}`;
   const restoredRef = useRef(false);
+  const [restoredAt, setRestoredAt] = useState<number | null>(null);
   useEffect(() => {
     if (restoredRef.current) return;
-    // procura rascunho mais recente para a categoria (caso obra ainda não escolhida)
-    const candidates: string[] = [];
-    try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k && k.startsWith(`draft:verificacao:${categoria}:`)) candidates.push(k);
-      }
-    } catch { /* ignore */ }
-    let best: { key: string; savedAt: number; data: any } | null = null;
-    for (const k of candidates) {
-      const d: any = loadDraft(k);
-      if (d && (!best || (d.__savedAt ?? 0) > best.savedAt)) best = { key: k, savedAt: d.__savedAt ?? 0, data: d };
+    restoredRef.current = true;
+    // Migração leve: tenta consumir rascunhos antigos com chave
+    // `draft:verificacao:<categoria>:...` salvos antes da mudança de esquema.
+    let d: any = loadDraft(draftKey);
+    if (!d) {
+      try {
+        let best: { k: string; d: any } | null = null;
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith(`draft:verificacao:${categoria}:`)) {
+            const dd: any = loadDraft(k);
+            if (dd && (!best || (dd.__savedAt ?? 0) > (best.d.__savedAt ?? 0))) best = { k, d: dd };
+          }
+        }
+        if (best) {
+          d = best.d;
+          // remove rascunhos legacy depois de aproveitar o mais recente
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && k.startsWith(`draft:verificacao:${categoria}:`)) clearDraftKey(k);
+          }
+        }
+      } catch { /* ignore */ }
     }
-    if (best && best.data) {
-      const d = best.data;
+    if (d) {
       if (d.obraId != null) setObraId(d.obraId);
       if (d.avaliadorId) setAvaliadorId(d.avaliadorId);
       if (d.dataVistoria) setDataVistoria(d.dataVistoria);
@@ -89,10 +102,8 @@ export default function NovaVerificacao({
       if (d.diretoria) setDiretoria(d.diretoria);
       if (d.observacoes) setObservacoes(d.observacoes);
       if (d.respostas) setRespostas(d.respostas);
-      restoredRef.current = true;
-      setTimeout(() => toast.success("Rascunho recuperado", { description: "Continuamos de onde você parou." }), 100);
+      setRestoredAt(d.__savedAt ?? Date.now());
     }
-    restoredRef.current = true;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -100,6 +111,13 @@ export default function NovaVerificacao({
     key: draftKey,
     data: { obraId, avaliadorId, dataVistoria, goNome, gcNome, nucleo, diretoria, observacoes, respostas },
   });
+
+  const discardDraft = () => {
+    clearDraftFn();
+    markClean();
+    setRestoredAt(null);
+    window.location.reload();
+  };
 
   // Filtrar membros por cargo
   const avaliadores = membros?.filter(m => m.cargo === "avaliador" && m.ativo) || [];
@@ -247,6 +265,7 @@ export default function NovaVerificacao({
 
   return (
     <div className="space-y-6">
+      <DraftRestoredBanner savedAt={restoredAt} onDiscard={discardDraft} />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
