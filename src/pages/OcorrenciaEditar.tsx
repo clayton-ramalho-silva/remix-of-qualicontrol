@@ -68,6 +68,7 @@ export default function OcorrenciaEditar() {
 
   const draftKey = id ? `draft:ocorrencia-edit:${id}` : null;
   const restoredRef = useRef(false);
+  const [restoredAt, setRestoredAt] = useState<number | null>(null);
 
   useEffect(() => {
     if (!ocorrencia) return;
