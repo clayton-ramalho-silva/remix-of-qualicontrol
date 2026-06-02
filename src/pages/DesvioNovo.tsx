@@ -265,8 +265,15 @@ export default function DesvioNovo() {
   };
 
   // Carrega disciplinas associadas ao grupo selecionado
+  const grupoFirstRef = useRef(true);
   useEffect(() => {
-    setDisciplinaId("");
+    // Na 1ª execução (após restauração de rascunho), NÃO limpa disciplinaId —
+    // apenas carrega a lista. Em mudanças posteriores do grupo, reseta.
+    if (grupoFirstRef.current) {
+      grupoFirstRef.current = false;
+    } else {
+      setDisciplinaId("");
+    }
     setDisciplinas([]);
     if (!grupoId) return;
     let cancelled = false;
@@ -290,12 +297,19 @@ export default function DesvioNovo() {
     return () => { cancelled = true; };
   }, [grupoId]);
 
+
   // Carrega fornecedores: interseção entre obras_fornecedores (obra) e
   // fornecedores_disciplinas (disciplina selecionada)
+  const fornFirstRef = useRef(true);
   useEffect(() => {
-    setFornecedorNome("");
+    if (fornFirstRef.current) {
+      fornFirstRef.current = false;
+    } else {
+      setFornecedorNome("");
+    }
     setFornecedoresApi([]);
     if (!obraId || !disciplinaId) return;
+
     let cancelled = false;
     (async () => {
       setLoadingFornecedores(true);
