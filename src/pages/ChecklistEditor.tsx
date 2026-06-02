@@ -185,7 +185,7 @@ export default function ChecklistEditor() {
           if (d.condicao) setCondicao(d.condicao);
           if (d.totalItens !== undefined) setTotalItens(d.totalItens);
           if (Array.isArray(d.items)) setItems(d.items);
-          setTimeout(() => toast.success("Rascunho recuperado", { description: "Continuamos de onde você parou." }), 100);
+          setRestoredAt(d.__savedAt ?? Date.now());
         }
         restoredRef.current = true;
       }
