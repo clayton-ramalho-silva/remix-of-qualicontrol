@@ -82,10 +82,28 @@ export function useDraftAutosave<T>(opts: DraftAutosaveOptions<T>) {
         localStorage.removeItem(key);
         return;
       }
-      const payload = safeStringify({ ...data, __savedAt: Date.now() });
-      if (payload === lastSavedRef.current) return;
+      const dataStr = safeStringify(data);
+      // Compara apenas o CONTEÚDO com o que já está em disco (ignora __savedAt).
+      // Se nada mudou de fato, NÃO regrava — isso preserva o __savedAt original
+      // (o momento em que o usuário realmente parou de preencher) mesmo que a
+      // restauração re-aplique o mesmo estado e dispare o autosave.
+      let existingDataStr = "";
+      try {
+        const existingRaw = localStorage.getItem(key);
+        if (existingRaw) {
+          const parsed = JSON.parse(existingRaw);
+          delete parsed.__savedAt;
+          existingDataStr = JSON.stringify(parsed);
+        }
+      } catch { /* ignore */ }
+      if (dataStr === existingDataStr) {
+        lastSavedRef.current = dataStr;
+        return;
+      }
+      if (dataStr === lastSavedRef.current) return;
+      const payload = JSON.stringify({ ...JSON.parse(dataStr), __savedAt: Date.now() });
       localStorage.setItem(key, payload);
-      lastSavedRef.current = payload;
+      lastSavedRef.current = dataStr;
     } catch (e) {
       // quota exceeded ou similar — silencia (foto não está aqui)
       console.warn("draft autosave failed", e);
