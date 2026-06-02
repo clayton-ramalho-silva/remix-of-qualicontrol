@@ -300,10 +300,16 @@ export default function DesvioNovo() {
 
   // Carrega fornecedores: interseção entre obras_fornecedores (obra) e
   // fornecedores_disciplinas (disciplina selecionada)
+  const fornFirstRef = useRef(true);
   useEffect(() => {
-    setFornecedorNome("");
+    if (fornFirstRef.current) {
+      fornFirstRef.current = false;
+    } else {
+      setFornecedorNome("");
+    }
     setFornecedoresApi([]);
     if (!obraId || !disciplinaId) return;
+
     let cancelled = false;
     (async () => {
       setLoadingFornecedores(true);
