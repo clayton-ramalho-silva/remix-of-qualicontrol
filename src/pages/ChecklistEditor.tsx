@@ -232,6 +232,13 @@ export default function ChecklistEditor() {
     enabled: !loading,
   });
 
+  const discardDraft = () => {
+    clearDraftFn();
+    markClean();
+    setRestoredAt(null);
+    window.location.reload();
+  };
+
   // Print on load
   useEffect(() => {
     if (printOnLoad && !loading) {
