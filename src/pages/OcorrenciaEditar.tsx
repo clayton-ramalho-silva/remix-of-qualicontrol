@@ -149,6 +149,13 @@ export default function OcorrenciaEditar() {
     enabled: !!ocorrencia,
   });
 
+  const discardDraft = () => {
+    clearDraftFn();
+    markClean();
+    setRestoredAt(null);
+    window.location.reload();
+  };
+
   async function salvar() {
     const parsed = schema.safeParse({
       obraId: Number(obraId),
