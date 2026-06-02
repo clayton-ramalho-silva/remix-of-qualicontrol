@@ -26,24 +26,57 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  );
 
-    // 1) Buscar API externa
-    const resp = await fetch(`${AW_BASE_URL}/check-lista-atividade-inspecao`, {
-      headers: { accept: "*/*", "X-Api-Key": AW_API_KEY },
-    });
-    if (!resp.ok) {
-      const text = await resp.text();
-      throw new Error(`AW API falhou [${resp.status}]: ${text}`);
+  // Helper: lê grupos existentes do banco (fallback quando a API externa falha)
+  const readGruposFromDb = async () => {
+    const { data, error } = await supabase
+      .from("grupos")
+      .select("*")
+      .eq("ativo", 1)
+      .order("nome");
+    if (error) throw error;
+    return data ?? [];
+  };
+
+  try {
+    // 1) Buscar API externa — com timeout para evitar travar a função
+    let atividades: AtividadeInspecao[] | null = null;
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 10_000);
+      const resp = await fetch(`${AW_BASE_URL}/check-lista-atividade-inspecao`, {
+        headers: { accept: "*/*", "X-Api-Key": AW_API_KEY },
+        signal: ctrl.signal,
+      });
+      clearTimeout(timer);
+      if (!resp.ok) {
+        const text = await resp.text();
+        throw new Error(`AW API falhou [${resp.status}]: ${text}`);
+      }
+      atividades = (await resp.json()) as AtividadeInspecao[];
+    } catch (extErr: unknown) {
+      // Falha de rede/TLS na API externa — não derruba o endpoint.
+      const msg = extErr instanceof Error ? extErr.message : String(extErr);
+      console.warn("AW API indisponível, usando fallback do banco:", msg);
+      const grupos = await readGruposFromDb();
+      return new Response(
+        JSON.stringify({
+          success: true,
+          synced: 0,
+          fallback: true,
+          warning: "API externa indisponível — exibindo grupos já sincronizados",
+          grupos,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
-    const atividades = (await resp.json()) as AtividadeInspecao[];
 
     // 2) De-para → grupos (id é auto-incremento; usamos `codigo` como chave de conflito)
-    const rows = atividades.map((a) => ({
+    const rows = (atividades ?? []).map((a) => ({
       codigo: String(a.IdAtividadeInspecao),
       nome: a.Descricao,
       ativo: 1,
@@ -57,29 +90,26 @@ Deno.serve(async (req) => {
     }
 
     // 3) Retornar lista atualizada
-    const { data, error } = await supabase
-      .from("grupos")
-      .select("*")
-      .eq("ativo", 1)
-      .order("nome");
-    if (error) throw error;
-
+    const grupos = await readGruposFromDb();
     return new Response(
-      JSON.stringify({ success: true, synced: rows.length, grupos: data }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
+      JSON.stringify({ success: true, synced: rows.length, grupos }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("sync-grupos-inspecao error:", message);
-    return new Response(
-      JSON.stringify({ success: false, error: message }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
-    );
+    // Última tentativa: devolver o que tiver em banco com fallback=true
+    try {
+      const grupos = await readGruposFromDb();
+      return new Response(
+        JSON.stringify({ success: false, error: message, fallback: true, grupos }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    } catch {
+      return new Response(
+        JSON.stringify({ success: false, error: message, fallback: true, grupos: [] }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
   }
 });
