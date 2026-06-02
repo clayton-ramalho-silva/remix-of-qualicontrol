@@ -409,6 +409,7 @@ export default function DesvioNovo() {
   // ---------- Render ----------
   return (
     <div className="max-w-3xl mx-auto space-y-6">
+      <DraftRestoredBanner savedAt={restoredAt} onDiscard={discardDraft} />
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => setLocation("/desvios")}>
           <ArrowLeft className="h-4 w-4" />
