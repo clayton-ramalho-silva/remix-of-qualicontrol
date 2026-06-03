@@ -211,16 +211,45 @@ export default function PlanosAcao() {
                   {items.length === 0 && (
                     <div className="text-center text-xs text-slate-400 py-8">Sem planos</div>
                   )}
-                  {items.map((p: any) => <PlanoCard key={p.id} plano={p} onClick={() => navigate(`/planos-acao/${p.id}`)} />)}
+                  {items.map((p: any) => (
+                    <PlanoCard
+                      key={p.id}
+                      plano={p}
+                      onClick={() => navigate(`/planos-acao/${p.id}`)}
+                      canDelete={isAdmin}
+                      onDelete={() => setConfirmDeleteId(p.id)}
+                    />
+                  ))}
                 </div>
               </div>
             );
           })}
         </div>
       )}
+      <AlertDialog open={confirmDeleteId !== null} onOpenChange={(o) => !o && setConfirmDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir plano de ação?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é permanente. Os vínculos com desvios também serão removidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteMutation.isPending}
+              onClick={(e) => { e.preventDefault(); if (confirmDeleteId !== null) deleteMutation.mutate({ id: confirmDeleteId }); }}
+            >
+              {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
+
 
 function KpiCard({ label, value, color, icon: Icon, clickable, onClick, active }: { label: string; value: number; color: string; icon: any; clickable?: boolean; onClick?: () => void; active?: boolean }) {
   return (
