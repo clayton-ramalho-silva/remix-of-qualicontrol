@@ -306,6 +306,53 @@ export default function ChecklistEditor() {
     setItems((prev) => prev.filter((_, i) => i !== idx));
   }
 
+  // Auto-popular fotos quando disciplina + fornecedor estiverem definidos (e fotos vazias)
+  const autoFotosRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!obraId) return;
+    items.forEach((it, idx) => {
+      const disc = (it.disciplina_nome || "").trim().toLowerCase();
+      const forn = (it.fornecedor_nome || "").trim().toLowerCase();
+      if (!disc || !forn) return;
+      if (it.fotos.length > 0) return;
+      const key = `${obraId}|${idx}|${disc}|${forn}`;
+      if (autoFotosRef.current.has(key)) return;
+      autoFotosRef.current.add(key);
+      (async () => {
+        const { data: desv } = await supabase
+          .from("desvios")
+          .select("id, disciplina, fornecedor_nome")
+          .eq("obra_id", Number(obraId))
+          .is("deleted_at", null);
+        const matchIds = (desv || [])
+          .filter((d: any) =>
+            (d.disciplina || "").trim().toLowerCase() === disc &&
+            (d.fornecedor_nome || "").trim().toLowerCase() === forn
+          )
+          .map((d: any) => d.id);
+        if (matchIds.length === 0) return;
+        const { data: fotos } = await supabase
+          .from("fotos_evidencia")
+          .select("id, url, tipo, descricao")
+          .in("desvio_id", matchIds);
+        const novas: Foto[] = (fotos || [])
+          .filter((f: any) => f.tipo !== "fechamento")
+          .map((f: any, i: number) => ({
+            foto_evidencia_id: f.id,
+            url: f.url,
+            legenda: f.descricao || "",
+            ordem: i,
+          }));
+        if (novas.length === 0) return;
+        setItems((prev) => prev.map((p, i) => {
+          if (i !== idx) return p;
+          if (p.fotos.length > 0) return p;
+          return { ...p, fotos: novas, expanded: true };
+        }));
+      })();
+    });
+  }, [items, obraId]);
+
   function suggestEquipes(fornecedor_nome: string): string[] {
     return equipesByForn[fornecedor_nome.toLowerCase()] || [];
   }
