@@ -331,9 +331,6 @@ export default function Obras() {
           </h1>
           <p className="text-muted-foreground text-sm mt-1">Cobertura por vertical — cada equipe escolhe quais obras cobre</p>
         </div>
-        <Button onClick={() => setShowCreate(true)} size="sm">
-          <Plus className="h-4 w-4 mr-1" /> Nova Obra
-        </Button>
       </div>
 
       <div className="inline-flex rounded-lg border bg-card p-1 gap-1">
