@@ -104,6 +104,13 @@ export default function DesviosList() {
     return Array.from(new Set(desvios.map(d => d.disciplina))).sort();
   }, [desvios]);
 
+  const obraNomeById = useMemo(() => {
+    const m = new Map<string, string>();
+    (obras || []).forEach((o: any) => m.set(String(o.id), o.nome));
+    return m;
+  }, [obras]);
+
+
   return (
     <div className="space-y-6">
       <div>
