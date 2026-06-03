@@ -233,7 +233,10 @@ export default function NovaVerificacao({
     try {
       const result = await createVerificacao.mutateAsync({
         obraId,
+        edificioId: edificioId ?? undefined,
+        andarId: andarId ?? undefined,
         categoria,
+
         avaliador: avaliadorNome,
         dataVistoria: new Date(dataVistoria).getTime(),
         go: goNome || undefined,
