@@ -117,11 +117,22 @@ export default function NovaVerificacao({
   const handleObraChange = (obraIdStr: string) => {
     const newObraId = Number(obraIdStr);
     setObraId(newObraId);
+    setEdificioId(null);
+    setAndarId(null);
     const obra: any = obrasAll?.find((o: any) => o.id === newObraId);
     setGoNome(obra?.gerente_obra ?? "");
     setGcNome(obra?.gerente_contrato ?? "");
     setNucleo(obra?.nucleo ?? "");
   };
+
+  // Edifícios + andares da obra selecionada
+  const { data: edificiosData } = trpc.edificios.listByObra.useQuery(
+    { obraId: obraId ?? 0 },
+    { enabled: !!obraId }
+  );
+  const edificios: any[] = (edificiosData as any) || [];
+  const andaresDoEdificio: any[] = (edificios.find((e: any) => e.id === edificioId)?.andares) || [];
+
 
 
   const exigeFoto = categoria === "vistoria";
