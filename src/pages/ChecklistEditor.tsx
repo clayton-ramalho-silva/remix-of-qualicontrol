@@ -80,6 +80,7 @@ export default function ChecklistEditor() {
   const [items, setItems] = useState<Item[]>([]);
   const [obras, setObras] = useState<{ id: number; codigo: string; nome: string; gerente_obra?: string | null; gerente_contrato?: string | null; nucleo?: string | null }[]>([]);
   const [disciplinas, setDisciplinas] = useState<{ id: number; nome: string }[]>([]);
+  const [disciplinasCatalogo, setDisciplinasCatalogo] = useState<{ id: number; nome: string }[]>([]);
   const [fornecedores, setFornecedores] = useState<{ id: number; nome: string }[]>([]);
   const [fornecedorDisciplinaLinks, setFornecedorDisciplinaLinks] = useState<{ fornecedor_id: number; disciplina_id: number }[]>([]);
   const [equipesByForn, setEquipesByForn] = useState<Record<string, string[]>>({});
@@ -148,7 +149,7 @@ export default function ChecklistEditor() {
     const disciplinasComDesvio = new Set(desviosObra.map((d) => normalizeKey(d.disciplina)).filter(Boolean));
     disciplinasComDesvio.forEach((key) => {
       const list = map.get(key) || [];
-      const disciplinaIds = disciplinas.filter((d) => normalizeKey(d.nome) === key).map((d) => d.id);
+      const disciplinaIds = disciplinasCatalogo.filter((d) => normalizeKey(d.nome) === key).map((d) => d.id);
       fornecedorDisciplinaLinks
         .filter((link) => disciplinaIds.includes(link.disciplina_id))
         .forEach((link) => {
@@ -163,7 +164,7 @@ export default function ChecklistEditor() {
       }
     });
     return map;
-  }, [desviosObra, disciplinas, fornecedorDisciplinaLinks, fornecedores]);
+  }, [desviosObra, disciplinasCatalogo, fornecedorDisciplinaLinks, fornecedores]);
 
   // Auto-popular GC/GO a partir da obra selecionada (quando vazios)
   useEffect(() => {
@@ -177,9 +178,10 @@ export default function ChecklistEditor() {
   // Load lookups
   useEffect(() => {
     (async () => {
-      const [obrasRes, discRes, fornRes, fdRes, feRes] = await Promise.all([
+      const [obrasRes, discRes, discCatalogoRes, fornRes, fdRes, feRes] = await Promise.all([
         supabase.from("obras").select("id, codigo, nome, gerente_obra, gerente_contrato, nucleo").order("codigo"),
         supabase.from("checklist_disciplinas").select("id, nome").eq("ativo", 1).order("ordem"),
+        supabase.from("disciplinas").select("id, nome").order("nome"),
         supabase.from("fornecedores").select("id, nome").order("nome"),
         supabase.from("fornecedores_disciplinas").select("fornecedor_id, disciplina_id"),
         supabase.from("checklist_fornecedor_equipe").select("fornecedor_nome, nome_equipe"),
@@ -189,6 +191,7 @@ export default function ChecklistEditor() {
       const comDesvio = new Set((dist || []).map((d: any) => d.obra_id));
       setObras(((obrasRes.data || []) as any[]).filter((o) => comDesvio.has(o.id)));
       setDisciplinas((discRes.data || []) as any[]);
+      setDisciplinasCatalogo((discCatalogoRes.data || []) as any[]);
       setFornecedores((fornRes.data || []) as any[]);
       setFornecedorDisciplinaLinks((fdRes.data || []) as any[]);
       const map: Record<string, string[]> = {};
