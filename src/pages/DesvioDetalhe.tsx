@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "wouter";
 import { toast } from "sonner";
 import {
@@ -126,7 +126,15 @@ export default function DesvioDetalhe() {
 
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
-  const [editDisciplina, setEditDisciplina] = useState("");
+  const [editGrupoId, setEditGrupoId] = useState<string>("");
+  const [editGrupoSearch, setEditGrupoSearch] = useState("");
+  const [editDisciplinaId, setEditDisciplinaId] = useState<string>("");
+  const [editDisciplinaSearch, setEditDisciplinaSearch] = useState("");
+  const [editDisciplinas, setEditDisciplinas] = useState<{ id: number; nome: string }[]>([]);
+  const [editLoadingDisciplinas, setEditLoadingDisciplinas] = useState(false);
+  const [editFornecedoresApi, setEditFornecedoresApi] = useState<{ id: number; nome: string }[]>([]);
+  const [editLoadingFornecedores, setEditLoadingFornecedores] = useState(false);
+  const [editFornecedorId, setEditFornecedorId] = useState<string>("");
   const [editFornecedorNome, setEditFornecedorNome] = useState("");
   const [editDescricao, setEditDescricao] = useState("");
   const [editLocalizacao, setEditLocalizacao] = useState("");
@@ -139,14 +147,29 @@ export default function DesvioDetalhe() {
   const [editTagSolicitadoArquitetura, setEditTagSolicitadoArquitetura] = useState(false);
   const [editPrazoSugerido, setEditPrazoSugerido] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
-  const [editGrupoSearch, setEditGrupoSearch] = useState("");
   const [editPlantaId, setEditPlantaId] = useState<number | null>(null);
   const [editPinX, setEditPinX] = useState<string | null>(null);
   const [editPinY, setEditPinY] = useState<string | null>(null);
 
+  // Refs to preserve initial selections when cascading loads run for the first time
+  const editGrupoFirstRef = useRef(true);
+  const editFornFirstRef = useRef(true);
+  const initialDisciplinaNomeRef = useRef<string>("");
+  const initialFornecedorIdRef = useRef<number | null>(null);
+  const initialFornecedorNomeRef = useRef<string>("");
+
   const startEditing = () => {
     if (!data) return;
-    setEditDisciplina(data.disciplina || "");
+    editGrupoFirstRef.current = true;
+    editFornFirstRef.current = true;
+    initialDisciplinaNomeRef.current = (data.disciplina || "").trim();
+    initialFornecedorIdRef.current = (data as any).fornecedorId ?? null;
+    initialFornecedorNomeRef.current = (data.fornecedorNome || "").trim();
+    setEditGrupoId((data as any).grupoId ? String((data as any).grupoId) : "");
+    setEditDisciplinaId("");
+    setEditDisciplinas([]);
+    setEditFornecedoresApi([]);
+    setEditFornecedorId("");
     setEditFornecedorNome(data.fornecedorNome || "");
     setEditDescricao(data.descricao);
     setEditLocalizacao(data.localizacao || "");
@@ -164,16 +187,123 @@ export default function DesvioDetalhe() {
     setIsEditing(true);
   };
 
+  // Carrega disciplinas do grupo selecionado, preservando seleção inicial (match por nome)
+  useEffect(() => {
+    if (!isEditing) return;
+    if (!editGrupoId) {
+      setEditDisciplinas([]);
+      setEditDisciplinaId("");
+      return;
+    }
+    if (!editGrupoFirstRef.current) {
+      setEditDisciplinaId("");
+      setEditFornecedorId("");
+      setEditFornecedorNome("");
+    }
+    let cancelled = false;
+    (async () => {
+      setEditLoadingDisciplinas(true);
+      try {
+        const { data: discs, error } = await supabase
+          .from("disciplinas")
+          .select("id, nome")
+          .eq("id_grupo", Number(editGrupoId))
+          .order("nome");
+        if (error) throw error;
+        if (cancelled) return;
+        const list = (discs || []) as { id: number; nome: string }[];
+        setEditDisciplinas(list);
+        if (editGrupoFirstRef.current) {
+          editGrupoFirstRef.current = false;
+          const target = initialDisciplinaNomeRef.current.toLowerCase();
+          const match = list.find(d => d.nome.toLowerCase() === target);
+          if (match) setEditDisciplinaId(String(match.id));
+        }
+      } catch (e) {
+        console.error(e);
+        toast.error("Não foi possível carregar as disciplinas");
+      } finally {
+        if (!cancelled) setEditLoadingDisciplinas(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [editGrupoId, isEditing]);
+
+  // Carrega fornecedores (interseção obra × disciplina), preservando seleção inicial
+  useEffect(() => {
+    if (!isEditing) return;
+    const obraId = (data as any)?.obraId;
+    if (!obraId || !editDisciplinaId) {
+      setEditFornecedoresApi([]);
+      return;
+    }
+    if (!editFornFirstRef.current) {
+      setEditFornecedorId("");
+      setEditFornecedorNome("");
+    }
+    let cancelled = false;
+    (async () => {
+      setEditLoadingFornecedores(true);
+      try {
+        const [{ data: of, error: e1 }, { data: fd, error: e2 }] = await Promise.all([
+          supabase.from("obras_fornecedores").select("fornecedor_id").eq("obra_id", Number(obraId)),
+          supabase.from("fornecedores_disciplinas").select("fornecedor_id").eq("disciplina_id", Number(editDisciplinaId)),
+        ]);
+        if (e1) throw e1;
+        if (e2) throw e2;
+        const obraSet = new Set((of || []).map((r: any) => r.fornecedor_id));
+        const ids = (fd || []).map((r: any) => r.fornecedor_id).filter((id: number) => obraSet.has(id));
+        let list: { id: number; nome: string }[] = [];
+        if (ids.length > 0) {
+          const { data: forns, error: e3 } = await supabase
+            .from("fornecedores")
+            .select("id, nome")
+            .in("id", ids)
+            .order("nome");
+          if (e3) throw e3;
+          list = (forns || []) as any;
+        }
+        if (cancelled) return;
+        setEditFornecedoresApi(list);
+        if (editFornFirstRef.current) {
+          editFornFirstRef.current = false;
+          const byId = initialFornecedorIdRef.current
+            ? list.find(f => f.id === initialFornecedorIdRef.current)
+            : null;
+          const byName = !byId && initialFornecedorNomeRef.current
+            ? list.find(f => f.nome.toLowerCase() === initialFornecedorNomeRef.current.toLowerCase())
+            : null;
+          const match = byId || byName;
+          if (match) {
+            setEditFornecedorId(String(match.id));
+            setEditFornecedorNome(match.nome);
+          }
+        }
+      } catch (e) {
+        console.error(e);
+        toast.error("Não foi possível carregar os fornecedores");
+      } finally {
+        if (!cancelled) setEditLoadingFornecedores(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [editDisciplinaId, isEditing, (data as any)?.obraId]);
+
   const handleSaveEdit = async () => {
-    if (!editDisciplina || !editDescricao || !editSeveridade) {
+    if (!editGrupoId || !editDescricao || !editSeveridade) {
       toast.error("Preencha os campos obrigatórios.");
       return;
     }
+    const grupoSel = (grupos || []).find(g => g.id === parseInt(editGrupoId));
+    const discSel = editDisciplinas.find(d => d.id === parseInt(editDisciplinaId));
+    const disciplinaText = discSel?.nome || (grupoSel ? `${grupoSel.codigo} - ${grupoSel.nome}` : "");
     setSavingEdit(true);
     try {
       await updateDesvio.mutateAsync({
         id: data!.id,
-        disciplina: editDisciplina,
+        disciplina: disciplinaText,
+        grupoId: parseInt(editGrupoId),
+        fornecedorId: editFornecedorId ? parseInt(editFornecedorId) : null,
         fornecedorNome: editFornecedorNome || undefined,
         descricao: editDescricao,
         localizacao: editLocalizacao || undefined,
@@ -197,6 +327,7 @@ export default function DesvioDetalhe() {
       setSavingEdit(false);
     }
   };
+
 
   const handleFechamentoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -490,7 +621,7 @@ export default function DesvioDetalhe() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label className="text-sm font-medium">Grupo *</Label>
-                    <Select value={editDisciplina} onValueChange={setEditDisciplina}>
+                    <Select value={editGrupoId} onValueChange={setEditGrupoId}>
                       <SelectTrigger className="mt-1 bg-background">
                         <SelectValue placeholder="Selecione o grupo..." />
                       </SelectTrigger>
@@ -510,7 +641,7 @@ export default function DesvioDetalhe() {
                           const term = editGrupoSearch.toLowerCase();
                           return g.nome.toLowerCase().includes(term) || g.codigo.toLowerCase().includes(term);
                         }).slice(0, 50).map((g) => (
-                          <SelectItem key={g.id} value={`${g.codigo} - ${g.nome}`}>
+                          <SelectItem key={g.id} value={String(g.id)}>
                             {g.codigo} - {g.nome}
                           </SelectItem>
                         ))}
@@ -518,24 +649,87 @@ export default function DesvioDetalhe() {
                     </Select>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium">Fornecedor</Label>
+                    <Label className="text-sm font-medium">Disciplina *</Label>
                     <Select
-                      value={editFornecedorNome || "__none__"}
-                      onValueChange={(v) => setEditFornecedorNome(v === "__none__" ? "" : v)}
+                      value={editDisciplinaId}
+                      onValueChange={setEditDisciplinaId}
+                      disabled={!editGrupoId || editLoadingDisciplinas}
                     >
                       <SelectTrigger className="mt-1 bg-background">
-                        <SelectValue placeholder="Selecione ou deixe em branco..." />
+                        <SelectValue
+                          placeholder={
+                            !editGrupoId
+                              ? "Selecione um grupo primeiro..."
+                              : editLoadingDisciplinas
+                                ? "Carregando..."
+                                : editDisciplinas.length === 0
+                                  ? "Nenhuma disciplina"
+                                  : "Selecione a disciplina..."
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <div className="px-2 pb-2">
+                          <Input
+                            placeholder="Buscar disciplina..."
+                            value={editDisciplinaSearch}
+                            onChange={e => setEditDisciplinaSearch(e.target.value)}
+                            className="h-8 text-sm"
+                            onClick={e => e.stopPropagation()}
+                            onKeyDown={e => e.stopPropagation()}
+                          />
+                        </div>
+                        {editDisciplinas.filter(d => {
+                          if (!editDisciplinaSearch) return true;
+                          return d.nome.toLowerCase().includes(editDisciplinaSearch.toLowerCase());
+                        }).map((d) => (
+                          <SelectItem key={d.id} value={String(d.id)}>
+                            {d.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label className="text-sm font-medium">Fornecedor</Label>
+                    <Select
+                      value={editFornecedorId || "__none__"}
+                      onValueChange={(v) => {
+                        if (v === "__none__") {
+                          setEditFornecedorId("");
+                          setEditFornecedorNome("");
+                        } else {
+                          const f = editFornecedoresApi.find(x => String(x.id) === v);
+                          setEditFornecedorId(v);
+                          setEditFornecedorNome(f?.nome || "");
+                        }
+                      }}
+                      disabled={!editDisciplinaId || editLoadingFornecedores}
+                    >
+                      <SelectTrigger className="mt-1 bg-background">
+                        <SelectValue
+                          placeholder={
+                            !editDisciplinaId
+                              ? "Selecione a disciplina primeiro..."
+                              : editLoadingFornecedores
+                                ? "Carregando..."
+                                : editFornecedoresApi.length === 0
+                                  ? "Nenhum fornecedor vinculado"
+                                  : "Selecione o fornecedor..."
+                          }
+                        />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__none__">
                           <span className="text-muted-foreground">Nenhum</span>
                         </SelectItem>
-                        {fornecedoresData?.map((f) => (
-                          <SelectItem key={f.id} value={f.nome}>{f.nome}</SelectItem>
+                        {editFornecedoresApi.map((f) => (
+                          <SelectItem key={f.id} value={String(f.id)}>{f.nome}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
+
 
                   <div>
                     <Label className="text-sm font-medium">Origem *</Label>
