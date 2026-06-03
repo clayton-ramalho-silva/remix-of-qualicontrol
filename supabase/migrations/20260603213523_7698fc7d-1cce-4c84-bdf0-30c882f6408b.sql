@@ -1,0 +1,3 @@
+ALTER TABLE public.verificacoes 
+  ADD COLUMN IF NOT EXISTS edificio_id BIGINT REFERENCES public.edificios(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS andar_id BIGINT REFERENCES public.andares(id) ON DELETE SET NULL;
