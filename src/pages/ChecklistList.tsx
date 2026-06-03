@@ -70,16 +70,18 @@ export default function ChecklistList() {
   async function handleDelete() {
     if (confirmDeleteId === null) return;
     setDeleting(true);
-    const { error } = await supabase.from("checklist_entregas").delete().eq("id", confirmDeleteId);
-    setDeleting(false);
-    if (error) {
-      toast.error("Erro ao excluir checklist");
-      return;
+    try {
+      await deleteMutation.mutateAsync({ id: confirmDeleteId });
+      toast.success("Checklist excluído");
+      setConfirmDeleteId(null);
+      load();
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao excluir checklist");
+    } finally {
+      setDeleting(false);
     }
-    toast.success("Checklist excluído");
-    setConfirmDeleteId(null);
-    load();
   }
+
 
   return (
     <div className="space-y-4 max-w-6xl mx-auto">
