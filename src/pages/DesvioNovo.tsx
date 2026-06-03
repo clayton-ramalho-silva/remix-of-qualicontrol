@@ -457,15 +457,30 @@ export default function DesvioNovo() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
-            <Field label="Obra" hint={HINTS.obra} required>
-              <ObraSelect
-                obras={obras}
-                value={obraId}
-                onValueChange={setObraId}
-                placeholder="Selecione a obra..."
-                className="w-full"
-              />
-            </Field>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <Field label="Vertical *" hint={HINTS.vertical} required>
+                <Select value={vertical} onValueChange={v => setVertical(v as any)}>
+                  <SelectTrigger><SelectValue placeholder="Selecione a vertical..." /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="qualidade" disabled={!allowedVerticais.includes("qualidade")}>Qualidade{!allowedVerticais.includes("qualidade") && " (sem permissão)"}</SelectItem>
+                    <SelectItem value="checklist" disabled={!allowedVerticais.includes("checklist")}>Checklist{!allowedVerticais.includes("checklist") && " (sem permissão)"}</SelectItem>
+                    <SelectItem value="qsms" disabled={!allowedVerticais.includes("qsms")}>QSMS{!allowedVerticais.includes("qsms") && " (sem permissão)"}</SelectItem>
+                    <SelectItem value="vistoria" disabled={!allowedVerticais.includes("vistoria")}>Vistoria{!allowedVerticais.includes("vistoria") && " (sem permissão)"}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+
+              <Field label="Obra" hint={HINTS.obra} required>
+                <ObraSelect
+                  obras={obras}
+                  value={obraId}
+                  onValueChange={setObraId}
+                  placeholder={vertical ? "Selecione a obra..." : "Selecione a vertical primeiro..."}
+                  className="w-full"
+                  disabled={!vertical}
+                />
+              </Field>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <Field label="Ambiente / Local" hint={HINTS.ambiente} required>
@@ -480,22 +495,11 @@ export default function DesvioNovo() {
                 />
               </Field>
 
-              <Field label="Vertical *" hint={HINTS.vertical} required>
-                <Select value={vertical} onValueChange={v => setVertical(v as any)}>
-                  <SelectTrigger><SelectValue placeholder="Selecione a vertical..." /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="qualidade" disabled={!allowedVerticais.includes("qualidade")}>Qualidade{!allowedVerticais.includes("qualidade") && " (sem permissão)"}</SelectItem>
-                    <SelectItem value="checklist" disabled={!allowedVerticais.includes("checklist")}>Checklist{!allowedVerticais.includes("checklist") && " (sem permissão)"}</SelectItem>
-                    <SelectItem value="qsms" disabled={!allowedVerticais.includes("qsms")}>QSMS{!allowedVerticais.includes("qsms") && " (sem permissão)"}</SelectItem>
-                    <SelectItem value="vistoria" disabled={!allowedVerticais.includes("vistoria")}>Vistoria{!allowedVerticais.includes("vistoria") && " (sem permissão)"}</SelectItem>
-                  </SelectContent>
-                </Select>
+              <Field label="Data da Inspeção" hint={HINTS.data}>
+                <Input type="date" value={dataInspecao} onChange={e => setDataInspecao(e.target.value)} />
               </Field>
             </div>
 
-            <Field label="Data da Inspeção" hint={HINTS.data}>
-              <Input type="date" value={dataInspecao} onChange={e => setDataInspecao(e.target.value)} />
-            </Field>
 
             {obraId && (
               <PlantaPinSelector
