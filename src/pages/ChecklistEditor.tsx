@@ -194,24 +194,13 @@ export default function ChecklistEditor() {
     })();
   }, [isEdit, id]);
 
-  // Restauração de rascunho em modo NOVO (slot único + migração de chaves legacy)
+  // Restauração de rascunho em modo NOVO — só restaura quando vier `?draft=<id>`.
   useEffect(() => {
     if (isEdit) return;
     if (restoredRef.current) return;
     restoredRef.current = true;
-    let best: any = loadDraft(draftKey);
-    try {
-      const legacy: string[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k && k.startsWith("draft:checklist-novo:")) {
-          legacy.push(k);
-          const d: any = loadDraft(k);
-          if (d && (!best || (d.__savedAt ?? 0) > (best.__savedAt ?? 0))) best = d;
-        }
-      }
-      legacy.forEach(clearDraftKey);
-    } catch { /* ignore */ }
+    if (!novoDraft.isResumed) return;
+    const best: any = loadDraft(draftKey);
     if (best) {
       if (best.obraId !== undefined) setObraId(best.obraId);
       if (best.dataVistoria) setDataVistoria(best.dataVistoria);
