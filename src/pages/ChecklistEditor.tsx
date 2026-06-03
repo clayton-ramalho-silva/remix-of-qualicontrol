@@ -72,7 +72,7 @@ export default function ChecklistEditor() {
   const [totalItens, setTotalItens] = useState<string>("");
 
   const [items, setItems] = useState<Item[]>([]);
-  const [obras, setObras] = useState<{ id: number; codigo: string; nome: string }[]>([]);
+  const [obras, setObras] = useState<{ id: number; codigo: string; nome: string; gerente_obra?: string | null; gerente_contrato?: string | null; nucleo?: string | null }[]>([]);
   const [disciplinas, setDisciplinas] = useState<{ id: number; nome: string }[]>([]);
   const [fornecedores, setFornecedores] = useState<{ id: number; nome: string }[]>([]);
   const [equipesByForn, setEquipesByForn] = useState<Record<string, string[]>>({});
@@ -105,11 +105,20 @@ export default function ChecklistEditor() {
     })();
   }, [obraId]);
 
+  // Auto-popular GC/GO a partir da obra selecionada (quando vazios)
+  useEffect(() => {
+    if (!obraId) return;
+    const o = obras.find((x) => String(x.id) === obraId);
+    if (!o) return;
+    setGc((prev) => prev || o.gerente_contrato || "");
+    setGo((prev) => prev || o.gerente_obra || "");
+  }, [obraId, obras]);
+
   // Load lookups
   useEffect(() => {
     (async () => {
       const [obrasRes, discRes, fornRes, feRes] = await Promise.all([
-        supabase.from("obras").select("id, codigo, nome").order("codigo"),
+        supabase.from("obras").select("id, codigo, nome, gerente_obra, gerente_contrato, nucleo").order("codigo"),
         supabase.from("checklist_disciplinas").select("id, nome").eq("ativo", 1).order("ordem"),
         supabase.from("fornecedores").select("id, nome").order("nome"),
         supabase.from("checklist_fornecedor_equipe").select("fornecedor_nome, nome_equipe"),
