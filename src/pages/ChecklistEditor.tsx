@@ -14,7 +14,7 @@ import {
   CheckCircle2, AlertTriangle, XCircle, ImagePlus, Printer, Loader2, FileEdit,
 } from "lucide-react";
 import FotosDesvioPicker, { type FotoEscolhida } from "@/components/checklist/FotosDesvioPicker";
-import { useDraftAutosave, loadDraft, clearDraft as clearDraftKey } from "@/hooks/useDraftAutosave";
+import { useDraftAutosave, loadDraft, clearDraft as clearDraftKey, useDraftId } from "@/hooks/useDraftAutosave";
 import DraftRestoredBanner from "@/components/DraftRestoredBanner";
 
 type Avaliacao = "ok" | "atencao" | "critico";
