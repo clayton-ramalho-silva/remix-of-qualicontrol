@@ -109,7 +109,7 @@ export default function ChecklistEditor() {
   useEffect(() => {
     (async () => {
       const [obrasRes, discRes, fornRes, feRes] = await Promise.all([
-        supabase.from("obras").select("id, codigo, nome").order("codigo"),
+        supabase.from("obras").select("id, codigo, nome, gerente_obra, gerente_contrato, nucleo").order("codigo"),
         supabase.from("checklist_disciplinas").select("id, nome").eq("ativo", 1).order("ordem"),
         supabase.from("fornecedores").select("id, nome").order("nome"),
         supabase.from("checklist_fornecedor_equipe").select("fornecedor_nome, nome_equipe"),
