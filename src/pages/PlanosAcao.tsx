@@ -6,13 +6,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import ObraSelect from "@/components/ObraSelect";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import {
   Target, Plus, Search, Calendar, AlertTriangle, CheckCircle2,
-  Clock, User, Filter, Link2, Flame, ShieldCheck,
+  Clock, User, Filter, Link2, Flame, ShieldCheck, Trash2,
 } from "lucide-react";
+
 
 const STATUS_COLS: { key: string; label: string; color: string; icon: any }[] = [
   { key: "pendente", label: "Pendente", color: "bg-amber-50 border-amber-200", icon: Clock },
