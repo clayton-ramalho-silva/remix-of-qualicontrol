@@ -54,6 +54,12 @@ const avalConfig: Record<Avaliacao, { label: string; icon: any; cls: string; pri
   critico: { label: "Crítico", icon: XCircle, cls: "text-red-600", print: "✗" },
 };
 
+const normalizeKey = (value?: string | null) =>
+  (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+
+const fornecedorValue = (f: { id: number | null; nome: string }) =>
+  f.id ? `id:${f.id}` : `n:${normalizeKey(f.nome)}`;
+
 export default function ChecklistEditor() {
   const [, navigate] = useLocation();
   const params = useParams<{ id?: string }>();
@@ -75,6 +81,7 @@ export default function ChecklistEditor() {
   const [obras, setObras] = useState<{ id: number; codigo: string; nome: string; gerente_obra?: string | null; gerente_contrato?: string | null; nucleo?: string | null }[]>([]);
   const [disciplinas, setDisciplinas] = useState<{ id: number; nome: string }[]>([]);
   const [fornecedores, setFornecedores] = useState<{ id: number; nome: string }[]>([]);
+  const [fornecedorDisciplinaLinks, setFornecedorDisciplinaLinks] = useState<{ fornecedor_id: number; disciplina_id: number }[]>([]);
   const [equipesByForn, setEquipesByForn] = useState<Record<string, string[]>>({});
   // Desvios da obra selecionada: usados para limitar disciplinas e fornecedores
   const [desviosObra, setDesviosObra] = useState<{ disciplina: string | null; fornecedor_id: number | null; fornecedor_nome: string | null }[]>([]);
@@ -117,9 +124,9 @@ export default function ChecklistEditor() {
     desviosObra.forEach((d) => {
       const nome = (d.disciplina || "").trim();
       if (!nome) return;
-      const key = nome.toLowerCase();
+      const key = normalizeKey(nome);
       if (seen.has(key)) return;
-      const match = disciplinas.find((x) => x.nome.trim().toLowerCase() === key);
+      const match = disciplinas.find((x) => normalizeKey(x.nome) === key);
       const id = match?.id ?? -Math.abs(key.split("").reduce((a, c) => a + c.charCodeAt(0), 0));
       seen.set(key, { id, nome: match?.nome ?? nome });
     });
