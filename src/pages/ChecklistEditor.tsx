@@ -350,13 +350,17 @@ export default function ChecklistEditor() {
       (async () => {
         const { data: desv } = await supabase
           .from("desvios")
-          .select("id, disciplina, fornecedor_nome")
+          .select("id, disciplina, fornecedor_id, fornecedor_nome")
           .eq("obra_id", Number(obraId))
           .is("deleted_at", null);
         const matchIds = (desv || [])
           .filter((d: any) =>
-            (d.disciplina || "").trim().toLowerCase() === disc &&
-            (d.fornecedor_nome || "").trim().toLowerCase() === forn
+            normalizeKey(d.disciplina) === disc &&
+            (
+              normalizeKey(d.fornecedor_nome) === forn ||
+              (it.fornecedor_id && d.fornecedor_id === it.fornecedor_id) ||
+              (!d.fornecedor_nome && !d.fornecedor_id)
+            )
           )
           .map((d: any) => d.id);
         if (matchIds.length === 0) return;
