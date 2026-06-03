@@ -6,13 +6,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import ObraSelect from "@/components/ObraSelect";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import {
   Target, Plus, Search, Calendar, AlertTriangle, CheckCircle2,
-  Clock, User, Filter, Link2, Flame, ShieldCheck,
+  Clock, User, Filter, Link2, Flame, ShieldCheck, Trash2,
 } from "lucide-react";
+
 
 const STATUS_COLS: { key: string; label: string; color: string; icon: any }[] = [
   { key: "pendente", label: "Pendente", color: "bg-amber-50 border-amber-200", icon: Clock },
@@ -39,6 +45,18 @@ const PRIO_COLORS: Record<string, string> = {
 export default function PlanosAcao() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+  const utils = trpc.useUtils();
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const deleteMutation = trpc.planos.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Plano excluído");
+      setConfirmDeleteId(null);
+      utils.planos.list.invalidate();
+    },
+    onError: (e: any) => toast.error(e?.message || "Erro ao excluir"),
+  });
+
   const [search, setSearch] = useState("");
   const [obraFilter, setObraFilter] = useState("all");
   const [verticalFilter, setVerticalFilter] = useState("all");
@@ -193,16 +211,45 @@ export default function PlanosAcao() {
                   {items.length === 0 && (
                     <div className="text-center text-xs text-slate-400 py-8">Sem planos</div>
                   )}
-                  {items.map((p: any) => <PlanoCard key={p.id} plano={p} onClick={() => navigate(`/planos-acao/${p.id}`)} />)}
+                  {items.map((p: any) => (
+                    <PlanoCard
+                      key={p.id}
+                      plano={p}
+                      onClick={() => navigate(`/planos-acao/${p.id}`)}
+                      canDelete={isAdmin}
+                      onDelete={() => setConfirmDeleteId(p.id)}
+                    />
+                  ))}
                 </div>
               </div>
             );
           })}
         </div>
       )}
+      <AlertDialog open={confirmDeleteId !== null} onOpenChange={(o) => !o && setConfirmDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir plano de ação?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é permanente. Os vínculos com desvios também serão removidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteMutation.isPending}
+              onClick={(e) => { e.preventDefault(); if (confirmDeleteId !== null) deleteMutation.mutate({ id: confirmDeleteId }); }}
+            >
+              {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
+
 
 function KpiCard({ label, value, color, icon: Icon, clickable, onClick, active }: { label: string; value: number; color: string; icon: any; clickable?: boolean; onClick?: () => void; active?: boolean }) {
   return (
@@ -218,7 +265,7 @@ function KpiCard({ label, value, color, icon: Icon, clickable, onClick, active }
   );
 }
 
-function PlanoCard({ plano, onClick }: { plano: any; onClick: () => void }) {
+function PlanoCard({ plano, onClick, canDelete, onDelete }: { plano: any; onClick: () => void; canDelete?: boolean; onDelete?: () => void }) {
   const overdue = plano.status !== "concluido" && plano.prazo && plano.prazo < Date.now();
   const isPreventivo = plano.tipo === "preventivo";
   const verticaisFromDesvios = (plano.desvios || []).map((d: any) => d.origem);
@@ -227,8 +274,23 @@ function PlanoCard({ plano, onClick }: { plano: any; onClick: () => void }) {
     ...verticaisFromDesvios,
   ])).filter(Boolean) as string[];
   return (
-    <button onClick={onClick} className="w-full text-left bg-white rounded-lg border border-slate-200 p-3 hover:shadow-md hover:border-teal-300 transition-all">
-      <div className="flex items-start justify-between gap-2 mb-2">
+    <div
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      className="relative w-full text-left bg-white rounded-lg border border-slate-200 p-3 hover:shadow-md hover:border-teal-300 transition-all cursor-pointer"
+    >
+      {canDelete && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onDelete?.(); }}
+          className="absolute top-1.5 right-1.5 h-6 w-6 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex items-center justify-center"
+          title="Excluir plano"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      )}
+      <div className="flex items-start justify-between gap-2 mb-2 pr-6">
         <p className="text-sm font-medium text-slate-900 line-clamp-2 flex-1">{plano.acao}</p>
         {plano.prioridade && plano.prioridade !== "normal" && (
           <Badge className={`text-[10px] shrink-0 ${PRIO_COLORS[plano.prioridade] || ""}`}>{plano.prioridade}</Badge>
@@ -258,6 +320,6 @@ function PlanoCard({ plano, onClick }: { plano: any; onClick: () => void }) {
           </span>
         )}
       </div>
-    </button>
+    </div>
   );
 }

@@ -11,6 +11,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import DraftsInProgress from "@/components/DraftsInProgress";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
+
 
 type Row = {
   id: number;
@@ -32,12 +35,16 @@ const condBadge: Record<Row["condicao"], string> = {
 
 export default function ChecklistList() {
   const [, navigate] = useLocation();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const [rows, setRows] = useState<Row[]>([]);
   const [obrasMap, setObrasMap] = useState<Record<number, { codigo: string; nome: string }>>({});
   const [loading, setLoading] = useState(true);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [mostrarRascunhos, setMostrarRascunhos] = useState(false);
+  const deleteMutation = trpc.checklistEntregas.delete.useMutation();
+
 
   async function load() {
     setLoading(true);
@@ -63,16 +70,18 @@ export default function ChecklistList() {
   async function handleDelete() {
     if (confirmDeleteId === null) return;
     setDeleting(true);
-    const { error } = await supabase.from("checklist_entregas").delete().eq("id", confirmDeleteId);
-    setDeleting(false);
-    if (error) {
-      toast.error("Erro ao excluir checklist");
-      return;
+    try {
+      await deleteMutation.mutateAsync({ id: confirmDeleteId });
+      toast.success("Checklist excluído");
+      setConfirmDeleteId(null);
+      load();
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao excluir checklist");
+    } finally {
+      setDeleting(false);
     }
-    toast.success("Checklist excluído");
-    setConfirmDeleteId(null);
-    load();
   }
+
 
   return (
     <div className="space-y-4 max-w-6xl mx-auto">
@@ -167,15 +176,18 @@ export default function ChecklistList() {
                       <Button size="sm" variant="ghost" onClick={() => navigate(`/checklists/${r.id}?print=1`)}>
                         <Printer className="h-4 w-4" />
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-muted-foreground hover:text-destructive"
-                        onClick={() => setConfirmDeleteId(r.id)}
-                        title="Excluir checklist"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {isAdmin && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-muted-foreground hover:text-destructive"
+                          onClick={() => setConfirmDeleteId(r.id)}
+                          title="Excluir checklist"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+
                     </td>
                   </tr>
                 ))}

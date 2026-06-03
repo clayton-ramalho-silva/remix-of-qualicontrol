@@ -7,7 +7,14 @@ import ObraSelect from "@/components/ObraSelect";
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
 import DraftsInProgress from "@/components/DraftsInProgress";
-import { ClipboardList, Plus, Calendar, User, Building2, TrendingUp, TrendingDown, Minus, Eye } from "lucide-react";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { toast } from "sonner";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ClipboardList, Plus, Calendar, User, Building2, TrendingUp, TrendingDown, Minus, Eye, Trash2 } from "lucide-react";
+
 
 const statusColors: Record<string, string> = {
   "ÓTIMA": "bg-emerald-100 text-emerald-700 border-emerald-200",
@@ -35,6 +42,18 @@ export default function Verificacoes({
   rotaBase = "/verificacoes",
 }: Props) {
   const [, navigate] = useLocation();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+  const utils = trpc.useUtils();
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const deleteMutation = trpc.verificacoes.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Verificação excluída");
+      setConfirmDeleteId(null);
+      utils.verificacoes.list.invalidate();
+    },
+    onError: (e: any) => toast.error(e?.message || "Erro ao excluir"),
+  });
   const { data: obras } = trpc.obras.list.useQuery();
   const [obraFilter, setObraFilter] = useState<string>("all");
   const [mostrarRascunhos, setMostrarRascunhos] = useState(false);
@@ -42,6 +61,7 @@ export default function Verificacoes({
     ...(obraFilter !== "all" ? { obraId: Number(obraFilter) } : {}),
     categoria,
   });
+
 
   const getObraNome = (obraId: number) => {
     const obra = obras?.find(o => o.id === obraId);
@@ -175,6 +195,17 @@ export default function Verificacoes({
                     <Button variant="outline" size="sm" className="shrink-0">
                       <Eye className="h-4 w-4 mr-1" /> Ver
                     </Button>
+                    {isAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                        onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(v.id); }}
+                        title="Excluir verificação"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -182,6 +213,27 @@ export default function Verificacoes({
           ))}
         </div>
       )}
+      <AlertDialog open={confirmDeleteId !== null} onOpenChange={(o) => !o && setConfirmDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir verificação?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é permanente. Todas as respostas e fotos vinculadas a esta verificação serão removidas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteMutation.isPending}
+              onClick={(e) => { e.preventDefault(); if (confirmDeleteId !== null) deleteMutation.mutate({ id: confirmDeleteId }); }}
+            >
+              {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
+

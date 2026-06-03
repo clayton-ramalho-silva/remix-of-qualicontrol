@@ -7,7 +7,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import ObraSelect from "@/components/ObraSelect";
 import { useLocation } from "wouter";
 import DraftsInProgress from "@/components/DraftsInProgress";
-import { Siren, Plus, Calendar, Building2, AlertTriangle, Clock } from "lucide-react";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { toast } from "sonner";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Siren, Plus, Calendar, Building2, AlertTriangle, Clock, Trash2 } from "lucide-react";
+
 
 const CLASSIF_LABELS: Record<string, string> = {
   incidente: "Incidente",
@@ -45,9 +52,22 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function Ocorrencias() {
   const [, navigate] = useLocation();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+  const utils = trpc.useUtils();
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const deleteMutation = trpc.ocorrencias.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Ocorrência excluída");
+      setConfirmDeleteId(null);
+      utils.ocorrencias.list.invalidate();
+    },
+    onError: (e: any) => toast.error(e?.message || "Erro ao excluir"),
+  });
   const { data: obras } = trpc.obras.list.useQuery();
   const [obraFilter, setObraFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+
 
   const { data: ocorrencias, isLoading } = trpc.ocorrencias.list.useQuery({
     ...(obraFilter !== "all" ? { obraId: Number(obraFilter) } : {}),
@@ -157,6 +177,17 @@ export default function Ocorrencias() {
                         </div>
                       </div>
                     </div>
+                    {isAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                        onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(o.id); }}
+                        title="Excluir ocorrência"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -164,6 +195,26 @@ export default function Ocorrencias() {
           })}
         </div>
       )}
+      <AlertDialog open={confirmDeleteId !== null} onOpenChange={(o) => !o && setConfirmDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir ocorrência?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é permanente. Todos os dados, fotos, documentos, testemunhas e cronologia vinculados a esta ocorrência serão removidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteMutation.isPending}
+              onClick={(e) => { e.preventDefault(); if (confirmDeleteId !== null) deleteMutation.mutate({ id: confirmDeleteId }); }}
+            >
+              {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
