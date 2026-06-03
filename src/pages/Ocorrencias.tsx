@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ObraSelect from "@/components/ObraSelect";
 import { useLocation } from "wouter";
+import DraftsInProgress from "@/components/DraftsInProgress";
 import { Siren, Plus, Calendar, Building2, AlertTriangle, Clock } from "lucide-react";
 
 const CLASSIF_LABELS: Record<string, string> = {
@@ -92,6 +93,17 @@ export default function Ocorrencias() {
           </SelectContent>
         </Select>
       </div>
+
+      <DraftsInProgress
+        scope="ocorrencia:nova"
+        novaRoute="/qsms/ocorrencias/nova"
+        renderSummary={(d) => {
+          const obraNome = d.obraId ? getObraNome(Number(d.obraId)) : "Sem obra";
+          const classif = d.classificacao ? CLASSIF_LABELS[d.classificacao] || d.classificacao : "";
+          const data = d.dataOcorrencia ? new Date(d.dataOcorrencia).toLocaleDateString("pt-BR") : "";
+          return [obraNome, classif, data].filter(Boolean).join(" • ");
+        }}
+      />
 
       {isLoading ? (
         <div className="text-center py-12 text-slate-500">Carregando ocorrências...</div>

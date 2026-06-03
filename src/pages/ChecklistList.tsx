@@ -10,6 +10,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import DraftsInProgress from "@/components/DraftsInProgress";
 
 type Row = {
   id: number;
@@ -32,6 +33,7 @@ const condBadge: Record<Row["condicao"], string> = {
 export default function ChecklistList() {
   const [, navigate] = useLocation();
   const [rows, setRows] = useState<Row[]>([]);
+  const [obrasMap, setObrasMap] = useState<Record<number, { codigo: string; nome: string }>>({});
   const [loading, setLoading] = useState(true);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -46,6 +48,7 @@ export default function ChecklistList() {
     const { data: obras } = await supabase.from("obras").select("id, codigo, nome");
     const obraMap: Record<number, { codigo: string; nome: string }> = {};
     (obras || []).forEach((o: any) => (obraMap[o.id] = { codigo: o.codigo, nome: o.nome }));
+    setObrasMap(obraMap);
     setRows(
       ((ents || []) as any[]).map((e) => ({ ...e, obra: obraMap[e.obra_id] || null }))
     );
@@ -93,7 +96,22 @@ export default function ChecklistList() {
           <Button onClick={() => navigate("/checklists/novo")}>
             <Plus className="h-4 w-4 mr-1" /> Novo Checklist
           </Button>
-        </div>
+      </div>
+
+      <DraftsInProgress
+        scope="checklist:novo"
+        novaRoute="/checklists/novo"
+        renderSummary={(d) => {
+          const obraId = d.obraId ? Number(d.obraId) : null;
+          const obra = obraId ? obrasMap[obraId] : null;
+          const obraNome = obra ? `${obra.codigo} — ${obra.nome}` : obraId ? `Obra #${obraId}` : "Sem obra";
+          const data = d.dataVistoria ? new Date(d.dataVistoria).toLocaleDateString("pt-BR") : "";
+          const itens = Array.isArray(d.items) ? d.items.length : 0;
+          return [obraNome, data, itens ? `${itens} item(ns)` : null].filter(Boolean).join(" • ");
+        }}
+      />
+
+
       </div>
 
       <Card>

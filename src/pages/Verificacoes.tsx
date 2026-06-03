@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import ObraSelect from "@/components/ObraSelect";
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
+import DraftsInProgress from "@/components/DraftsInProgress";
 import { ClipboardList, Plus, Calendar, User, Building2, TrendingUp, TrendingDown, Minus, Eye } from "lucide-react";
 
 const statusColors: Record<string, string> = {
@@ -88,6 +89,17 @@ export default function Verificacoes({
           </Button>
         )}
       </div>
+
+      <DraftsInProgress
+        scope={`verificacao:${categoria}`}
+        novaRoute={`${rotaBase}/nova`}
+        renderSummary={(d) => {
+          const obraNome = d.obraId ? getObraNome(Number(d.obraId)) : "Sem obra selecionada";
+          const total = d.respostas ? Object.keys(d.respostas).length : 0;
+          const data = d.dataVistoria ? new Date(d.dataVistoria).toLocaleDateString("pt-BR") : "";
+          return `${obraNome}${data ? ` • ${data}` : ""}${total ? ` • ${total} respostas` : ""}`;
+        }}
+      />
 
       {/* Lista de Verificações */}
       {isLoading ? (

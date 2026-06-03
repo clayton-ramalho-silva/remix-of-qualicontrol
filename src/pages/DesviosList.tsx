@@ -18,6 +18,7 @@ import {
   Search, Filter, ArrowRight, AlertTriangle, Clock, CheckCircle2,
   FileWarning, UserCheck, ShieldAlert, Tag, Trash2,
 } from "lucide-react";
+import DraftsInProgress from "@/components/DraftsInProgress";
 
 const SEV_BADGE: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   leve: { label: "Leve", variant: "secondary" },
@@ -111,6 +112,21 @@ export default function DesviosList() {
           {filteredDesvios.length} desvio{filteredDesvios.length !== 1 ? "s" : ""} encontrado{filteredDesvios.length !== 1 ? "s" : ""}
         </p>
       </div>
+
+      <DraftsInProgress
+        scope="desvio:novo"
+        novaRoute="/desvios/novo"
+        renderSummary={(d) => {
+          const obraNome = d.obraId
+            ? (obras?.find((o: any) => String(o.id) === String(d.obraId))?.nome || `Obra #${d.obraId}`)
+            : "Sem obra";
+          const desc = d.descricao ? String(d.descricao).slice(0, 60) : "";
+          const reg = Array.isArray(d.registrados) ? d.registrados.length : 0;
+          return [obraNome, desc, reg ? `${reg} já registrado(s)` : null].filter(Boolean).join(" • ");
+        }}
+      />
+
+
 
       {/* Filters */}
       <Card className="shadow-sm border-0 bg-card">

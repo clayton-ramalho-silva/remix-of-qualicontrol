@@ -10,7 +10,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useEffect, useRef } from "react";
-import { useDraftAutosave, loadDraft } from "@/hooks/useDraftAutosave";
+import { useDraftAutosave, loadDraft, useDraftId } from "@/hooks/useDraftAutosave";
 import DraftRestoredBanner from "@/components/DraftRestoredBanner";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -115,15 +115,16 @@ export default function DesvioNovo() {
   const [registrados, setRegistrados] = useState<{ id: number; descricao: string }[]>([]);
   const [annotatingIdx, setAnnotatingIdx] = useState<number | null>(null);
 
-  // ---------- Auto-save de rascunho (slot único por usuário) ----------
-  // Salva o contexto da inspeção + o desvio atual em preenchimento.
+  // ---------- Auto-save de rascunho (múltiplos rascunhos por usuário) ----------
+  // Identificado por `?draft=<id>` na URL; quando ausente, é gerado um novo id.
   // Fotos em upload (sem fileKey) não são persistidas; somente as já enviadas.
-  const draftKey = `draft:desvio:novo`;
+  const { key: draftKey, isResumed } = useDraftId("desvio:novo");
   const restoredRef = useRef(false);
   const [restoredAt, setRestoredAt] = useState<number | null>(null);
   useEffect(() => {
     if (restoredRef.current) return;
     restoredRef.current = true;
+    if (!isResumed) return;
     const d: any = loadDraft(draftKey);
     if (!d) return;
     // Etapa 1

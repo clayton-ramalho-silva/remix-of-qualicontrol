@@ -14,7 +14,7 @@ import {
   CheckCircle2, AlertTriangle, XCircle, ImagePlus, Printer, Loader2, FileEdit,
 } from "lucide-react";
 import FotosDesvioPicker, { type FotoEscolhida } from "@/components/checklist/FotosDesvioPicker";
-import { useDraftAutosave, loadDraft, clearDraft as clearDraftKey } from "@/hooks/useDraftAutosave";
+import { useDraftAutosave, loadDraft, clearDraft as clearDraftKey, useDraftId } from "@/hooks/useDraftAutosave";
 import DraftRestoredBanner from "@/components/DraftRestoredBanner";
 
 type Avaliacao = "ok" | "atencao" | "critico";
@@ -86,10 +86,11 @@ export default function ChecklistEditor() {
   const serverLoadedAtRef = useRef(0);
   const [restoredAt, setRestoredAt] = useState<number | null>(null);
 
-  // Chave do rascunho local: edit usa id; novo usa slot único.
+  // Chave do rascunho local: edit usa id; novo usa id único via `?draft=`.
+  const novoDraft = useDraftId("checklist:novo");
   const draftKey = isEdit
     ? `draft:checklist-edit:${id}`
-    : `draft:checklist:novo`;
+    : novoDraft.key;
 
   // Total de itens = total de desvios da obra selecionada
   useEffect(() => {
@@ -193,24 +194,13 @@ export default function ChecklistEditor() {
     })();
   }, [isEdit, id]);
 
-  // Restauração de rascunho em modo NOVO (slot único + migração de chaves legacy)
+  // Restauração de rascunho em modo NOVO — só restaura quando vier `?draft=<id>`.
   useEffect(() => {
     if (isEdit) return;
     if (restoredRef.current) return;
     restoredRef.current = true;
-    let best: any = loadDraft(draftKey);
-    try {
-      const legacy: string[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k && k.startsWith("draft:checklist-novo:")) {
-          legacy.push(k);
-          const d: any = loadDraft(k);
-          if (d && (!best || (d.__savedAt ?? 0) > (best.__savedAt ?? 0))) best = d;
-        }
-      }
-      legacy.forEach(clearDraftKey);
-    } catch { /* ignore */ }
+    if (!novoDraft.isResumed) return;
+    const best: any = loadDraft(draftKey);
     if (best) {
       if (best.obraId !== undefined) setObraId(best.obraId);
       if (best.dataVistoria) setDataVistoria(best.dataVistoria);

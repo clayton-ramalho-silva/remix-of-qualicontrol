@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useDraftAutosave, loadDraft, clearDraft as clearDraftKey } from "@/hooks/useDraftAutosave";
+import { useDraftAutosave, loadDraft, useDraftId } from "@/hooks/useDraftAutosave";
 import DraftRestoredBanner from "@/components/DraftRestoredBanner";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -54,32 +54,16 @@ export default function OcorrenciaNova() {
   const [fotos, setFotos] = useState<Foto[]>([]);
   const [salvando, setSalvando] = useState(false);
 
-  // Auto-save de rascunho — UMA única "vaga" para Nova Ocorrência.
+  // Auto-save de rascunho — vários rascunhos coexistem; o id vem de `?draft=`.
   // Fotos já uploaded (com fileKey/publicUrl) são preservadas.
-  const draftKey = `draft:ocorrencia:nova`;
+  const { key: draftKey, isResumed } = useDraftId("ocorrencia:nova");
   const restoredRef = useRef(false);
   const [restoredAt, setRestoredAt] = useState<number | null>(null);
   useEffect(() => {
     if (restoredRef.current) return;
     restoredRef.current = true;
-    let d: any = loadDraft(draftKey);
-    // Migração: consome rascunhos antigos com chave `draft:ocorrencia:<obra>:<data>:<hora>`
-    if (!d) {
-      try {
-        let best: any = null;
-        const legacy: string[] = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const k = localStorage.key(i);
-          if (k && k.startsWith("draft:ocorrencia:") && k !== draftKey && !k.startsWith("draft:ocorrencia-edit:")) {
-            legacy.push(k);
-            const dd: any = loadDraft(k);
-            if (dd && (!best || (dd.__savedAt ?? 0) > (best.__savedAt ?? 0))) best = dd;
-          }
-        }
-        if (best) d = best;
-        legacy.forEach(clearDraftKey);
-      } catch { /* ignore */ }
-    }
+    if (!isResumed) return;
+    const d: any = loadDraft(draftKey);
     if (d) {
       if (d.obraId) setObraId(d.obraId);
       if (d.dataOcorrencia) setDataOcorrencia(d.dataOcorrencia);
@@ -106,6 +90,7 @@ export default function OcorrenciaNova() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
   const { clearDraft: clearDraftFn, markClean } = useDraftAutosave({
     key: draftKey,
