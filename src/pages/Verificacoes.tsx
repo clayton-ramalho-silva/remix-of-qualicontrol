@@ -90,6 +90,17 @@ export default function Verificacoes({
         )}
       </div>
 
+      <DraftsInProgress
+        scope={`verificacao:${categoria}`}
+        novaRoute={`${rotaBase}/nova`}
+        renderSummary={(d) => {
+          const obraNome = d.obraId ? getObraNome(Number(d.obraId)) : "Sem obra selecionada";
+          const total = d.respostas ? Object.keys(d.respostas).length : 0;
+          const data = d.dataVistoria ? new Date(d.dataVistoria).toLocaleDateString("pt-BR") : "";
+          return `${obraNome}${data ? ` • ${data}` : ""}${total ? ` • ${total} respostas` : ""}`;
+        }}
+      />
+
       {/* Lista de Verificações */}
       {isLoading ? (
         <div className="text-center py-12 text-slate-500">Carregando verificações...</div>
