@@ -167,6 +167,11 @@ export default function ChecklistEditor() {
     setGo((prev) => prev || o.gerente_obra || "");
   }, [obraId, obras]);
 
+  const obraSel = useMemo(
+    () => obras.find((o) => String(o.id) === obraId) || null,
+    [obras, obraId]
+  );
+
   // Load lookups
   useEffect(() => {
     (async () => {
@@ -334,11 +339,6 @@ export default function ChecklistEditor() {
       setTimeout(() => window.print(), 600);
     }
   }, [printOnLoad, loading]);
-
-  const obraSel = useMemo(
-    () => obras.find((o) => String(o.id) === obraId) || null,
-    [obras, obraId]
-  );
 
   function addItem() {
     setItems((prev) => [
