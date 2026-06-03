@@ -881,8 +881,10 @@ export default function DesvioDetalhe() {
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div><span className="text-muted-foreground">Grupo:</span> <span className="font-medium ml-1">{data.disciplina || "—"}</span></div>
+                  <div><span className="text-muted-foreground">Grupo:</span> <span className="font-medium ml-1">{(() => { const g = (grupos || []).find((x: any) => x.id === (data as any).grupoId); return g ? `${g.codigo} - ${g.nome}` : "—"; })()}</span></div>
+                  <div><span className="text-muted-foreground">Disciplina:</span> <span className="font-medium ml-1">{data.disciplina || "—"}</span></div>
                   <div><span className="text-muted-foreground">Fornecedor:</span> <span className="font-medium ml-1">{data.fornecedorNome || "—"}</span></div>
+
                   <div><span className="text-muted-foreground">Localização:</span> <span className="font-medium ml-1">{data.localizacao || "—"}</span></div>
                   <div><span className="text-muted-foreground">Identificado em:</span> <span className="font-medium ml-1">{new Date(data.dataIdentificacao).toLocaleDateString("pt-BR")}</span></div>
                   <div><span className="text-muted-foreground">Prazo:</span> <span className={`font-medium ml-1 ${isOverdue ? "text-red-600" : ""}`}>{data.prazoSugerido ? new Date(data.prazoSugerido).toLocaleDateString("pt-BR") : "—"}</span></div>
