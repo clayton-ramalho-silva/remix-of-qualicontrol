@@ -523,11 +523,12 @@ export default function ChecklistEditor() {
                     <Select
                       value={it.disciplina_id ? String(it.disciplina_id) : ""}
                       onValueChange={(v) => {
-                        const d = disciplinas.find((x) => String(x.id) === v);
+                        const d =
+                          disciplinasFiltradas.find((x) => String(x.id) === v) ||
+                          disciplinas.find((x) => String(x.id) === v);
                         updItem(idx, {
                           disciplina_id: d?.id || null,
                           disciplina_nome: d?.nome || "",
-                          // limpa fornecedor ao trocar disciplina
                           fornecedor_id: null,
                           fornecedor_nome: "",
                         });
