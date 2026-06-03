@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useDraftAutosave, loadDraft, clearDraft as clearDraftKey } from "@/hooks/useDraftAutosave";
+import { useDraftAutosave, loadDraft, useDraftId } from "@/hooks/useDraftAutosave";
 import DraftRestoredBanner from "@/components/DraftRestoredBanner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -61,37 +61,17 @@ export default function NovaVerificacao({
   const [expandedSections, setExpandedSections] = useState<Record<number, boolean>>({});
   const [submitting, setSubmitting] = useState(false);
 
-  // Auto-save de rascunho — UMA única "vaga" por categoria (só pode existir
-  // um rascunho de "Nova Verificação de <categoria>" em andamento por vez).
-  const draftKey = `draft:verificacao:${categoria}`;
+  // Auto-save de rascunho — vários rascunhos podem coexistir, identificados
+  // pelo parâmetro `?draft=<id>` na URL. Se a URL não trouxer um id, é gerado
+  // um novo (o rascunho só é persistido quando o usuário começar a preencher).
+  const { key: draftKey, isResumed } = useDraftId(`verificacao:${categoria}`);
   const restoredRef = useRef(false);
   const [restoredAt, setRestoredAt] = useState<number | null>(null);
   useEffect(() => {
     if (restoredRef.current) return;
     restoredRef.current = true;
-    // Migração leve: tenta consumir rascunhos antigos com chave
-    // `draft:verificacao:<categoria>:...` salvos antes da mudança de esquema.
-    let d: any = loadDraft(draftKey);
-    if (!d) {
-      try {
-        let best: { k: string; d: any } | null = null;
-        for (let i = 0; i < localStorage.length; i++) {
-          const k = localStorage.key(i);
-          if (k && k.startsWith(`draft:verificacao:${categoria}:`)) {
-            const dd: any = loadDraft(k);
-            if (dd && (!best || (dd.__savedAt ?? 0) > (best.d.__savedAt ?? 0))) best = { k, d: dd };
-          }
-        }
-        if (best) {
-          d = best.d;
-          // remove rascunhos legacy depois de aproveitar o mais recente
-          for (let i = 0; i < localStorage.length; i++) {
-            const k = localStorage.key(i);
-            if (k && k.startsWith(`draft:verificacao:${categoria}:`)) clearDraftKey(k);
-          }
-        }
-      } catch { /* ignore */ }
-    }
+    if (!isResumed) return;
+    const d: any = loadDraft(draftKey);
     if (d) {
       if (d.obraId != null) setObraId(d.obraId);
       if (d.avaliadorId) setAvaliadorId(d.avaliadorId);
@@ -106,6 +86,7 @@ export default function NovaVerificacao({
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
   const { clearDraft: clearDraftFn, markClean } = useDraftAutosave({
     key: draftKey,
