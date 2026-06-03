@@ -515,9 +515,21 @@ export default function DesvioDetalhe() {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-start gap-3">
-        <Button variant="ghost" size="icon" onClick={() => setLocation("/desvios")} className="mt-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            if (typeof window !== "undefined" && window.history.length > 1) {
+              window.history.back();
+            } else {
+              setLocation("/desvios");
+            }
+          }}
+          className="mt-1"
+        >
           <ArrowLeft className="h-4 w-4" />
         </Button>
+
         <div className="flex-1">
           {obraNome && (
             <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-1">{obraNome}</h2>
