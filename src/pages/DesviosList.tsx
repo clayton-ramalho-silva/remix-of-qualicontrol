@@ -104,6 +104,13 @@ export default function DesviosList() {
     return Array.from(new Set(desvios.map(d => d.disciplina))).sort();
   }, [desvios]);
 
+  const obraNomeById = useMemo(() => {
+    const m = new Map<string, string>();
+    (obras || []).forEach((o: any) => m.set(String(o.id), o.nome));
+    return m;
+  }, [obras]);
+
+
   return (
     <div className="space-y-6">
       <div>
@@ -244,12 +251,18 @@ export default function DesviosList() {
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
+                      {desvio.obraId && (
+                        <div className="text-base font-semibold text-foreground mb-1.5 truncate">
+                          {obraNomeById.get(String(desvio.obraId)) || `Obra #${desvio.obraId}`}
+                        </div>
+                      )}
                       <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                         <span className="text-xs font-mono text-muted-foreground">#{desvio.id}</span>
                         <Badge variant={sev?.variant || "secondary"} className="text-xs">
                           {desvio.severidade === "grave" && <AlertTriangle className="h-3 w-3 mr-1" />}
                           {sev?.label}
                         </Badge>
+
                         <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border ${st.className}`}>
                           {st.icon} {st.label}
                         </span>
