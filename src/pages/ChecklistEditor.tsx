@@ -78,14 +78,14 @@ export default function ChecklistEditor() {
   const [totalItens, setTotalItens] = useState<string>("");
 
   const [items, setItems] = useState<Item[]>([]);
-  const [obras, setObras] = useState<{ id: number; codigo: string; nome: string; gerente_obra?: string | null; gerente_contrato?: string | null; nucleo?: string | null }[]>([]);
+  const [obras, setObras] = useState<{ id: number; id_projeto?: number | null; codigo: string; nome: string; gerente_obra?: string | null; gerente_contrato?: string | null; nucleo?: string | null }[]>([]);
   const [disciplinas, setDisciplinas] = useState<{ id: number; nome: string }[]>([]);
-  const [disciplinasCatalogo, setDisciplinasCatalogo] = useState<{ id: number; nome: string }[]>([]);
-  const [fornecedores, setFornecedores] = useState<{ id: number; nome: string }[]>([]);
-  const [fornecedorDisciplinaLinks, setFornecedorDisciplinaLinks] = useState<{ fornecedor_id: number; disciplina_id: number }[]>([]);
+  const [disciplinasCatalogo, setDisciplinasCatalogo] = useState<{ id: number; nome: string; id_disciplina?: number | null }[]>([]);
+  const [fornecedores, setFornecedores] = useState<{ id: number; id_fornecedor?: number | null; nome: string }[]>([]);
   const [equipesByForn, setEquipesByForn] = useState<Record<string, string[]>>({});
   // Desvios da obra selecionada: usados para limitar disciplinas e fornecedores
   const [desviosObra, setDesviosObra] = useState<{ disciplina: string | null; fornecedor_id: number | null; fornecedor_nome: string | null }[]>([]);
+  const [fornecedoresObraDisciplina, setFornecedoresObraDisciplina] = useState<Record<string, { id: number | null; nome: string }[]>>({});
 
   const [pickerForItem, setPickerForItem] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
@@ -139,32 +139,24 @@ export default function ChecklistEditor() {
     const map = new Map<string, { id: number | null; nome: string }[]>();
     desviosObra.forEach((d) => {
       const key = normalizeKey(d.disciplina);
-      if (!key || !d.fornecedor_nome) return;
+      const nome = d.fornecedor_nome || fornecedores.find((f) => f.id === d.fornecedor_id)?.nome || "";
+      if (!key || !nome) return;
       if (!map.has(key)) map.set(key, []);
       const list = map.get(key)!;
-      if (!list.some((f) => normalizeKey(f.nome) === normalizeKey(d.fornecedor_nome))) {
-        list.push({ id: d.fornecedor_id, nome: d.fornecedor_nome });
+      if (!list.some((f) => normalizeKey(f.nome) === normalizeKey(nome))) {
+        list.push({ id: d.fornecedor_id, nome });
       }
     });
     const disciplinasComDesvio = new Set(desviosObra.map((d) => normalizeKey(d.disciplina)).filter(Boolean));
     disciplinasComDesvio.forEach((key) => {
       const list = map.get(key) || [];
-      const disciplinaIds = disciplinasCatalogo.filter((d) => normalizeKey(d.nome) === key).map((d) => d.id);
-      fornecedorDisciplinaLinks
-        .filter((link) => disciplinaIds.includes(link.disciplina_id))
-        .forEach((link) => {
-          const fornecedor = fornecedores.find((f) => f.id === link.fornecedor_id);
-          if (!fornecedor) return;
-          if (!list.some((f) => f.id === fornecedor.id || normalizeKey(f.nome) === normalizeKey(fornecedor.nome))) {
-            list.push({ id: fornecedor.id, nome: fornecedor.nome });
-          }
-        });
+      if (list.length === 0) list.push(...(fornecedoresObraDisciplina[key] || []));
       if (list.length > 0) {
         map.set(key, list.sort((a, b) => a.nome.localeCompare(b.nome)));
       }
     });
     return map;
-  }, [desviosObra, disciplinasCatalogo, fornecedorDisciplinaLinks, fornecedores]);
+  }, [desviosObra, fornecedores, fornecedoresObraDisciplina]);
 
   // Auto-popular GC/GO a partir da obra selecionada (quando vazios)
   useEffect(() => {
