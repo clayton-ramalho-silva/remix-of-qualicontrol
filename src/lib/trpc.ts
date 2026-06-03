@@ -1687,10 +1687,8 @@ async function computeVerificacaoScores(respostasArr: any[], rootCategoria: stri
     }, 0);
     return Math.round((pontos / validos.length) * 100);
   };
-  const ponderado = (categoria?: string) => {
-    const list = (secoes || []).filter((s: any) =>
-      !categoria || s.categoria === categoria
-    );
+  const ponderado = (matcher?: (s: any) => boolean) => {
+    const list = (secoes || []).filter((s: any) => !matcher || matcher(s));
     let totalPeso = 0;
     let acc = 0;
     list.forEach((s: any) => {
@@ -1702,6 +1700,9 @@ async function computeVerificacaoScores(respostasArr: any[], rootCategoria: stri
     });
     return totalPeso > 0 ? Math.round(acc / totalPeso) : null;
   };
+  const norm = (s: string) =>
+    (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const titleHas = (kw: string) => (s: any) => norm(s.titulo).includes(kw);
   const statusFromScore = (sc: number | null) => {
     if (sc == null) return null;
     const f = (faixas || []).find((x: any) => sc >= x.minimo && sc <= x.maximo);
@@ -1709,9 +1710,9 @@ async function computeVerificacaoScores(respostasArr: any[], rootCategoria: stri
   };
   return {
     scoreGeral: ponderado(),
-    scoreQualidade: ponderado("qualidade"),
-    scoreCronograma: ponderado("cronograma"),
-    scoreCondicao: ponderado("condicao"),
+    scoreQualidade: ponderado(titleHas("qualidade")),
+    scoreCronograma: ponderado(titleHas("cronograma")),
+    scoreCondicao: ponderado(titleHas("condic")),
     statusFromScore,
   };
 }
