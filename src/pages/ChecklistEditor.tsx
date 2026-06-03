@@ -647,7 +647,7 @@ export default function ChecklistEditor() {
                       <SelectTrigger className="mt-1 h-9 w-full min-w-0">
                         <SelectValue placeholder={obraId ? "—" : "Selecione a obra"} />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent align="start" className="w-[var(--radix-select-trigger-width)]">
                         {disciplinasFiltradas.length === 0 ? (
                           <div className="px-2 py-1.5 text-xs text-muted-foreground">
                             Nenhuma disciplina vinculada aos desvios desta obra
@@ -677,14 +677,14 @@ export default function ChecklistEditor() {
                       <SelectTrigger className="mt-1 h-9 w-full min-w-0">
                         <SelectValue placeholder={it.disciplina_nome ? (fornsDaDisc.length ? "Selecione" : "Sem fornecedor") : "Escolha a disciplina"} />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent align="start" className="w-[var(--radix-select-trigger-width)]">
                         {fornsDaDisc.length === 0 ? (
                           <div className="px-2 py-1.5 text-xs text-muted-foreground">
                             Nenhum fornecedor com desvios nesta disciplina
                           </div>
                         ) : (
                           fornsDaDisc.map((f) => (
-                            <SelectItem key={`${f.id}-${f.nome}`} value={fornecedorValue(f)}>
+                            <SelectItem key={`${f.id}-${f.nome}`} value={fornecedorValue(f)} className="truncate">
                               {f.nome}
                             </SelectItem>
                           ))
