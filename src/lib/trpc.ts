@@ -1503,10 +1503,15 @@ const mutationResolvers: Record<string, Resolver> = {
     return mapOcorrenciaFromDb(data);
   },
   "ocorrencias.delete": async ({ id }: { id: number }) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Não autenticado");
+    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
+    if (!(roles ?? []).some((r: any) => r.role === "admin")) throw new Error("Apenas administradores podem excluir ocorrências");
     const { error } = await (supabase.from("ocorrencias" as any) as any).delete().eq("id", id);
     if (error) throw error;
     return { ok: true };
   },
+
   "ocorrencias.addFoto": async (input: any) => {
     const { data, error } = await (supabase.from("ocorrencia_fotos" as any) as any).insert({
       ocorrencia_id: input.ocorrenciaId,
