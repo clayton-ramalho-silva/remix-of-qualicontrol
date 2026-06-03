@@ -72,7 +72,7 @@ export default function ChecklistEditor() {
   const [totalItens, setTotalItens] = useState<string>("");
 
   const [items, setItems] = useState<Item[]>([]);
-  const [obras, setObras] = useState<{ id: number; codigo: string; nome: string }[]>([]);
+  const [obras, setObras] = useState<{ id: number; codigo: string; nome: string; gerente_obra?: string | null; gerente_contrato?: string | null; nucleo?: string | null }[]>([]);
   const [disciplinas, setDisciplinas] = useState<{ id: number; nome: string }[]>([]);
   const [fornecedores, setFornecedores] = useState<{ id: number; nome: string }[]>([]);
   const [equipesByForn, setEquipesByForn] = useState<Record<string, string[]>>({});
