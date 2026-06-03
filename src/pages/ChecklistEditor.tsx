@@ -340,8 +340,8 @@ export default function ChecklistEditor() {
   useEffect(() => {
     if (!obraId) return;
     items.forEach((it, idx) => {
-      const disc = (it.disciplina_nome || "").trim().toLowerCase();
-      const forn = (it.fornecedor_nome || "").trim().toLowerCase();
+      const disc = normalizeKey(it.disciplina_nome);
+      const forn = normalizeKey(it.fornecedor_nome);
       if (!disc || !forn) return;
       if (it.fotos.length > 0) return;
       const key = `${obraId}|${idx}|${disc}|${forn}`;
