@@ -96,16 +96,45 @@ export default function ChecklistEditor() {
 
   // Total de itens = total de desvios da obra selecionada
   useEffect(() => {
-    if (!obraId) { setTotalItens(""); return; }
+    if (!obraId) { setTotalItens(""); setDesviosObra([]); return; }
     (async () => {
-      const { count, error } = await supabase
+      const { data, error } = await supabase
         .from("desvios")
-        .select("id", { count: "exact", head: true })
+        .select("disciplina, fornecedor_id, fornecedor_nome")
         .eq("obra_id", Number(obraId))
         .is("deleted_at", null);
-      if (!error) setTotalItens(String(count ?? 0));
+      if (!error) {
+        setTotalItens(String((data || []).length));
+        setDesviosObra((data || []) as any[]);
+      }
     })();
   }, [obraId]);
+
+  // Disciplinas presentes nos desvios da obra (match por nome, case-insensitive)
+  const disciplinasFiltradas = (() => {
+    if (!obraId) return disciplinas;
+    const nomes = new Set(
+      desviosObra
+        .map((d) => (d.disciplina || "").trim().toLowerCase())
+        .filter(Boolean)
+    );
+    return disciplinas.filter((d) => nomes.has(d.nome.trim().toLowerCase()));
+  })();
+
+  // Fornecedores por disciplina (a partir dos desvios da obra)
+  const fornecedoresPorDisciplina = (() => {
+    const map = new Map<string, { id: number | null; nome: string }[]>();
+    desviosObra.forEach((d) => {
+      const key = (d.disciplina || "").trim().toLowerCase();
+      if (!key || !d.fornecedor_nome) return;
+      if (!map.has(key)) map.set(key, []);
+      const list = map.get(key)!;
+      if (!list.some((f) => f.nome.toLowerCase() === d.fornecedor_nome!.toLowerCase())) {
+        list.push({ id: d.fornecedor_id, nome: d.fornecedor_nome });
+      }
+    });
+    return map;
+  })();
 
   // Auto-popular GC/GO a partir da obra selecionada (quando vazios)
   useEffect(() => {
