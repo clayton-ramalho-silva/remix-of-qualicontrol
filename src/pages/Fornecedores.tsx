@@ -229,34 +229,6 @@ export default function Fornecedores() {
             placeholder="Filtrar por obra"
             className="w-[200px]"
           />
-          <Dialog open={showDialog} onOpenChange={setShowDialog}>
-            <DialogTrigger asChild>
-              <Button size="sm"><PlusCircle className="h-4 w-4 mr-1.5" /> Novo Fornecedor</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>Cadastrar Fornecedor</DialogTitle></DialogHeader>
-              <div className="space-y-4 mt-2">
-                <div><Label className="text-sm">Nome *</Label><Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do fornecedor" className="mt-1" /></div>
-                <div><Label className="text-sm">Disciplina</Label><Input value={disciplina} onChange={(e) => setDisciplina(e.target.value)} placeholder="Ex: Marcenaria, Pintura" className="mt-1" /></div>
-                <div><Label className="text-sm flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> E-mail</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="fornecedor@empresa.com" className="mt-1" /></div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div><Label className="text-sm flex items-center gap-1.5"><User className="h-3.5 w-3.5" /> Contato</Label><Input value={contato} onChange={(e) => setContato(e.target.value)} placeholder="Nome do contato" className="mt-1" /></div>
-                  <div><Label className="text-sm flex items-center gap-1.5"><Phone className="h-3.5 w-3.5" /> Telefone</Label><Input value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="(11) 99999-9999" className="mt-1" /></div>
-                </div>
-                <Button className="w-full" disabled={!nome || createFornecedor.isPending}
-                  onClick={() => createFornecedor.mutate({
-                    nome,
-                    disciplina: disciplina || null,
-                    contato: contato || null,
-                    telefone: telefone || null,
-                    email: email || null,
-                  })}>
-                  {createFornecedor.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  Cadastrar
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
         </div>
       </div>
 
