@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ObraSelect from "@/components/ObraSelect";
 import { useLocation } from "wouter";
+import DraftsInProgress from "@/components/DraftsInProgress";
 import { Siren, Plus, Calendar, Building2, AlertTriangle, Clock } from "lucide-react";
 
 const CLASSIF_LABELS: Record<string, string> = {
