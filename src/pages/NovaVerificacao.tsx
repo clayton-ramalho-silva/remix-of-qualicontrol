@@ -96,7 +96,8 @@ export default function NovaVerificacao({
 
   const { clearDraft: clearDraftFn, markClean } = useDraftAutosave({
     key: draftKey,
-    data: { obraId, avaliadorId, dataVistoria, goNome, gcNome, nucleo, diretoria, observacoes, respostas },
+    data: { obraId, edificioId, andarId, avaliadorId, dataVistoria, goNome, gcNome, nucleo, diretoria, observacoes, respostas },
+
   });
 
   const discardDraft = () => {
