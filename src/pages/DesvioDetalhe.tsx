@@ -515,9 +515,21 @@ export default function DesvioDetalhe() {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-start gap-3">
-        <Button variant="ghost" size="icon" onClick={() => setLocation("/desvios")} className="mt-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            if (typeof window !== "undefined" && window.history.length > 1) {
+              window.history.back();
+            } else {
+              setLocation("/desvios");
+            }
+          }}
+          className="mt-1"
+        >
           <ArrowLeft className="h-4 w-4" />
         </Button>
+
         <div className="flex-1">
           {obraNome && (
             <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-1">{obraNome}</h2>
@@ -869,8 +881,10 @@ export default function DesvioDetalhe() {
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div><span className="text-muted-foreground">Grupo:</span> <span className="font-medium ml-1">{data.disciplina || "—"}</span></div>
+                  <div><span className="text-muted-foreground">Grupo:</span> <span className="font-medium ml-1">{(() => { const g = (grupos || []).find((x: any) => x.id === (data as any).grupoId); return g ? `${g.codigo} - ${g.nome}` : "—"; })()}</span></div>
+                  <div><span className="text-muted-foreground">Disciplina:</span> <span className="font-medium ml-1">{data.disciplina || "—"}</span></div>
                   <div><span className="text-muted-foreground">Fornecedor:</span> <span className="font-medium ml-1">{data.fornecedorNome || "—"}</span></div>
+
                   <div><span className="text-muted-foreground">Localização:</span> <span className="font-medium ml-1">{data.localizacao || "—"}</span></div>
                   <div><span className="text-muted-foreground">Identificado em:</span> <span className="font-medium ml-1">{new Date(data.dataIdentificacao).toLocaleDateString("pt-BR")}</span></div>
                   <div><span className="text-muted-foreground">Prazo:</span> <span className={`font-medium ml-1 ${isOverdue ? "text-red-600" : ""}`}>{data.prazoSugerido ? new Date(data.prazoSugerido).toLocaleDateString("pt-BR") : "—"}</span></div>
