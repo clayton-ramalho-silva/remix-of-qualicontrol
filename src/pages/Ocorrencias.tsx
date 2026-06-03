@@ -52,9 +52,22 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function Ocorrencias() {
   const [, navigate] = useLocation();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+  const utils = trpc.useUtils();
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const deleteMutation = trpc.ocorrencias.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Ocorrência excluída");
+      setConfirmDeleteId(null);
+      utils.ocorrencias.list.invalidate();
+    },
+    onError: (e: any) => toast.error(e?.message || "Erro ao excluir"),
+  });
   const { data: obras } = trpc.obras.list.useQuery();
   const [obraFilter, setObraFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+
 
   const { data: ocorrencias, isLoading } = trpc.ocorrencias.list.useQuery({
     ...(obraFilter !== "all" ? { obraId: Number(obraFilter) } : {}),
