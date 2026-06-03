@@ -54,6 +54,12 @@ const avalConfig: Record<Avaliacao, { label: string; icon: any; cls: string; pri
   critico: { label: "Crítico", icon: XCircle, cls: "text-red-600", print: "✗" },
 };
 
+const normalizeKey = (value?: string | null) =>
+  (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+
+const fornecedorValue = (f: { id: number | null; nome: string }) =>
+  f.id ? `id:${f.id}` : `n:${normalizeKey(f.nome)}`;
+
 export default function ChecklistEditor() {
   const [, navigate] = useLocation();
   const params = useParams<{ id?: string }>();
@@ -74,7 +80,9 @@ export default function ChecklistEditor() {
   const [items, setItems] = useState<Item[]>([]);
   const [obras, setObras] = useState<{ id: number; codigo: string; nome: string; gerente_obra?: string | null; gerente_contrato?: string | null; nucleo?: string | null }[]>([]);
   const [disciplinas, setDisciplinas] = useState<{ id: number; nome: string }[]>([]);
+  const [disciplinasCatalogo, setDisciplinasCatalogo] = useState<{ id: number; nome: string }[]>([]);
   const [fornecedores, setFornecedores] = useState<{ id: number; nome: string }[]>([]);
+  const [fornecedorDisciplinaLinks, setFornecedorDisciplinaLinks] = useState<{ fornecedor_id: number; disciplina_id: number }[]>([]);
   const [equipesByForn, setEquipesByForn] = useState<Record<string, string[]>>({});
   // Desvios da obra selecionada: usados para limitar disciplinas e fornecedores
   const [desviosObra, setDesviosObra] = useState<{ disciplina: string | null; fornecedor_id: number | null; fornecedor_nome: string | null }[]>([]);
@@ -117,9 +125,9 @@ export default function ChecklistEditor() {
     desviosObra.forEach((d) => {
       const nome = (d.disciplina || "").trim();
       if (!nome) return;
-      const key = nome.toLowerCase();
+      const key = normalizeKey(nome);
       if (seen.has(key)) return;
-      const match = disciplinas.find((x) => x.nome.trim().toLowerCase() === key);
+      const match = disciplinas.find((x) => normalizeKey(x.nome) === key);
       const id = match?.id ?? -Math.abs(key.split("").reduce((a, c) => a + c.charCodeAt(0), 0));
       seen.set(key, { id, nome: match?.nome ?? nome });
     });
@@ -130,16 +138,33 @@ export default function ChecklistEditor() {
   const fornecedoresPorDisciplina = useMemo(() => {
     const map = new Map<string, { id: number | null; nome: string }[]>();
     desviosObra.forEach((d) => {
-      const key = (d.disciplina || "").trim().toLowerCase();
+      const key = normalizeKey(d.disciplina);
       if (!key || !d.fornecedor_nome) return;
       if (!map.has(key)) map.set(key, []);
       const list = map.get(key)!;
-      if (!list.some((f) => f.nome.toLowerCase() === d.fornecedor_nome!.toLowerCase())) {
+      if (!list.some((f) => normalizeKey(f.nome) === normalizeKey(d.fornecedor_nome))) {
         list.push({ id: d.fornecedor_id, nome: d.fornecedor_nome });
       }
     });
+    const disciplinasComDesvio = new Set(desviosObra.map((d) => normalizeKey(d.disciplina)).filter(Boolean));
+    disciplinasComDesvio.forEach((key) => {
+      const list = map.get(key) || [];
+      const disciplinaIds = disciplinasCatalogo.filter((d) => normalizeKey(d.nome) === key).map((d) => d.id);
+      fornecedorDisciplinaLinks
+        .filter((link) => disciplinaIds.includes(link.disciplina_id))
+        .forEach((link) => {
+          const fornecedor = fornecedores.find((f) => f.id === link.fornecedor_id);
+          if (!fornecedor) return;
+          if (!list.some((f) => f.id === fornecedor.id || normalizeKey(f.nome) === normalizeKey(fornecedor.nome))) {
+            list.push({ id: fornecedor.id, nome: fornecedor.nome });
+          }
+        });
+      if (list.length > 0) {
+        map.set(key, list.sort((a, b) => a.nome.localeCompare(b.nome)));
+      }
+    });
     return map;
-  }, [desviosObra]);
+  }, [desviosObra, disciplinasCatalogo, fornecedorDisciplinaLinks, fornecedores]);
 
   // Auto-popular GC/GO a partir da obra selecionada (quando vazios)
   useEffect(() => {
@@ -153,10 +178,12 @@ export default function ChecklistEditor() {
   // Load lookups
   useEffect(() => {
     (async () => {
-      const [obrasRes, discRes, fornRes, feRes] = await Promise.all([
+      const [obrasRes, discRes, discCatalogoRes, fornRes, fdRes, feRes] = await Promise.all([
         supabase.from("obras").select("id, codigo, nome, gerente_obra, gerente_contrato, nucleo").order("codigo"),
         supabase.from("checklist_disciplinas").select("id, nome").eq("ativo", 1).order("ordem"),
+        supabase.from("disciplinas").select("id, nome").order("nome"),
         supabase.from("fornecedores").select("id, nome").order("nome"),
+        supabase.from("fornecedores_disciplinas").select("fornecedor_id, disciplina_id"),
         supabase.from("checklist_fornecedor_equipe").select("fornecedor_nome, nome_equipe"),
       ]);
       // só obras com desvios
@@ -164,7 +191,9 @@ export default function ChecklistEditor() {
       const comDesvio = new Set((dist || []).map((d: any) => d.obra_id));
       setObras(((obrasRes.data || []) as any[]).filter((o) => comDesvio.has(o.id)));
       setDisciplinas((discRes.data || []) as any[]);
+      setDisciplinasCatalogo((discCatalogoRes.data || []) as any[]);
       setFornecedores((fornRes.data || []) as any[]);
+      setFornecedorDisciplinaLinks((fdRes.data || []) as any[]);
       const map: Record<string, string[]> = {};
       (feRes.data || []).forEach((r: any) => {
         const k = r.fornecedor_nome.toLowerCase();
@@ -311,8 +340,8 @@ export default function ChecklistEditor() {
   useEffect(() => {
     if (!obraId) return;
     items.forEach((it, idx) => {
-      const disc = (it.disciplina_nome || "").trim().toLowerCase();
-      const forn = (it.fornecedor_nome || "").trim().toLowerCase();
+      const disc = normalizeKey(it.disciplina_nome);
+      const forn = normalizeKey(it.fornecedor_nome);
       if (!disc || !forn) return;
       if (it.fotos.length > 0) return;
       const key = `${obraId}|${idx}|${disc}|${forn}`;
@@ -321,13 +350,17 @@ export default function ChecklistEditor() {
       (async () => {
         const { data: desv } = await supabase
           .from("desvios")
-          .select("id, disciplina, fornecedor_nome")
+          .select("id, disciplina, fornecedor_id, fornecedor_nome")
           .eq("obra_id", Number(obraId))
           .is("deleted_at", null);
         const matchIds = (desv || [])
           .filter((d: any) =>
-            (d.disciplina || "").trim().toLowerCase() === disc &&
-            (d.fornecedor_nome || "").trim().toLowerCase() === forn
+            normalizeKey(d.disciplina) === disc &&
+            (
+              normalizeKey(d.fornecedor_nome) === forn ||
+              (it.fornecedor_id && d.fornecedor_id === it.fornecedor_id) ||
+              (!d.fornecedor_nome && !d.fornecedor_id)
+            )
           )
           .map((d: any) => d.id);
         if (matchIds.length === 0) return;
@@ -561,11 +594,15 @@ export default function ChecklistEditor() {
           {items.map((it, idx) => {
             const sugs = suggestEquipes(it.fornecedor_nome);
             const fornsDaDisc =
-              fornecedoresPorDisciplina.get((it.disciplina_nome || "").trim().toLowerCase()) || [];
+              fornecedoresPorDisciplina.get(normalizeKey(it.disciplina_nome)) || [];
+            const fornecedorSelecionado = fornsDaDisc.find((f) =>
+              (it.fornecedor_id && f.id === it.fornecedor_id) ||
+              normalizeKey(f.nome) === normalizeKey(it.fornecedor_nome)
+            );
             return (
               <div key={idx} className="border rounded-lg overflow-hidden">
                 <div className="grid grid-cols-12 gap-2 p-3 items-start bg-muted/20">
-                  <div className="col-span-12 md:col-span-3">
+                  <div className="col-span-12 lg:col-span-3 min-w-0">
                     <Label className="text-xs">Disciplina</Label>
                     <Select
                       value={it.disciplina_id ? String(it.disciplina_id) : ""}
@@ -582,7 +619,7 @@ export default function ChecklistEditor() {
                       }}
                       disabled={!obraId}
                     >
-                      <SelectTrigger className="mt-1 h-9">
+                      <SelectTrigger className="mt-1 h-9 w-full min-w-0">
                         <SelectValue placeholder={obraId ? "—" : "Selecione a obra"} />
                       </SelectTrigger>
                       <SelectContent>
@@ -598,22 +635,21 @@ export default function ChecklistEditor() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="col-span-12 md:col-span-2">
+                  <div className="col-span-12 sm:col-span-6 lg:col-span-3 min-w-0">
                     <Label className="text-xs">Fornecedor</Label>
                     <Select
-                      value={it.fornecedor_nome ? `n:${it.fornecedor_nome.toLowerCase()}` : ""}
+                      value={fornecedorSelecionado ? fornecedorValue(fornecedorSelecionado) : ""}
                       onValueChange={(v) => {
-                        const nome = v.startsWith("n:") ? v.slice(2) : v;
-                        const match = fornsDaDisc.find((f) => f.nome.toLowerCase() === nome);
+                        const match = fornsDaDisc.find((f) => fornecedorValue(f) === v);
                         updItem(idx, {
-                          fornecedor_nome: match?.nome || nome,
+                          fornecedor_nome: match?.nome || "",
                           fornecedor_id: match?.id || null,
                           fotos: [],
                         });
                       }}
                       disabled={!it.disciplina_nome}
                     >
-                      <SelectTrigger className="mt-1 h-9">
+                      <SelectTrigger className="mt-1 h-9 w-full min-w-0">
                         <SelectValue placeholder={it.disciplina_nome ? (fornsDaDisc.length ? "Selecione" : "Sem fornecedor") : "Escolha a disciplina"} />
                       </SelectTrigger>
                       <SelectContent>
@@ -623,7 +659,7 @@ export default function ChecklistEditor() {
                           </div>
                         ) : (
                           fornsDaDisc.map((f) => (
-                            <SelectItem key={`${f.id}-${f.nome}`} value={`n:${f.nome.toLowerCase()}`}>
+                            <SelectItem key={`${f.id}-${f.nome}`} value={fornecedorValue(f)}>
                               {f.nome}
                             </SelectItem>
                           ))
@@ -631,11 +667,11 @@ export default function ChecklistEditor() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="col-span-12 md:col-span-2">
+                  <div className="col-span-12 sm:col-span-6 lg:col-span-3 min-w-0">
                     <Label className="text-xs">Equipe Alocada</Label>
                     <Input
                       list={`equipelist-${idx}`}
-                      className="mt-1 h-9"
+                      className="mt-1 h-9 w-full min-w-0"
                       value={it.equipe_nome}
                       onChange={(e) => updItem(idx, { equipe_nome: e.target.value })}
                     />
@@ -657,7 +693,7 @@ export default function ChecklistEditor() {
                       </div>
                     )}
                   </div>
-                  <div className="col-span-6 md:col-span-2">
+                  <div className="col-span-12 sm:col-span-6 lg:col-span-3">
                     <Label className="text-xs">Avaliação</Label>
                     <div className="flex gap-1 mt-1">
                       {(Object.keys(avalConfig) as Avaliacao[]).map((a) => {
@@ -678,7 +714,7 @@ export default function ChecklistEditor() {
                       })}
                     </div>
                   </div>
-                  <div className="col-span-12 md:col-span-3">
+                  <div className="col-span-12 min-w-0">
                     <Label className="text-xs">Comentários</Label>
                     <Textarea
                       className="mt-1 min-h-[36px] text-sm"
