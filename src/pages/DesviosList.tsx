@@ -113,6 +113,21 @@ export default function DesviosList() {
         </p>
       </div>
 
+      <DraftsInProgress
+        scope="desvio:novo"
+        novaRoute="/desvios/novo"
+        renderSummary={(d) => {
+          const obraNome = d.obraId
+            ? (obras?.find((o: any) => String(o.id) === String(d.obraId))?.nome || `Obra #${d.obraId}`)
+            : "Sem obra";
+          const desc = d.descricao ? String(d.descricao).slice(0, 60) : "";
+          const reg = Array.isArray(d.registrados) ? d.registrados.length : 0;
+          return [obraNome, desc, reg ? `${reg} já registrado(s)` : null].filter(Boolean).join(" • ");
+        }}
+      />
+
+
+
       {/* Filters */}
       <Card className="shadow-sm border-0 bg-card">
         <CardContent className="p-4 space-y-3">
