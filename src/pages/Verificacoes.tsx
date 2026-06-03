@@ -42,6 +42,18 @@ export default function Verificacoes({
   rotaBase = "/verificacoes",
 }: Props) {
   const [, navigate] = useLocation();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+  const utils = trpc.useUtils();
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const deleteMutation = trpc.verificacoes.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Verificação excluída");
+      setConfirmDeleteId(null);
+      utils.verificacoes.list.invalidate();
+    },
+    onError: (e: any) => toast.error(e?.message || "Erro ao excluir"),
+  });
   const { data: obras } = trpc.obras.list.useQuery();
   const [obraFilter, setObraFilter] = useState<string>("all");
   const [mostrarRascunhos, setMostrarRascunhos] = useState(false);
@@ -49,6 +61,7 @@ export default function Verificacoes({
     ...(obraFilter !== "all" ? { obraId: Number(obraFilter) } : {}),
     categoria,
   });
+
 
   const getObraNome = (obraId: number) => {
     const obra = obras?.find(o => o.id === obraId);
