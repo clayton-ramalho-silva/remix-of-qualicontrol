@@ -110,15 +110,20 @@ export default function ChecklistEditor() {
     })();
   }, [obraId]);
 
-  // Disciplinas presentes nos desvios da obra (match por nome, case-insensitive)
+  // Disciplinas presentes nos desvios da obra (derivadas diretamente dos desvios)
   const disciplinasFiltradas = (() => {
     if (!obraId) return disciplinas;
-    const nomes = new Set(
-      desviosObra
-        .map((d) => (d.disciplina || "").trim().toLowerCase())
-        .filter(Boolean)
-    );
-    return disciplinas.filter((d) => nomes.has(d.nome.trim().toLowerCase()));
+    const seen = new Map<string, { id: number; nome: string }>();
+    desviosObra.forEach((d) => {
+      const nome = (d.disciplina || "").trim();
+      if (!nome) return;
+      const key = nome.toLowerCase();
+      if (seen.has(key)) return;
+      // tenta achar id na lista global; senão usa hash do nome
+      const match = disciplinas.find((x) => x.nome.trim().toLowerCase() === key);
+      seen.set(key, { id: match?.id ?? -Math.abs(key.split("").reduce((a, c) => a + c.charCodeAt(0), 0)), nome: match?.nome ?? nome });
+    });
+    return Array.from(seen.values()).sort((a, b) => a.nome.localeCompare(b.nome));
   })();
 
   // Fornecedores por disciplina (a partir dos desvios da obra)
