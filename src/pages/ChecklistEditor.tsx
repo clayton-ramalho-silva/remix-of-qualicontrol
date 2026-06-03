@@ -508,6 +508,8 @@ export default function ChecklistEditor() {
           )}
           {items.map((it, idx) => {
             const sugs = suggestEquipes(it.fornecedor_nome);
+            const fornsDaDisc =
+              fornecedoresPorDisciplina.get((it.disciplina_nome || "").trim().toLowerCase()) || [];
             return (
               <div key={idx} className="border rounded-lg overflow-hidden">
                 <div className="grid grid-cols-12 gap-2 p-3 items-start bg-muted/20">
@@ -517,14 +519,29 @@ export default function ChecklistEditor() {
                       value={it.disciplina_id ? String(it.disciplina_id) : ""}
                       onValueChange={(v) => {
                         const d = disciplinas.find((x) => String(x.id) === v);
-                        updItem(idx, { disciplina_id: d?.id || null, disciplina_nome: d?.nome || "" });
+                        updItem(idx, {
+                          disciplina_id: d?.id || null,
+                          disciplina_nome: d?.nome || "",
+                          // limpa fornecedor ao trocar disciplina
+                          fornecedor_id: null,
+                          fornecedor_nome: "",
+                        });
                       }}
+                      disabled={!obraId}
                     >
-                      <SelectTrigger className="mt-1 h-9"><SelectValue placeholder="—" /></SelectTrigger>
+                      <SelectTrigger className="mt-1 h-9">
+                        <SelectValue placeholder={obraId ? "—" : "Selecione a obra"} />
+                      </SelectTrigger>
                       <SelectContent>
-                        {disciplinas.map((d) => (
-                          <SelectItem key={d.id} value={String(d.id)}>{d.nome}</SelectItem>
-                        ))}
+                        {disciplinasFiltradas.length === 0 ? (
+                          <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                            Nenhuma disciplina vinculada aos desvios desta obra
+                          </div>
+                        ) : (
+                          disciplinasFiltradas.map((d) => (
+                            <SelectItem key={d.id} value={String(d.id)}>{d.nome}</SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -533,15 +550,19 @@ export default function ChecklistEditor() {
                     <Input
                       list={`fornlist-${idx}`}
                       className="mt-1 h-9"
+                      placeholder={it.disciplina_nome ? (fornsDaDisc.length ? "Selecione" : "Sem fornecedor") : "Escolha a disciplina"}
+                      disabled={!it.disciplina_nome}
                       value={it.fornecedor_nome}
                       onChange={(e) => {
                         const v = e.target.value;
-                        const match = fornecedores.find((f) => f.nome.toLowerCase() === v.toLowerCase());
+                        const match =
+                          fornsDaDisc.find((f) => f.nome.toLowerCase() === v.toLowerCase()) ||
+                          fornecedores.find((f) => f.nome.toLowerCase() === v.toLowerCase());
                         updItem(idx, { fornecedor_nome: v, fornecedor_id: match?.id || null });
                       }}
                     />
                     <datalist id={`fornlist-${idx}`}>
-                      {fornecedores.map((f) => <option key={f.id} value={f.nome} />)}
+                      {fornsDaDisc.map((f) => <option key={`${f.id}-${f.nome}`} value={f.nome} />)}
                     </datalist>
                   </div>
                   <div className="col-span-12 md:col-span-2">
