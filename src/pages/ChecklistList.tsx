@@ -10,6 +10,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import DraftsInProgress from "@/components/DraftsInProgress";
 
 type Row = {
   id: number;
@@ -93,7 +94,23 @@ export default function ChecklistList() {
           <Button onClick={() => navigate("/checklists/novo")}>
             <Plus className="h-4 w-4 mr-1" /> Novo Checklist
           </Button>
-        </div>
+      </div>
+
+      <DraftsInProgress
+        scope="checklist:novo"
+        novaRoute="/checklists/novo"
+        renderSummary={(d) => {
+          const obraId = d.obraId ? Number(d.obraId) : null;
+          const obraNome = obraId
+            ? "Obra #" + obraId
+            : "Sem obra";
+          const data = d.dataVistoria ? new Date(d.dataVistoria).toLocaleDateString("pt-BR") : "";
+          const itens = Array.isArray(d.items) ? d.items.length : 0;
+          return [obraNome, data, itens ? `${itens} item(ns)` : null].filter(Boolean).join(" • ");
+        }}
+      />
+
+
       </div>
 
       <Card>
