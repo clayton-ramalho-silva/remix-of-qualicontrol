@@ -1137,6 +1137,8 @@ const mutationResolvers: Record<string, Resolver> = {
 
     const insertObj: any = {
       obra_id: input.obraId,
+      edificio_id: input.edificioId ?? null,
+      andar_id: input.andarId ?? null,
       avaliador: input.avaliador,
       data_vistoria: input.dataVistoria,
       go: input.go ?? null,
@@ -1154,6 +1156,7 @@ const mutationResolvers: Record<string, Resolver> = {
       status_cronograma: statusFromScore(scoreCronograma),
       status_condicao: statusFromScore(scoreCondicao),
     };
+
 
     const { data: verif, error } = await supabase.from("verificacoes").insert(insertObj).select().single();
     if (error) throw error;

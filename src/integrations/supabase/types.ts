@@ -1796,11 +1796,13 @@ export type Database = {
       }
       verificacoes: {
         Row: {
+          andar_id: number | null
           avaliador: string
           categoria: string
           created_at: string
           data_vistoria: number
           diretoria: string | null
+          edificio_id: number | null
           gc: string | null
           go: string | null
           id: number
@@ -1819,11 +1821,13 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          andar_id?: number | null
           avaliador: string
           categoria?: string
           created_at?: string
           data_vistoria: number
           diretoria?: string | null
+          edificio_id?: number | null
           gc?: string | null
           go?: string | null
           id?: number
@@ -1842,11 +1846,13 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          andar_id?: number | null
           avaliador?: string
           categoria?: string
           created_at?: string
           data_vistoria?: number
           diretoria?: string | null
+          edificio_id?: number | null
           gc?: string | null
           go?: string | null
           id?: number
@@ -1865,6 +1871,20 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "verificacoes_andar_id_fkey"
+            columns: ["andar_id"]
+            isOneToOne: false
+            referencedRelation: "andares"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verificacoes_edificio_id_fkey"
+            columns: ["edificio_id"]
+            isOneToOne: false
+            referencedRelation: "edificios"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "verificacoes_obra_id_fkey"
             columns: ["obra_id"]

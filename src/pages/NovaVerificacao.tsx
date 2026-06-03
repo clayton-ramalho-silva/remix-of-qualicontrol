@@ -50,7 +50,10 @@ export default function NovaVerificacao({
   const { data: membros } = trpc.membros.list.useQuery();
 
   const [obraId, setObraId] = useState<number | null>(null);
+  const [edificioId, setEdificioId] = useState<number | null>(null);
+  const [andarId, setAndarId] = useState<number | null>(null);
   const [avaliadorId, setAvaliadorId] = useState<string>("");
+
   const [dataVistoria, setDataVistoria] = useState(new Date().toISOString().split("T")[0]);
   const [goNome, setGoNome] = useState<string>("");
   const [gcNome, setGcNome] = useState<string>("");
@@ -74,7 +77,10 @@ export default function NovaVerificacao({
     const d: any = loadDraft(draftKey);
     if (d) {
       if (d.obraId != null) setObraId(d.obraId);
+      if (d.edificioId != null) setEdificioId(d.edificioId);
+      if (d.andarId != null) setAndarId(d.andarId);
       if (d.avaliadorId) setAvaliadorId(d.avaliadorId);
+
       if (d.dataVistoria) setDataVistoria(d.dataVistoria);
       if (d.goNome) setGoNome(d.goNome);
       if (d.gcNome) setGcNome(d.gcNome);
@@ -90,7 +96,8 @@ export default function NovaVerificacao({
 
   const { clearDraft: clearDraftFn, markClean } = useDraftAutosave({
     key: draftKey,
-    data: { obraId, avaliadorId, dataVistoria, goNome, gcNome, nucleo, diretoria, observacoes, respostas },
+    data: { obraId, edificioId, andarId, avaliadorId, dataVistoria, goNome, gcNome, nucleo, diretoria, observacoes, respostas },
+
   });
 
   const discardDraft = () => {
@@ -110,11 +117,22 @@ export default function NovaVerificacao({
   const handleObraChange = (obraIdStr: string) => {
     const newObraId = Number(obraIdStr);
     setObraId(newObraId);
+    setEdificioId(null);
+    setAndarId(null);
     const obra: any = obrasAll?.find((o: any) => o.id === newObraId);
     setGoNome(obra?.gerente_obra ?? "");
     setGcNome(obra?.gerente_contrato ?? "");
     setNucleo(obra?.nucleo ?? "");
   };
+
+  // Edifícios + andares da obra selecionada
+  const { data: edificiosData } = trpc.edificios.listByObra.useQuery(
+    { obraId: obraId ?? 0 },
+    { enabled: !!obraId }
+  );
+  const edificios: any[] = (edificiosData as any) || [];
+  const andaresDoEdificio: any[] = (edificios.find((e: any) => e.id === edificioId)?.andares) || [];
+
 
 
   const exigeFoto = categoria === "vistoria";
@@ -215,7 +233,10 @@ export default function NovaVerificacao({
     try {
       const result = await createVerificacao.mutateAsync({
         obraId,
+        edificioId: edificioId ?? undefined,
+        andarId: andarId ?? undefined,
         categoria,
+
         avaliador: avaliadorNome,
         dataVistoria: new Date(dataVistoria).getTime(),
         go: goNome || undefined,
@@ -336,6 +357,45 @@ export default function NovaVerificacao({
             <Label>Núcleo</Label>
             <Input className="mt-1" placeholder="Selecione uma obra..." value={nucleo} onChange={e => setNucleo(e.target.value)} />
           </div>
+          <div>
+            <Label>Edifício</Label>
+            <Select
+              value={edificioId ? String(edificioId) : ""}
+              onValueChange={(v) => { setEdificioId(v ? Number(v) : null); setAndarId(null); }}
+              disabled={!obraId || edificios.length === 0}
+            >
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder={!obraId ? "Selecione a obra primeiro..." : edificios.length === 0 ? "Nenhum edifício cadastrado" : "Selecione o edifício..."} />
+              </SelectTrigger>
+              <SelectContent>
+                {edificios.map((e: any) => (
+                  <SelectItem key={e.id} value={String(e.id)}>
+                    {e.codigo ? `${e.codigo} - ${e.nome}` : e.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Andar</Label>
+            <Select
+              value={andarId ? String(andarId) : ""}
+              onValueChange={(v) => setAndarId(v ? Number(v) : null)}
+              disabled={!edificioId || andaresDoEdificio.length === 0}
+            >
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder={!edificioId ? "Selecione o edifício primeiro..." : andaresDoEdificio.length === 0 ? "Nenhum andar cadastrado" : "Selecione o andar..."} />
+              </SelectTrigger>
+              <SelectContent>
+                {andaresDoEdificio.map((a: any) => (
+                  <SelectItem key={a.id} value={String(a.id)}>
+                    {a.numero != null ? `${a.numero} - ${a.nome}` : a.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
 
         </CardContent>
       </Card>
