@@ -110,8 +110,8 @@ export default function ChecklistEditor() {
     })();
   }, [obraId]);
 
-  // Disciplinas presentes nos desvios da obra (derivadas diretamente dos desvios)
-  const disciplinasFiltradas = (() => {
+  // Disciplinas presentes nos desvios da obra (derivadas direto dos desvios)
+  const disciplinasFiltradas = useMemo(() => {
     if (!obraId) return disciplinas;
     const seen = new Map<string, { id: number; nome: string }>();
     desviosObra.forEach((d) => {
@@ -119,15 +119,15 @@ export default function ChecklistEditor() {
       if (!nome) return;
       const key = nome.toLowerCase();
       if (seen.has(key)) return;
-      // tenta achar id na lista global; senão usa hash do nome
       const match = disciplinas.find((x) => x.nome.trim().toLowerCase() === key);
-      seen.set(key, { id: match?.id ?? -Math.abs(key.split("").reduce((a, c) => a + c.charCodeAt(0), 0)), nome: match?.nome ?? nome });
+      const id = match?.id ?? -Math.abs(key.split("").reduce((a, c) => a + c.charCodeAt(0), 0));
+      seen.set(key, { id, nome: match?.nome ?? nome });
     });
     return Array.from(seen.values()).sort((a, b) => a.nome.localeCompare(b.nome));
-  })();
+  }, [obraId, desviosObra, disciplinas]);
 
   // Fornecedores por disciplina (a partir dos desvios da obra)
-  const fornecedoresPorDisciplina = (() => {
+  const fornecedoresPorDisciplina = useMemo(() => {
     const map = new Map<string, { id: number | null; nome: string }[]>();
     desviosObra.forEach((d) => {
       const key = (d.disciplina || "").trim().toLowerCase();
@@ -139,7 +139,7 @@ export default function ChecklistEditor() {
       }
     });
     return map;
-  })();
+  }, [desviosObra]);
 
   // Auto-popular GC/GO a partir da obra selecionada (quando vazios)
   useEffect(() => {
