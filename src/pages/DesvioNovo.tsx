@@ -370,6 +370,7 @@ export default function DesvioNovo() {
     }
     const grupo = grupos?.find(g => g.id === parseInt(grupoId));
     const disciplina = disciplinas.find(d => d.id === parseInt(disciplinaId));
+    const fornecedor = fornecedoresApi.find(f => f.nome === fornecedorNome);
 
     setSubmitting(true);
     try {
@@ -377,6 +378,7 @@ export default function DesvioNovo() {
         obraId: parseInt(obraId),
         disciplina: disciplina?.nome || (grupo ? `${grupo.codigo} - ${grupo.nome}` : ""),
         grupoId: parseInt(grupoId),
+        fornecedorId: fornecedor?.id,
         fornecedorNome: fornecedorNome || undefined,
         descricao,
         localizacao: ambiente,
