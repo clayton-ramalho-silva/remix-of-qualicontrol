@@ -35,12 +35,16 @@ const condBadge: Record<Row["condicao"], string> = {
 
 export default function ChecklistList() {
   const [, navigate] = useLocation();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const [rows, setRows] = useState<Row[]>([]);
   const [obrasMap, setObrasMap] = useState<Record<number, { codigo: string; nome: string }>>({});
   const [loading, setLoading] = useState(true);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [mostrarRascunhos, setMostrarRascunhos] = useState(false);
+  const deleteMutation = trpc.checklistEntregas.delete.useMutation();
+
 
   async function load() {
     setLoading(true);
