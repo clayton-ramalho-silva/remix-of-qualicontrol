@@ -45,6 +45,18 @@ const PRIO_COLORS: Record<string, string> = {
 export default function PlanosAcao() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+  const utils = trpc.useUtils();
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const deleteMutation = trpc.planos.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Plano excluído");
+      setConfirmDeleteId(null);
+      utils.planos.list.invalidate();
+    },
+    onError: (e: any) => toast.error(e?.message || "Erro ao excluir"),
+  });
+
   const [search, setSearch] = useState("");
   const [obraFilter, setObraFilter] = useState("all");
   const [verticalFilter, setVerticalFilter] = useState("all");
