@@ -176,15 +176,18 @@ export default function ChecklistList() {
                       <Button size="sm" variant="ghost" onClick={() => navigate(`/checklists/${r.id}?print=1`)}>
                         <Printer className="h-4 w-4" />
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-muted-foreground hover:text-destructive"
-                        onClick={() => setConfirmDeleteId(r.id)}
-                        title="Excluir checklist"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {isAdmin && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-muted-foreground hover:text-destructive"
+                          onClick={() => setConfirmDeleteId(r.id)}
+                          title="Excluir checklist"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+
                     </td>
                   </tr>
                 ))}
