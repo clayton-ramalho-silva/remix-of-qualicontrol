@@ -105,6 +105,15 @@ export default function ChecklistEditor() {
     })();
   }, [obraId]);
 
+  // Auto-popular GC/GO a partir da obra selecionada (quando vazios)
+  useEffect(() => {
+    if (!obraId) return;
+    const o = obras.find((x) => String(x.id) === obraId);
+    if (!o) return;
+    setGc((prev) => prev || o.gerente_contrato || "");
+    setGo((prev) => prev || o.gerente_obra || "");
+  }, [obraId, obras]);
+
   // Load lookups
   useEffect(() => {
     (async () => {
