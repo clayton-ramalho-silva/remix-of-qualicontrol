@@ -838,6 +838,44 @@ const mutationResolvers: Record<string, Resolver> = {
     if (error) throw error;
     return mapPlanoFromDb(data);
   },
+  "planos.delete": async ({ id }: { id: number }) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Não autenticado");
+    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
+    if (!(roles ?? []).some((r: any) => r.role === "admin")) throw new Error("Apenas administradores podem excluir planos");
+    await supabase.from("plano_desvios" as any).delete().eq("plano_id", id);
+    const { error } = await supabase.from("planos_acao").delete().eq("id", id);
+    if (error) throw error;
+    return { id };
+  },
+  "verificacoes.delete": async ({ id }: { id: number }) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Não autenticado");
+    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
+    if (!(roles ?? []).some((r: any) => r.role === "admin")) throw new Error("Apenas administradores podem excluir verificações");
+    await supabase.from("verificacao_resposta_fotos" as any).delete().eq("verificacao_id", id);
+    await supabase.from("verificacao_respostas").delete().eq("verificacao_id", id);
+    const { error } = await supabase.from("verificacoes").delete().eq("id", id);
+    if (error) throw error;
+    return { id };
+  },
+  "checklistEntregas.delete": async ({ id }: { id: number }) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Não autenticado");
+    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
+    if (!(roles ?? []).some((r: any) => r.role === "admin")) throw new Error("Apenas administradores podem excluir checklists");
+    const { data: itens } = await supabase.from("checklist_entrega_itens" as any).select("id").eq("entrega_id", id);
+    const itemIds = (itens || []).map((i: any) => i.id);
+    if (itemIds.length) {
+      await supabase.from("checklist_entrega_fotos" as any).delete().in("item_id", itemIds);
+    }
+    await supabase.from("checklist_entrega_itens" as any).delete().eq("entrega_id", id);
+    const { error } = await supabase.from("checklist_entregas" as any).delete().eq("id", id);
+    if (error) throw error;
+    return { id };
+  },
+
+
 
   // --- HISTORICO ---
   "historico.addComment": async (input: any) => {
