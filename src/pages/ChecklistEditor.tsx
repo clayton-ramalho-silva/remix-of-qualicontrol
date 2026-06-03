@@ -194,6 +194,41 @@ export default function ChecklistEditor() {
     })();
   }, []);
 
+  // Fornecedores válidos por obra + disciplina, vindos da integração da obra.
+  // Usado como fallback quando desvios antigos foram salvos sem fornecedor.
+  useEffect(() => {
+    const idProjeto = obraSel?.id_projeto;
+    if (!obraId || !idProjeto || desviosObra.length === 0 || disciplinasCatalogo.length === 0) {
+      setFornecedoresObraDisciplina({});
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const entries = await Promise.all(
+        Array.from(new Set(desviosObra.map((d) => normalizeKey(d.disciplina)).filter(Boolean))).map(async (key) => {
+          const disciplina = disciplinasCatalogo.find((d) => normalizeKey(d.nome) === key);
+          if (!disciplina?.id_disciplina) return [key, []] as const;
+          const { data, error } = await supabase.functions.invoke("sync-fornecedores-sub-atividade", {
+            body: {
+              idProjeto,
+              idSubAtividadeInspecao: disciplina.id_disciplina,
+            },
+          });
+          if (error) return [key, []] as const;
+          const list = ((data as any)?.fornecedores || []).map((apiF: any) => {
+            const local = fornecedores.find(
+              (f) => f.id_fornecedor === apiF.id || normalizeKey(f.nome) === normalizeKey(apiF.nome),
+            );
+            return { id: local?.id ?? null, nome: local?.nome ?? apiF.nome };
+          });
+          return [key, list] as const;
+        }),
+      );
+      if (!cancelled) setFornecedoresObraDisciplina(Object.fromEntries(entries));
+    })();
+    return () => { cancelled = true; };
+  }, [obraId, obraSel?.id_projeto, desviosObra, disciplinasCatalogo, fornecedores]);
+
   // Load entrega if editing
   useEffect(() => {
     if (!isEdit || !id) return;
