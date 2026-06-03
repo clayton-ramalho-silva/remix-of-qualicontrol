@@ -7,7 +7,14 @@ import ObraSelect from "@/components/ObraSelect";
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
 import DraftsInProgress from "@/components/DraftsInProgress";
-import { ClipboardList, Plus, Calendar, User, Building2, TrendingUp, TrendingDown, Minus, Eye } from "lucide-react";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { toast } from "sonner";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ClipboardList, Plus, Calendar, User, Building2, TrendingUp, TrendingDown, Minus, Eye, Trash2 } from "lucide-react";
+
 
 const statusColors: Record<string, string> = {
   "ÓTIMA": "bg-emerald-100 text-emerald-700 border-emerald-200",
