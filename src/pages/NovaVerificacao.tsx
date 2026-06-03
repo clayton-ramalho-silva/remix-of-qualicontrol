@@ -50,7 +50,10 @@ export default function NovaVerificacao({
   const { data: membros } = trpc.membros.list.useQuery();
 
   const [obraId, setObraId] = useState<number | null>(null);
+  const [edificioId, setEdificioId] = useState<number | null>(null);
+  const [andarId, setAndarId] = useState<number | null>(null);
   const [avaliadorId, setAvaliadorId] = useState<string>("");
+
   const [dataVistoria, setDataVistoria] = useState(new Date().toISOString().split("T")[0]);
   const [goNome, setGoNome] = useState<string>("");
   const [gcNome, setGcNome] = useState<string>("");
