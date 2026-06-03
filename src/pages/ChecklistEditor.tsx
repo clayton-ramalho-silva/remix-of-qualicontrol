@@ -78,14 +78,14 @@ export default function ChecklistEditor() {
   const [totalItens, setTotalItens] = useState<string>("");
 
   const [items, setItems] = useState<Item[]>([]);
-  const [obras, setObras] = useState<{ id: number; codigo: string; nome: string; gerente_obra?: string | null; gerente_contrato?: string | null; nucleo?: string | null }[]>([]);
+  const [obras, setObras] = useState<{ id: number; id_projeto?: number | null; codigo: string; nome: string; gerente_obra?: string | null; gerente_contrato?: string | null; nucleo?: string | null }[]>([]);
   const [disciplinas, setDisciplinas] = useState<{ id: number; nome: string }[]>([]);
-  const [disciplinasCatalogo, setDisciplinasCatalogo] = useState<{ id: number; nome: string }[]>([]);
-  const [fornecedores, setFornecedores] = useState<{ id: number; nome: string }[]>([]);
-  const [fornecedorDisciplinaLinks, setFornecedorDisciplinaLinks] = useState<{ fornecedor_id: number; disciplina_id: number }[]>([]);
+  const [disciplinasCatalogo, setDisciplinasCatalogo] = useState<{ id: number; nome: string; id_disciplina?: number | null }[]>([]);
+  const [fornecedores, setFornecedores] = useState<{ id: number; id_fornecedor?: number | null; nome: string }[]>([]);
   const [equipesByForn, setEquipesByForn] = useState<Record<string, string[]>>({});
   // Desvios da obra selecionada: usados para limitar disciplinas e fornecedores
   const [desviosObra, setDesviosObra] = useState<{ disciplina: string | null; fornecedor_id: number | null; fornecedor_nome: string | null }[]>([]);
+  const [fornecedoresObraDisciplina, setFornecedoresObraDisciplina] = useState<Record<string, { id: number | null; nome: string }[]>>({});
 
   const [pickerForItem, setPickerForItem] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
@@ -139,32 +139,24 @@ export default function ChecklistEditor() {
     const map = new Map<string, { id: number | null; nome: string }[]>();
     desviosObra.forEach((d) => {
       const key = normalizeKey(d.disciplina);
-      if (!key || !d.fornecedor_nome) return;
+      const nome = d.fornecedor_nome || fornecedores.find((f) => f.id === d.fornecedor_id)?.nome || "";
+      if (!key || !nome) return;
       if (!map.has(key)) map.set(key, []);
       const list = map.get(key)!;
-      if (!list.some((f) => normalizeKey(f.nome) === normalizeKey(d.fornecedor_nome))) {
-        list.push({ id: d.fornecedor_id, nome: d.fornecedor_nome });
+      if (!list.some((f) => normalizeKey(f.nome) === normalizeKey(nome))) {
+        list.push({ id: d.fornecedor_id, nome });
       }
     });
     const disciplinasComDesvio = new Set(desviosObra.map((d) => normalizeKey(d.disciplina)).filter(Boolean));
     disciplinasComDesvio.forEach((key) => {
       const list = map.get(key) || [];
-      const disciplinaIds = disciplinasCatalogo.filter((d) => normalizeKey(d.nome) === key).map((d) => d.id);
-      fornecedorDisciplinaLinks
-        .filter((link) => disciplinaIds.includes(link.disciplina_id))
-        .forEach((link) => {
-          const fornecedor = fornecedores.find((f) => f.id === link.fornecedor_id);
-          if (!fornecedor) return;
-          if (!list.some((f) => f.id === fornecedor.id || normalizeKey(f.nome) === normalizeKey(fornecedor.nome))) {
-            list.push({ id: fornecedor.id, nome: fornecedor.nome });
-          }
-        });
+      if (list.length === 0) list.push(...(fornecedoresObraDisciplina[key] || []));
       if (list.length > 0) {
         map.set(key, list.sort((a, b) => a.nome.localeCompare(b.nome)));
       }
     });
     return map;
-  }, [desviosObra, disciplinasCatalogo, fornecedorDisciplinaLinks, fornecedores]);
+  }, [desviosObra, fornecedores, fornecedoresObraDisciplina]);
 
   // Auto-popular GC/GO a partir da obra selecionada (quando vazios)
   useEffect(() => {
@@ -175,15 +167,19 @@ export default function ChecklistEditor() {
     setGo((prev) => prev || o.gerente_obra || "");
   }, [obraId, obras]);
 
+  const obraSel = useMemo(
+    () => obras.find((o) => String(o.id) === obraId) || null,
+    [obras, obraId]
+  );
+
   // Load lookups
   useEffect(() => {
     (async () => {
-      const [obrasRes, discRes, discCatalogoRes, fornRes, fdRes, feRes] = await Promise.all([
-        supabase.from("obras").select("id, codigo, nome, gerente_obra, gerente_contrato, nucleo").order("codigo"),
+      const [obrasRes, discRes, discCatalogoRes, fornRes, feRes] = await Promise.all([
+        supabase.from("obras").select("id, id_projeto, codigo, nome, gerente_obra, gerente_contrato, nucleo").order("codigo"),
         supabase.from("checklist_disciplinas").select("id, nome").eq("ativo", 1).order("ordem"),
-        supabase.from("disciplinas").select("id, nome").order("nome"),
-        supabase.from("fornecedores").select("id, nome").order("nome"),
-        supabase.from("fornecedores_disciplinas").select("fornecedor_id, disciplina_id"),
+        supabase.from("disciplinas").select("id, nome, id_disciplina").order("nome"),
+        supabase.from("fornecedores").select("id, id_fornecedor, nome").order("nome"),
         supabase.from("checklist_fornecedor_equipe").select("fornecedor_nome, nome_equipe"),
       ]);
       // só obras com desvios
@@ -193,7 +189,6 @@ export default function ChecklistEditor() {
       setDisciplinas((discRes.data || []) as any[]);
       setDisciplinasCatalogo((discCatalogoRes.data || []) as any[]);
       setFornecedores((fornRes.data || []) as any[]);
-      setFornecedorDisciplinaLinks((fdRes.data || []) as any[]);
       const map: Record<string, string[]> = {};
       (feRes.data || []).forEach((r: any) => {
         const k = r.fornecedor_nome.toLowerCase();
@@ -203,6 +198,41 @@ export default function ChecklistEditor() {
       setEquipesByForn(map);
     })();
   }, []);
+
+  // Fornecedores válidos por obra + disciplina, vindos da integração da obra.
+  // Usado como fallback quando desvios antigos foram salvos sem fornecedor.
+  useEffect(() => {
+    const idProjeto = obraSel?.id_projeto;
+    if (!obraId || !idProjeto || desviosObra.length === 0 || disciplinasCatalogo.length === 0) {
+      setFornecedoresObraDisciplina({});
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const entries = await Promise.all(
+        Array.from(new Set(desviosObra.map((d) => normalizeKey(d.disciplina)).filter(Boolean))).map(async (key) => {
+          const disciplina = disciplinasCatalogo.find((d) => normalizeKey(d.nome) === key);
+          if (!disciplina?.id_disciplina) return [key, []] as const;
+          const { data, error } = await supabase.functions.invoke("sync-fornecedores-sub-atividade", {
+            body: {
+              idProjeto,
+              idSubAtividadeInspecao: disciplina.id_disciplina,
+            },
+          });
+          if (error) return [key, []] as const;
+          const list = ((data as any)?.fornecedores || []).map((apiF: any) => {
+            const local = fornecedores.find(
+              (f) => f.id_fornecedor === apiF.id || normalizeKey(f.nome) === normalizeKey(apiF.nome),
+            );
+            return { id: local?.id ?? null, nome: local?.nome ?? apiF.nome };
+          });
+          return [key, list] as const;
+        }),
+      );
+      if (!cancelled) setFornecedoresObraDisciplina(Object.fromEntries(entries));
+    })();
+    return () => { cancelled = true; };
+  }, [obraId, obraSel?.id_projeto, desviosObra, disciplinasCatalogo, fornecedores]);
 
   // Load entrega if editing
   useEffect(() => {
@@ -309,11 +339,6 @@ export default function ChecklistEditor() {
       setTimeout(() => window.print(), 600);
     }
   }, [printOnLoad, loading]);
-
-  const obraSel = useMemo(
-    () => obras.find((o) => String(o.id) === obraId) || null,
-    [obras, obraId]
-  );
 
   function addItem() {
     setItems((prev) => [
@@ -622,7 +647,7 @@ export default function ChecklistEditor() {
                       <SelectTrigger className="mt-1 h-9 w-full min-w-0">
                         <SelectValue placeholder={obraId ? "—" : "Selecione a obra"} />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent align="start" className="w-[var(--radix-select-trigger-width)]">
                         {disciplinasFiltradas.length === 0 ? (
                           <div className="px-2 py-1.5 text-xs text-muted-foreground">
                             Nenhuma disciplina vinculada aos desvios desta obra
@@ -652,14 +677,14 @@ export default function ChecklistEditor() {
                       <SelectTrigger className="mt-1 h-9 w-full min-w-0">
                         <SelectValue placeholder={it.disciplina_nome ? (fornsDaDisc.length ? "Selecione" : "Sem fornecedor") : "Escolha a disciplina"} />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent align="start" className="w-[var(--radix-select-trigger-width)]">
                         {fornsDaDisc.length === 0 ? (
                           <div className="px-2 py-1.5 text-xs text-muted-foreground">
                             Nenhum fornecedor com desvios nesta disciplina
                           </div>
                         ) : (
                           fornsDaDisc.map((f) => (
-                            <SelectItem key={`${f.id}-${f.nome}`} value={fornecedorValue(f)}>
+                            <SelectItem key={`${f.id}-${f.nome}`} value={fornecedorValue(f)} className="truncate">
                               {f.nome}
                             </SelectItem>
                           ))
