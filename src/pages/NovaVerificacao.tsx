@@ -357,6 +357,45 @@ export default function NovaVerificacao({
             <Label>Núcleo</Label>
             <Input className="mt-1" placeholder="Selecione uma obra..." value={nucleo} onChange={e => setNucleo(e.target.value)} />
           </div>
+          <div>
+            <Label>Edifício</Label>
+            <Select
+              value={edificioId ? String(edificioId) : ""}
+              onValueChange={(v) => { setEdificioId(v ? Number(v) : null); setAndarId(null); }}
+              disabled={!obraId || edificios.length === 0}
+            >
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder={!obraId ? "Selecione a obra primeiro..." : edificios.length === 0 ? "Nenhum edifício cadastrado" : "Selecione o edifício..."} />
+              </SelectTrigger>
+              <SelectContent>
+                {edificios.map((e: any) => (
+                  <SelectItem key={e.id} value={String(e.id)}>
+                    {e.codigo ? `${e.codigo} - ${e.nome}` : e.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Andar</Label>
+            <Select
+              value={andarId ? String(andarId) : ""}
+              onValueChange={(v) => setAndarId(v ? Number(v) : null)}
+              disabled={!edificioId || andaresDoEdificio.length === 0}
+            >
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder={!edificioId ? "Selecione o edifício primeiro..." : andaresDoEdificio.length === 0 ? "Nenhum andar cadastrado" : "Selecione o andar..."} />
+              </SelectTrigger>
+              <SelectContent>
+                {andaresDoEdificio.map((a: any) => (
+                  <SelectItem key={a.id} value={String(a.id)}>
+                    {a.numero != null ? `${a.numero} - ${a.nome}` : a.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
 
         </CardContent>
       </Card>
