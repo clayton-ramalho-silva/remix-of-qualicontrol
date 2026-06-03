@@ -177,6 +177,17 @@ export default function Ocorrencias() {
                         </div>
                       </div>
                     </div>
+                    {isAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                        onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(o.id); }}
+                        title="Excluir ocorrência"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -184,6 +195,26 @@ export default function Ocorrencias() {
           })}
         </div>
       )}
+      <AlertDialog open={confirmDeleteId !== null} onOpenChange={(o) => !o && setConfirmDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir ocorrência?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é permanente. Todos os dados, fotos, documentos, testemunhas e cronologia vinculados a esta ocorrência serão removidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteMutation.isPending}
+              onClick={(e) => { e.preventDefault(); if (confirmDeleteId !== null) deleteMutation.mutate({ id: confirmDeleteId }); }}
+            >
+              {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
