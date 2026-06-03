@@ -600,23 +600,36 @@ export default function ChecklistEditor() {
                   </div>
                   <div className="col-span-12 md:col-span-2">
                     <Label className="text-xs">Fornecedor</Label>
-                    <Input
-                      list={`fornlist-${idx}`}
-                      className="mt-1 h-9"
-                      placeholder={it.disciplina_nome ? (fornsDaDisc.length ? "Selecione" : "Sem fornecedor") : "Escolha a disciplina"}
-                      disabled={!it.disciplina_nome}
-                      value={it.fornecedor_nome}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        const match =
-                          fornsDaDisc.find((f) => f.nome.toLowerCase() === v.toLowerCase()) ||
-                          fornecedores.find((f) => f.nome.toLowerCase() === v.toLowerCase());
-                        updItem(idx, { fornecedor_nome: v, fornecedor_id: match?.id || null });
+                    <Select
+                      value={it.fornecedor_nome ? `n:${it.fornecedor_nome.toLowerCase()}` : ""}
+                      onValueChange={(v) => {
+                        const nome = v.startsWith("n:") ? v.slice(2) : v;
+                        const match = fornsDaDisc.find((f) => f.nome.toLowerCase() === nome);
+                        updItem(idx, {
+                          fornecedor_nome: match?.nome || nome,
+                          fornecedor_id: match?.id || null,
+                          fotos: [],
+                        });
                       }}
-                    />
-                    <datalist id={`fornlist-${idx}`}>
-                      {fornsDaDisc.map((f) => <option key={`${f.id}-${f.nome}`} value={f.nome} />)}
-                    </datalist>
+                      disabled={!it.disciplina_nome}
+                    >
+                      <SelectTrigger className="mt-1 h-9">
+                        <SelectValue placeholder={it.disciplina_nome ? (fornsDaDisc.length ? "Selecione" : "Sem fornecedor") : "Escolha a disciplina"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {fornsDaDisc.length === 0 ? (
+                          <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                            Nenhum fornecedor com desvios nesta disciplina
+                          </div>
+                        ) : (
+                          fornsDaDisc.map((f) => (
+                            <SelectItem key={`${f.id}-${f.nome}`} value={`n:${f.nome.toLowerCase()}`}>
+                              {f.nome}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="col-span-12 md:col-span-2">
                     <Label className="text-xs">Equipe Alocada</Label>
