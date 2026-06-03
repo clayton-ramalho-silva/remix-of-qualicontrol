@@ -11,6 +11,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import DraftsInProgress from "@/components/DraftsInProgress";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
+
 
 type Row = {
   id: number;
