@@ -76,6 +76,8 @@ export default function ChecklistEditor() {
   const [disciplinas, setDisciplinas] = useState<{ id: number; nome: string }[]>([]);
   const [fornecedores, setFornecedores] = useState<{ id: number; nome: string }[]>([]);
   const [equipesByForn, setEquipesByForn] = useState<Record<string, string[]>>({});
+  // Desvios da obra selecionada: usados para limitar disciplinas e fornecedores
+  const [desviosObra, setDesviosObra] = useState<{ disciplina: string | null; fornecedor_id: number | null; fornecedor_nome: string | null }[]>([]);
 
   const [pickerForItem, setPickerForItem] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
@@ -94,16 +96,45 @@ export default function ChecklistEditor() {
 
   // Total de itens = total de desvios da obra selecionada
   useEffect(() => {
-    if (!obraId) { setTotalItens(""); return; }
+    if (!obraId) { setTotalItens(""); setDesviosObra([]); return; }
     (async () => {
-      const { count, error } = await supabase
+      const { data, error } = await supabase
         .from("desvios")
-        .select("id", { count: "exact", head: true })
+        .select("disciplina, fornecedor_id, fornecedor_nome")
         .eq("obra_id", Number(obraId))
         .is("deleted_at", null);
-      if (!error) setTotalItens(String(count ?? 0));
+      if (!error) {
+        setTotalItens(String((data || []).length));
+        setDesviosObra((data || []) as any[]);
+      }
     })();
   }, [obraId]);
+
+  // Disciplinas presentes nos desvios da obra (match por nome, case-insensitive)
+  const disciplinasFiltradas = (() => {
+    if (!obraId) return disciplinas;
+    const nomes = new Set(
+      desviosObra
+        .map((d) => (d.disciplina || "").trim().toLowerCase())
+        .filter(Boolean)
+    );
+    return disciplinas.filter((d) => nomes.has(d.nome.trim().toLowerCase()));
+  })();
+
+  // Fornecedores por disciplina (a partir dos desvios da obra)
+  const fornecedoresPorDisciplina = (() => {
+    const map = new Map<string, { id: number | null; nome: string }[]>();
+    desviosObra.forEach((d) => {
+      const key = (d.disciplina || "").trim().toLowerCase();
+      if (!key || !d.fornecedor_nome) return;
+      if (!map.has(key)) map.set(key, []);
+      const list = map.get(key)!;
+      if (!list.some((f) => f.nome.toLowerCase() === d.fornecedor_nome!.toLowerCase())) {
+        list.push({ id: d.fornecedor_id, nome: d.fornecedor_nome });
+      }
+    });
+    return map;
+  })();
 
   // Auto-popular GC/GO a partir da obra selecionada (quando vazios)
   useEffect(() => {
@@ -477,6 +508,8 @@ export default function ChecklistEditor() {
           )}
           {items.map((it, idx) => {
             const sugs = suggestEquipes(it.fornecedor_nome);
+            const fornsDaDisc =
+              fornecedoresPorDisciplina.get((it.disciplina_nome || "").trim().toLowerCase()) || [];
             return (
               <div key={idx} className="border rounded-lg overflow-hidden">
                 <div className="grid grid-cols-12 gap-2 p-3 items-start bg-muted/20">
@@ -486,14 +519,29 @@ export default function ChecklistEditor() {
                       value={it.disciplina_id ? String(it.disciplina_id) : ""}
                       onValueChange={(v) => {
                         const d = disciplinas.find((x) => String(x.id) === v);
-                        updItem(idx, { disciplina_id: d?.id || null, disciplina_nome: d?.nome || "" });
+                        updItem(idx, {
+                          disciplina_id: d?.id || null,
+                          disciplina_nome: d?.nome || "",
+                          // limpa fornecedor ao trocar disciplina
+                          fornecedor_id: null,
+                          fornecedor_nome: "",
+                        });
                       }}
+                      disabled={!obraId}
                     >
-                      <SelectTrigger className="mt-1 h-9"><SelectValue placeholder="—" /></SelectTrigger>
+                      <SelectTrigger className="mt-1 h-9">
+                        <SelectValue placeholder={obraId ? "—" : "Selecione a obra"} />
+                      </SelectTrigger>
                       <SelectContent>
-                        {disciplinas.map((d) => (
-                          <SelectItem key={d.id} value={String(d.id)}>{d.nome}</SelectItem>
-                        ))}
+                        {disciplinasFiltradas.length === 0 ? (
+                          <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                            Nenhuma disciplina vinculada aos desvios desta obra
+                          </div>
+                        ) : (
+                          disciplinasFiltradas.map((d) => (
+                            <SelectItem key={d.id} value={String(d.id)}>{d.nome}</SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -502,15 +550,19 @@ export default function ChecklistEditor() {
                     <Input
                       list={`fornlist-${idx}`}
                       className="mt-1 h-9"
+                      placeholder={it.disciplina_nome ? (fornsDaDisc.length ? "Selecione" : "Sem fornecedor") : "Escolha a disciplina"}
+                      disabled={!it.disciplina_nome}
                       value={it.fornecedor_nome}
                       onChange={(e) => {
                         const v = e.target.value;
-                        const match = fornecedores.find((f) => f.nome.toLowerCase() === v.toLowerCase());
+                        const match =
+                          fornsDaDisc.find((f) => f.nome.toLowerCase() === v.toLowerCase()) ||
+                          fornecedores.find((f) => f.nome.toLowerCase() === v.toLowerCase());
                         updItem(idx, { fornecedor_nome: v, fornecedor_id: match?.id || null });
                       }}
                     />
                     <datalist id={`fornlist-${idx}`}>
-                      {fornecedores.map((f) => <option key={f.id} value={f.nome} />)}
+                      {fornsDaDisc.map((f) => <option key={`${f.id}-${f.nome}`} value={f.nome} />)}
                     </datalist>
                   </div>
                   <div className="col-span-12 md:col-span-2">
