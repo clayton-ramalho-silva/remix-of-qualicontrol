@@ -18,6 +18,7 @@ import {
   Search, Filter, ArrowRight, AlertTriangle, Clock, CheckCircle2,
   FileWarning, UserCheck, ShieldAlert, Tag, Trash2,
 } from "lucide-react";
+import DraftsInProgress from "@/components/DraftsInProgress";
 
 const SEV_BADGE: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   leve: { label: "Leve", variant: "secondary" },
