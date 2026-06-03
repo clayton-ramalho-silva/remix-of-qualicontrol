@@ -126,7 +126,15 @@ export default function DesvioDetalhe() {
 
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
-  const [editDisciplina, setEditDisciplina] = useState("");
+  const [editGrupoId, setEditGrupoId] = useState<string>("");
+  const [editGrupoSearch, setEditGrupoSearch] = useState("");
+  const [editDisciplinaId, setEditDisciplinaId] = useState<string>("");
+  const [editDisciplinaSearch, setEditDisciplinaSearch] = useState("");
+  const [editDisciplinas, setEditDisciplinas] = useState<{ id: number; nome: string }[]>([]);
+  const [editLoadingDisciplinas, setEditLoadingDisciplinas] = useState(false);
+  const [editFornecedoresApi, setEditFornecedoresApi] = useState<{ id: number; nome: string }[]>([]);
+  const [editLoadingFornecedores, setEditLoadingFornecedores] = useState(false);
+  const [editFornecedorId, setEditFornecedorId] = useState<string>("");
   const [editFornecedorNome, setEditFornecedorNome] = useState("");
   const [editDescricao, setEditDescricao] = useState("");
   const [editLocalizacao, setEditLocalizacao] = useState("");
@@ -139,14 +147,29 @@ export default function DesvioDetalhe() {
   const [editTagSolicitadoArquitetura, setEditTagSolicitadoArquitetura] = useState(false);
   const [editPrazoSugerido, setEditPrazoSugerido] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
-  const [editGrupoSearch, setEditGrupoSearch] = useState("");
   const [editPlantaId, setEditPlantaId] = useState<number | null>(null);
   const [editPinX, setEditPinX] = useState<string | null>(null);
   const [editPinY, setEditPinY] = useState<string | null>(null);
 
+  // Refs to preserve initial selections when cascading loads run for the first time
+  const editGrupoFirstRef = useRef(true);
+  const editFornFirstRef = useRef(true);
+  const initialDisciplinaNomeRef = useRef<string>("");
+  const initialFornecedorIdRef = useRef<number | null>(null);
+  const initialFornecedorNomeRef = useRef<string>("");
+
   const startEditing = () => {
     if (!data) return;
-    setEditDisciplina(data.disciplina || "");
+    editGrupoFirstRef.current = true;
+    editFornFirstRef.current = true;
+    initialDisciplinaNomeRef.current = (data.disciplina || "").trim();
+    initialFornecedorIdRef.current = (data as any).fornecedorId ?? null;
+    initialFornecedorNomeRef.current = (data.fornecedorNome || "").trim();
+    setEditGrupoId((data as any).grupoId ? String((data as any).grupoId) : "");
+    setEditDisciplinaId("");
+    setEditDisciplinas([]);
+    setEditFornecedoresApi([]);
+    setEditFornecedorId("");
     setEditFornecedorNome(data.fornecedorNome || "");
     setEditDescricao(data.descricao);
     setEditLocalizacao(data.localizacao || "");
@@ -164,16 +187,123 @@ export default function DesvioDetalhe() {
     setIsEditing(true);
   };
 
+  // Carrega disciplinas do grupo selecionado, preservando seleção inicial (match por nome)
+  useEffect(() => {
+    if (!isEditing) return;
+    if (!editGrupoId) {
+      setEditDisciplinas([]);
+      setEditDisciplinaId("");
+      return;
+    }
+    if (!editGrupoFirstRef.current) {
+      setEditDisciplinaId("");
+      setEditFornecedorId("");
+      setEditFornecedorNome("");
+    }
+    let cancelled = false;
+    (async () => {
+      setEditLoadingDisciplinas(true);
+      try {
+        const { data: discs, error } = await supabase
+          .from("disciplinas")
+          .select("id, nome")
+          .eq("id_grupo", Number(editGrupoId))
+          .order("nome");
+        if (error) throw error;
+        if (cancelled) return;
+        const list = (discs || []) as { id: number; nome: string }[];
+        setEditDisciplinas(list);
+        if (editGrupoFirstRef.current) {
+          editGrupoFirstRef.current = false;
+          const target = initialDisciplinaNomeRef.current.toLowerCase();
+          const match = list.find(d => d.nome.toLowerCase() === target);
+          if (match) setEditDisciplinaId(String(match.id));
+        }
+      } catch (e) {
+        console.error(e);
+        toast.error("Não foi possível carregar as disciplinas");
+      } finally {
+        if (!cancelled) setEditLoadingDisciplinas(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [editGrupoId, isEditing]);
+
+  // Carrega fornecedores (interseção obra × disciplina), preservando seleção inicial
+  useEffect(() => {
+    if (!isEditing) return;
+    const obraId = (data as any)?.obraId;
+    if (!obraId || !editDisciplinaId) {
+      setEditFornecedoresApi([]);
+      return;
+    }
+    if (!editFornFirstRef.current) {
+      setEditFornecedorId("");
+      setEditFornecedorNome("");
+    }
+    let cancelled = false;
+    (async () => {
+      setEditLoadingFornecedores(true);
+      try {
+        const [{ data: of, error: e1 }, { data: fd, error: e2 }] = await Promise.all([
+          supabase.from("obras_fornecedores").select("fornecedor_id").eq("obra_id", Number(obraId)),
+          supabase.from("fornecedores_disciplinas").select("fornecedor_id").eq("disciplina_id", Number(editDisciplinaId)),
+        ]);
+        if (e1) throw e1;
+        if (e2) throw e2;
+        const obraSet = new Set((of || []).map((r: any) => r.fornecedor_id));
+        const ids = (fd || []).map((r: any) => r.fornecedor_id).filter((id: number) => obraSet.has(id));
+        let list: { id: number; nome: string }[] = [];
+        if (ids.length > 0) {
+          const { data: forns, error: e3 } = await supabase
+            .from("fornecedores")
+            .select("id, nome")
+            .in("id", ids)
+            .order("nome");
+          if (e3) throw e3;
+          list = (forns || []) as any;
+        }
+        if (cancelled) return;
+        setEditFornecedoresApi(list);
+        if (editFornFirstRef.current) {
+          editFornFirstRef.current = false;
+          const byId = initialFornecedorIdRef.current
+            ? list.find(f => f.id === initialFornecedorIdRef.current)
+            : null;
+          const byName = !byId && initialFornecedorNomeRef.current
+            ? list.find(f => f.nome.toLowerCase() === initialFornecedorNomeRef.current.toLowerCase())
+            : null;
+          const match = byId || byName;
+          if (match) {
+            setEditFornecedorId(String(match.id));
+            setEditFornecedorNome(match.nome);
+          }
+        }
+      } catch (e) {
+        console.error(e);
+        toast.error("Não foi possível carregar os fornecedores");
+      } finally {
+        if (!cancelled) setEditLoadingFornecedores(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [editDisciplinaId, isEditing, (data as any)?.obraId]);
+
   const handleSaveEdit = async () => {
-    if (!editDisciplina || !editDescricao || !editSeveridade) {
+    if (!editGrupoId || !editDescricao || !editSeveridade) {
       toast.error("Preencha os campos obrigatórios.");
       return;
     }
+    const grupoSel = (grupos || []).find(g => g.id === parseInt(editGrupoId));
+    const discSel = editDisciplinas.find(d => d.id === parseInt(editDisciplinaId));
+    const disciplinaText = discSel?.nome || (grupoSel ? `${grupoSel.codigo} - ${grupoSel.nome}` : "");
     setSavingEdit(true);
     try {
       await updateDesvio.mutateAsync({
         id: data!.id,
-        disciplina: editDisciplina,
+        disciplina: disciplinaText,
+        grupoId: parseInt(editGrupoId),
+        fornecedorId: editFornecedorId ? parseInt(editFornecedorId) : null,
         fornecedorNome: editFornecedorNome || undefined,
         descricao: editDescricao,
         localizacao: editLocalizacao || undefined,
@@ -197,6 +327,7 @@ export default function DesvioDetalhe() {
       setSavingEdit(false);
     }
   };
+
 
   const handleFechamentoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
