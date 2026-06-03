@@ -170,12 +170,11 @@ export default function ChecklistEditor() {
   // Load lookups
   useEffect(() => {
     (async () => {
-      const [obrasRes, discRes, discCatalogoRes, fornRes, fdRes, feRes] = await Promise.all([
-        supabase.from("obras").select("id, codigo, nome, gerente_obra, gerente_contrato, nucleo").order("codigo"),
+      const [obrasRes, discRes, discCatalogoRes, fornRes, feRes] = await Promise.all([
+        supabase.from("obras").select("id, id_projeto, codigo, nome, gerente_obra, gerente_contrato, nucleo").order("codigo"),
         supabase.from("checklist_disciplinas").select("id, nome").eq("ativo", 1).order("ordem"),
-        supabase.from("disciplinas").select("id, nome").order("nome"),
-        supabase.from("fornecedores").select("id, nome").order("nome"),
-        supabase.from("fornecedores_disciplinas").select("fornecedor_id, disciplina_id"),
+        supabase.from("disciplinas").select("id, nome, id_disciplina").order("nome"),
+        supabase.from("fornecedores").select("id, id_fornecedor, nome").order("nome"),
         supabase.from("checklist_fornecedor_equipe").select("fornecedor_nome, nome_equipe"),
       ]);
       // só obras com desvios
@@ -185,7 +184,6 @@ export default function ChecklistEditor() {
       setDisciplinas((discRes.data || []) as any[]);
       setDisciplinasCatalogo((discCatalogoRes.data || []) as any[]);
       setFornecedores((fornRes.data || []) as any[]);
-      setFornecedorDisciplinaLinks((fdRes.data || []) as any[]);
       const map: Record<string, string[]> = {};
       (feRes.data || []).forEach((r: any) => {
         const k = r.fornecedor_nome.toLowerCase();
