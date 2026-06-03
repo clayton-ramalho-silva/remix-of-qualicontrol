@@ -77,7 +77,10 @@ export default function NovaVerificacao({
     const d: any = loadDraft(draftKey);
     if (d) {
       if (d.obraId != null) setObraId(d.obraId);
+      if (d.edificioId != null) setEdificioId(d.edificioId);
+      if (d.andarId != null) setAndarId(d.andarId);
       if (d.avaliadorId) setAvaliadorId(d.avaliadorId);
+
       if (d.dataVistoria) setDataVistoria(d.dataVistoria);
       if (d.goNome) setGoNome(d.goNome);
       if (d.gcNome) setGcNome(d.gcNome);
