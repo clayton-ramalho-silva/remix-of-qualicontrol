@@ -94,6 +94,17 @@ export default function Ocorrencias() {
         </Select>
       </div>
 
+      <DraftsInProgress
+        scope="ocorrencia:nova"
+        novaRoute="/qsms/ocorrencias/nova"
+        renderSummary={(d) => {
+          const obraNome = d.obraId ? getObraNome(Number(d.obraId)) : "Sem obra";
+          const classif = d.classificacao ? CLASSIF_LABELS[d.classificacao] || d.classificacao : "";
+          const data = d.dataOcorrencia ? new Date(d.dataOcorrencia).toLocaleDateString("pt-BR") : "";
+          return [obraNome, classif, data].filter(Boolean).join(" • ");
+        }}
+      />
+
       {isLoading ? (
         <div className="text-center py-12 text-slate-500">Carregando ocorrências...</div>
       ) : !ocorrencias?.length ? (
