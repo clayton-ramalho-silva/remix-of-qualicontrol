@@ -110,8 +110,8 @@ export default function ChecklistEditor() {
     })();
   }, [obraId]);
 
-  // Disciplinas presentes nos desvios da obra (derivadas diretamente dos desvios)
-  const disciplinasFiltradas = (() => {
+  // Disciplinas presentes nos desvios da obra (derivadas direto dos desvios)
+  const disciplinasFiltradas = useMemo(() => {
     if (!obraId) return disciplinas;
     const seen = new Map<string, { id: number; nome: string }>();
     desviosObra.forEach((d) => {
@@ -119,15 +119,15 @@ export default function ChecklistEditor() {
       if (!nome) return;
       const key = nome.toLowerCase();
       if (seen.has(key)) return;
-      // tenta achar id na lista global; senão usa hash do nome
       const match = disciplinas.find((x) => x.nome.trim().toLowerCase() === key);
-      seen.set(key, { id: match?.id ?? -Math.abs(key.split("").reduce((a, c) => a + c.charCodeAt(0), 0)), nome: match?.nome ?? nome });
+      const id = match?.id ?? -Math.abs(key.split("").reduce((a, c) => a + c.charCodeAt(0), 0));
+      seen.set(key, { id, nome: match?.nome ?? nome });
     });
     return Array.from(seen.values()).sort((a, b) => a.nome.localeCompare(b.nome));
-  })();
+  }, [obraId, desviosObra, disciplinas]);
 
   // Fornecedores por disciplina (a partir dos desvios da obra)
-  const fornecedoresPorDisciplina = (() => {
+  const fornecedoresPorDisciplina = useMemo(() => {
     const map = new Map<string, { id: number | null; nome: string }[]>();
     desviosObra.forEach((d) => {
       const key = (d.disciplina || "").trim().toLowerCase();
@@ -139,7 +139,7 @@ export default function ChecklistEditor() {
       }
     });
     return map;
-  })();
+  }, [desviosObra]);
 
   // Auto-popular GC/GO a partir da obra selecionada (quando vazios)
   useEffect(() => {
@@ -305,6 +305,53 @@ export default function ChecklistEditor() {
   function removeItem(idx: number) {
     setItems((prev) => prev.filter((_, i) => i !== idx));
   }
+
+  // Auto-popular fotos quando disciplina + fornecedor estiverem definidos (e fotos vazias)
+  const autoFotosRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!obraId) return;
+    items.forEach((it, idx) => {
+      const disc = (it.disciplina_nome || "").trim().toLowerCase();
+      const forn = (it.fornecedor_nome || "").trim().toLowerCase();
+      if (!disc || !forn) return;
+      if (it.fotos.length > 0) return;
+      const key = `${obraId}|${idx}|${disc}|${forn}`;
+      if (autoFotosRef.current.has(key)) return;
+      autoFotosRef.current.add(key);
+      (async () => {
+        const { data: desv } = await supabase
+          .from("desvios")
+          .select("id, disciplina, fornecedor_nome")
+          .eq("obra_id", Number(obraId))
+          .is("deleted_at", null);
+        const matchIds = (desv || [])
+          .filter((d: any) =>
+            (d.disciplina || "").trim().toLowerCase() === disc &&
+            (d.fornecedor_nome || "").trim().toLowerCase() === forn
+          )
+          .map((d: any) => d.id);
+        if (matchIds.length === 0) return;
+        const { data: fotos } = await supabase
+          .from("fotos_evidencia")
+          .select("id, url, tipo, descricao")
+          .in("desvio_id", matchIds);
+        const novas: Foto[] = (fotos || [])
+          .filter((f: any) => f.tipo !== "fechamento")
+          .map((f: any, i: number) => ({
+            foto_evidencia_id: f.id,
+            url: f.url,
+            legenda: f.descricao || "",
+            ordem: i,
+          }));
+        if (novas.length === 0) return;
+        setItems((prev) => prev.map((p, i) => {
+          if (i !== idx) return p;
+          if (p.fotos.length > 0) return p;
+          return { ...p, fotos: novas, expanded: true };
+        }));
+      })();
+    });
+  }, [items, obraId]);
 
   function suggestEquipes(fornecedor_nome: string): string[] {
     return equipesByForn[fornecedor_nome.toLowerCase()] || [];
@@ -523,11 +570,12 @@ export default function ChecklistEditor() {
                     <Select
                       value={it.disciplina_id ? String(it.disciplina_id) : ""}
                       onValueChange={(v) => {
-                        const d = disciplinas.find((x) => String(x.id) === v);
+                        const d =
+                          disciplinasFiltradas.find((x) => String(x.id) === v) ||
+                          disciplinas.find((x) => String(x.id) === v);
                         updItem(idx, {
                           disciplina_id: d?.id || null,
                           disciplina_nome: d?.nome || "",
-                          // limpa fornecedor ao trocar disciplina
                           fornecedor_id: null,
                           fornecedor_nome: "",
                         });
