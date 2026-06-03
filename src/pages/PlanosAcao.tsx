@@ -265,7 +265,7 @@ function KpiCard({ label, value, color, icon: Icon, clickable, onClick, active }
   );
 }
 
-function PlanoCard({ plano, onClick }: { plano: any; onClick: () => void }) {
+function PlanoCard({ plano, onClick, canDelete, onDelete }: { plano: any; onClick: () => void; canDelete?: boolean; onDelete?: () => void }) {
   const overdue = plano.status !== "concluido" && plano.prazo && plano.prazo < Date.now();
   const isPreventivo = plano.tipo === "preventivo";
   const verticaisFromDesvios = (plano.desvios || []).map((d: any) => d.origem);
@@ -274,8 +274,23 @@ function PlanoCard({ plano, onClick }: { plano: any; onClick: () => void }) {
     ...verticaisFromDesvios,
   ])).filter(Boolean) as string[];
   return (
-    <button onClick={onClick} className="w-full text-left bg-white rounded-lg border border-slate-200 p-3 hover:shadow-md hover:border-teal-300 transition-all">
-      <div className="flex items-start justify-between gap-2 mb-2">
+    <div
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      className="relative w-full text-left bg-white rounded-lg border border-slate-200 p-3 hover:shadow-md hover:border-teal-300 transition-all cursor-pointer"
+    >
+      {canDelete && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onDelete?.(); }}
+          className="absolute top-1.5 right-1.5 h-6 w-6 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex items-center justify-center"
+          title="Excluir plano"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      )}
+      <div className="flex items-start justify-between gap-2 mb-2 pr-6">
         <p className="text-sm font-medium text-slate-900 line-clamp-2 flex-1">{plano.acao}</p>
         {plano.prioridade && plano.prioridade !== "normal" && (
           <Badge className={`text-[10px] shrink-0 ${PRIO_COLORS[plano.prioridade] || ""}`}>{plano.prioridade}</Badge>
@@ -305,6 +320,6 @@ function PlanoCard({ plano, onClick }: { plano: any; onClick: () => void }) {
           </span>
         )}
       </div>
-    </button>
+    </div>
   );
 }
