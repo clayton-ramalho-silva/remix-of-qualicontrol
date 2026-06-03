@@ -621,7 +621,7 @@ export default function DesvioDetalhe() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label className="text-sm font-medium">Grupo *</Label>
-                    <Select value={editDisciplina} onValueChange={setEditDisciplina}>
+                    <Select value={editGrupoId} onValueChange={setEditGrupoId}>
                       <SelectTrigger className="mt-1 bg-background">
                         <SelectValue placeholder="Selecione o grupo..." />
                       </SelectTrigger>
@@ -641,7 +641,7 @@ export default function DesvioDetalhe() {
                           const term = editGrupoSearch.toLowerCase();
                           return g.nome.toLowerCase().includes(term) || g.codigo.toLowerCase().includes(term);
                         }).slice(0, 50).map((g) => (
-                          <SelectItem key={g.id} value={`${g.codigo} - ${g.nome}`}>
+                          <SelectItem key={g.id} value={String(g.id)}>
                             {g.codigo} - {g.nome}
                           </SelectItem>
                         ))}
@@ -649,24 +649,87 @@ export default function DesvioDetalhe() {
                     </Select>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium">Fornecedor</Label>
+                    <Label className="text-sm font-medium">Disciplina *</Label>
                     <Select
-                      value={editFornecedorNome || "__none__"}
-                      onValueChange={(v) => setEditFornecedorNome(v === "__none__" ? "" : v)}
+                      value={editDisciplinaId}
+                      onValueChange={setEditDisciplinaId}
+                      disabled={!editGrupoId || editLoadingDisciplinas}
                     >
                       <SelectTrigger className="mt-1 bg-background">
-                        <SelectValue placeholder="Selecione ou deixe em branco..." />
+                        <SelectValue
+                          placeholder={
+                            !editGrupoId
+                              ? "Selecione um grupo primeiro..."
+                              : editLoadingDisciplinas
+                                ? "Carregando..."
+                                : editDisciplinas.length === 0
+                                  ? "Nenhuma disciplina"
+                                  : "Selecione a disciplina..."
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <div className="px-2 pb-2">
+                          <Input
+                            placeholder="Buscar disciplina..."
+                            value={editDisciplinaSearch}
+                            onChange={e => setEditDisciplinaSearch(e.target.value)}
+                            className="h-8 text-sm"
+                            onClick={e => e.stopPropagation()}
+                            onKeyDown={e => e.stopPropagation()}
+                          />
+                        </div>
+                        {editDisciplinas.filter(d => {
+                          if (!editDisciplinaSearch) return true;
+                          return d.nome.toLowerCase().includes(editDisciplinaSearch.toLowerCase());
+                        }).map((d) => (
+                          <SelectItem key={d.id} value={String(d.id)}>
+                            {d.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label className="text-sm font-medium">Fornecedor</Label>
+                    <Select
+                      value={editFornecedorId || "__none__"}
+                      onValueChange={(v) => {
+                        if (v === "__none__") {
+                          setEditFornecedorId("");
+                          setEditFornecedorNome("");
+                        } else {
+                          const f = editFornecedoresApi.find(x => String(x.id) === v);
+                          setEditFornecedorId(v);
+                          setEditFornecedorNome(f?.nome || "");
+                        }
+                      }}
+                      disabled={!editDisciplinaId || editLoadingFornecedores}
+                    >
+                      <SelectTrigger className="mt-1 bg-background">
+                        <SelectValue
+                          placeholder={
+                            !editDisciplinaId
+                              ? "Selecione a disciplina primeiro..."
+                              : editLoadingFornecedores
+                                ? "Carregando..."
+                                : editFornecedoresApi.length === 0
+                                  ? "Nenhum fornecedor vinculado"
+                                  : "Selecione o fornecedor..."
+                          }
+                        />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__none__">
                           <span className="text-muted-foreground">Nenhum</span>
                         </SelectItem>
-                        {fornecedoresData?.map((f) => (
-                          <SelectItem key={f.id} value={f.nome}>{f.nome}</SelectItem>
+                        {editFornecedoresApi.map((f) => (
+                          <SelectItem key={f.id} value={String(f.id)}>{f.nome}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
+
 
                   <div>
                     <Label className="text-sm font-medium">Origem *</Label>
