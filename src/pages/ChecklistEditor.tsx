@@ -594,11 +594,15 @@ export default function ChecklistEditor() {
           {items.map((it, idx) => {
             const sugs = suggestEquipes(it.fornecedor_nome);
             const fornsDaDisc =
-              fornecedoresPorDisciplina.get((it.disciplina_nome || "").trim().toLowerCase()) || [];
+              fornecedoresPorDisciplina.get(normalizeKey(it.disciplina_nome)) || [];
+            const fornecedorSelecionado = fornsDaDisc.find((f) =>
+              (it.fornecedor_id && f.id === it.fornecedor_id) ||
+              normalizeKey(f.nome) === normalizeKey(it.fornecedor_nome)
+            );
             return (
               <div key={idx} className="border rounded-lg overflow-hidden">
                 <div className="grid grid-cols-12 gap-2 p-3 items-start bg-muted/20">
-                  <div className="col-span-12 md:col-span-3">
+                  <div className="col-span-12 lg:col-span-3 min-w-0">
                     <Label className="text-xs">Disciplina</Label>
                     <Select
                       value={it.disciplina_id ? String(it.disciplina_id) : ""}
@@ -615,7 +619,7 @@ export default function ChecklistEditor() {
                       }}
                       disabled={!obraId}
                     >
-                      <SelectTrigger className="mt-1 h-9">
+                      <SelectTrigger className="mt-1 h-9 w-full min-w-0">
                         <SelectValue placeholder={obraId ? "—" : "Selecione a obra"} />
                       </SelectTrigger>
                       <SelectContent>
@@ -631,22 +635,21 @@ export default function ChecklistEditor() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="col-span-12 md:col-span-2">
+                  <div className="col-span-12 sm:col-span-6 lg:col-span-3 min-w-0">
                     <Label className="text-xs">Fornecedor</Label>
                     <Select
-                      value={it.fornecedor_nome ? `n:${it.fornecedor_nome.toLowerCase()}` : ""}
+                      value={fornecedorSelecionado ? fornecedorValue(fornecedorSelecionado) : ""}
                       onValueChange={(v) => {
-                        const nome = v.startsWith("n:") ? v.slice(2) : v;
-                        const match = fornsDaDisc.find((f) => f.nome.toLowerCase() === nome);
+                        const match = fornsDaDisc.find((f) => fornecedorValue(f) === v);
                         updItem(idx, {
-                          fornecedor_nome: match?.nome || nome,
+                          fornecedor_nome: match?.nome || "",
                           fornecedor_id: match?.id || null,
                           fotos: [],
                         });
                       }}
                       disabled={!it.disciplina_nome}
                     >
-                      <SelectTrigger className="mt-1 h-9">
+                      <SelectTrigger className="mt-1 h-9 w-full min-w-0">
                         <SelectValue placeholder={it.disciplina_nome ? (fornsDaDisc.length ? "Selecione" : "Sem fornecedor") : "Escolha a disciplina"} />
                       </SelectTrigger>
                       <SelectContent>
@@ -656,7 +659,7 @@ export default function ChecklistEditor() {
                           </div>
                         ) : (
                           fornsDaDisc.map((f) => (
-                            <SelectItem key={`${f.id}-${f.nome}`} value={`n:${f.nome.toLowerCase()}`}>
+                            <SelectItem key={`${f.id}-${f.nome}`} value={fornecedorValue(f)}>
                               {f.nome}
                             </SelectItem>
                           ))
@@ -664,11 +667,11 @@ export default function ChecklistEditor() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="col-span-12 md:col-span-2">
+                  <div className="col-span-12 sm:col-span-6 lg:col-span-3 min-w-0">
                     <Label className="text-xs">Equipe Alocada</Label>
                     <Input
                       list={`equipelist-${idx}`}
-                      className="mt-1 h-9"
+                      className="mt-1 h-9 w-full min-w-0"
                       value={it.equipe_nome}
                       onChange={(e) => updItem(idx, { equipe_nome: e.target.value })}
                     />
@@ -690,7 +693,7 @@ export default function ChecklistEditor() {
                       </div>
                     )}
                   </div>
-                  <div className="col-span-6 md:col-span-2">
+                  <div className="col-span-12 sm:col-span-6 lg:col-span-3">
                     <Label className="text-xs">Avaliação</Label>
                     <div className="flex gap-1 mt-1">
                       {(Object.keys(avalConfig) as Avaliacao[]).map((a) => {
@@ -711,7 +714,7 @@ export default function ChecklistEditor() {
                       })}
                     </div>
                   </div>
-                  <div className="col-span-12 md:col-span-3">
+                  <div className="col-span-12 min-w-0">
                     <Label className="text-xs">Comentários</Label>
                     <Textarea
                       className="mt-1 min-h-[36px] text-sm"
