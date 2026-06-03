@@ -59,6 +59,9 @@ export default function DesvioDetalhe() {
   const isAdmin = user?.role === "admin";
 
   const { data, isLoading } = trpc.desvios.getById.useQuery({ id: desvioId });
+  const { data: obras } = trpc.obras.list.useQuery();
+  const obraNome = (obras || []).find((o: any) => String(o.id) === String((data as any)?.obraId))?.nome;
+
   const restoreDesvio = trpc.desvios.restore.useMutation({
     onSuccess: () => {
       utils.desvios.getById.invalidate({ id: desvioId });
