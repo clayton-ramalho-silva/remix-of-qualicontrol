@@ -388,8 +388,12 @@ export default function DesvioDetalhe() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
+          {obraNome && (
+            <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-1">{obraNome}</h2>
+          )}
           <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-xl font-bold tracking-tight">Desvio #{data.id}</h1>
+
             <Badge variant={data.severidade === "grave" ? "destructive" : data.severidade === "moderado" ? "default" : "secondary"}>
               {data.severidade === "grave" && <AlertTriangle className="h-3 w-3 mr-1" />}
               {data.severidade.charAt(0).toUpperCase() + data.severidade.slice(1)}
