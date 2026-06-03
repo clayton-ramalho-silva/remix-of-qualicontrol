@@ -1,0 +1,1 @@
+UPDATE public.verificacoes SET score_condicao=100, status_condicao='Excelente', score_cronograma=83, status_cronograma='Bom' WHERE id=2;
