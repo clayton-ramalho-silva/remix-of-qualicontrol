@@ -1,4 +1,43 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+
+/** Gera um id curto e único para identificar um rascunho. */
+export function newDraftId(): string {
+  return (
+    Date.now().toString(36) +
+    Math.random().toString(36).slice(2, 8)
+  );
+}
+
+/**
+ * Hook que obtém (ou gera) o id do rascunho atual a partir do parâmetro `?draft=`
+ * da URL. Se a URL não trouxer um id, gera um novo e o injeta na URL via
+ * `history.replaceState`, de modo que reloads continuem o mesmo rascunho.
+ *
+ * Retorna a chave de localStorage pronta no formato `draft:<scope>:<id>`.
+ */
+export function useDraftId(scope: string): { draftId: string; key: string; isResumed: boolean } {
+  const initial = useMemo(() => {
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      const fromUrl = sp.get("draft");
+      if (fromUrl) return { id: fromUrl, resumed: true };
+    } catch { /* ignore */ }
+    return { id: newDraftId(), resumed: false };
+  }, []);
+  const idRef = useRef(initial.id);
+  useEffect(() => {
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.get("draft") !== idRef.current) {
+        sp.set("draft", idRef.current);
+        const qs = sp.toString();
+        window.history.replaceState({}, "", `${window.location.pathname}${qs ? `?${qs}` : ""}${window.location.hash}`);
+      }
+    } catch { /* ignore */ }
+  }, []);
+  return { draftId: idRef.current, key: `draft:${scope}:${idRef.current}`, isResumed: initial.resumed };
+}
+
 
 /**
  * Auto-save de rascunho em localStorage.
