@@ -76,6 +76,8 @@ export default function ChecklistEditor() {
   const [disciplinas, setDisciplinas] = useState<{ id: number; nome: string }[]>([]);
   const [fornecedores, setFornecedores] = useState<{ id: number; nome: string }[]>([]);
   const [equipesByForn, setEquipesByForn] = useState<Record<string, string[]>>({});
+  // Desvios da obra selecionada: usados para limitar disciplinas e fornecedores
+  const [desviosObra, setDesviosObra] = useState<{ disciplina: string | null; fornecedor_id: number | null; fornecedor_nome: string | null }[]>([]);
 
   const [pickerForItem, setPickerForItem] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
