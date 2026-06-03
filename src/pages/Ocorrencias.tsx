@@ -7,7 +7,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import ObraSelect from "@/components/ObraSelect";
 import { useLocation } from "wouter";
 import DraftsInProgress from "@/components/DraftsInProgress";
-import { Siren, Plus, Calendar, Building2, AlertTriangle, Clock } from "lucide-react";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { toast } from "sonner";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Siren, Plus, Calendar, Building2, AlertTriangle, Clock, Trash2 } from "lucide-react";
+
 
 const CLASSIF_LABELS: Record<string, string> = {
   incidente: "Incidente",
