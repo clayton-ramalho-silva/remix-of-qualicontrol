@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import ObraSelect from "@/components/ObraSelect";
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
+import DraftsInProgress from "@/components/DraftsInProgress";
 import { ClipboardList, Plus, Calendar, User, Building2, TrendingUp, TrendingDown, Minus, Eye } from "lucide-react";
 
 const statusColors: Record<string, string> = {
