@@ -1226,7 +1226,8 @@ const mutationResolvers: Record<string, Resolver> = {
       status_condicao: statusFromScore(scoreCondicao),
     };
     ["obraId:obra_id", "avaliador:avaliador", "dataVistoria:data_vistoria",
-     "go:go", "gc:gc", "nucleo:nucleo", "diretoria:diretoria", "observacoes:observacoes"
+     "go:go", "gc:gc", "nucleo:nucleo", "diretoria:diretoria", "observacoes:observacoes",
+     "plantaUrl:planta_url", "plantaFileKey:planta_file_key"
     ].forEach(map => {
       const [k, col] = map.split(":");
       if (k in input && input[k] !== undefined) patch[col] = input[k];
@@ -1258,6 +1259,8 @@ const mutationResolvers: Record<string, Resolver> = {
             url: f.url,
             file_key: f.fileKey,
             descricao: f.descricao ?? null,
+            pin_x: f.pinX ?? null,
+            pin_y: f.pinY ?? null,
           });
         });
       });
