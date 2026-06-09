@@ -70,9 +70,13 @@ export default function DesvioDetalhe() {
     onError: (err) => toast.error(err.message || "Erro ao restaurar."),
   });
   const updateDesvio = trpc.desvios.update.useMutation({
-    onSuccess: () => {
+    onSuccess: (_data, vars: any) => {
       utils.desvios.getById.invalidate({ id: desvioId });
-      toast.success("Status atualizado!");
+      utils.desvios.list.invalidate();
+      utils.desvios.stats.invalidate?.();
+      if (vars?.status && Object.keys(vars).length <= 2) {
+        toast.success("Status atualizado!");
+      }
     },
     onError: (err) => {
       toast.error(err.message || "Erro ao atualizar status.");
