@@ -96,6 +96,8 @@ export default function NovaVerificacao({
       if (d.diretoria) setDiretoria(d.diretoria);
       if (d.observacoes) setObservacoes(d.observacoes);
       if (d.respostas) setRespostas(d.respostas);
+      if (d.plantaUrl) setPlantaUrl(d.plantaUrl);
+      if (d.plantaFileKey) setPlantaFileKey(d.plantaFileKey);
       setRestoredAt(d.__savedAt ?? Date.now());
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -104,9 +106,37 @@ export default function NovaVerificacao({
 
   const { clearDraft: clearDraftFn, markClean } = useDraftAutosave({
     key: draftKey,
-    data: { obraId, edificioId, andarId, avaliadorId, dataVistoria, goNome, gcNome, nucleo, diretoria, observacoes, respostas },
+    data: { obraId, edificioId, andarId, avaliadorId, dataVistoria, goNome, gcNome, nucleo, diretoria, observacoes, respostas, plantaUrl, plantaFileKey },
 
   });
+
+  const handlePlantaUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploadingPlanta(true);
+    try {
+      const file = files[0];
+      const compressed = await compressImage(file, { maxDim: 2400, quality: 0.85 });
+      const key = `vistoria-plantas/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+      const { error } = await supabase.storage.from("evidencias").upload(key, compressed, {
+        contentType: compressed.type || "image/jpeg",
+        upsert: false,
+      });
+      if (error) throw error;
+      // Remover planta anterior (se houver)
+      if (plantaFileKey) {
+        supabase.storage.from("evidencias").remove([plantaFileKey]).catch(() => {});
+      }
+      const { data: pub } = supabase.storage.from("evidencias").getPublicUrl(key);
+      setPlantaUrl(pub.publicUrl);
+      setPlantaFileKey(key);
+      toast.success("Planta da vistoria carregada.");
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao enviar planta");
+    } finally {
+      setUploadingPlanta(false);
+      if (plantaInputRef.current) plantaInputRef.current.value = "";
+    }
+  };
 
   const discardDraft = () => {
     clearDraftFn();
