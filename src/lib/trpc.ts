@@ -1147,6 +1147,8 @@ const mutationResolvers: Record<string, Resolver> = {
       diretoria: input.diretoria ?? null,
       observacoes: input.observacoes ?? null,
       categoria,
+      planta_url: input.plantaUrl ?? null,
+      planta_file_key: input.plantaFileKey ?? null,
       score_geral: scoreGeral,
       score_qualidade: scoreQualidade,
       score_cronograma: scoreCronograma,
