@@ -267,6 +267,22 @@ export default function NovaVerificacao({
       }
     }
 
+    if (isVistoria) {
+      if (!plantaUrl) {
+        toast.error("Faça upload da planta da vistoria antes de salvar.");
+        return;
+      }
+      const semPin = allItems.some(item => {
+        const r = respostas[item.id];
+        if (!r || r.resposta === "NA") return false;
+        return (r.fotos || []).some(f => f.pinX == null || f.pinY == null);
+      });
+      if (semPin) {
+        toast.error("Há fotos sem pin marcado na planta. Marque o pin em todas as fotos.");
+        return;
+      }
+    }
+
     setSubmitting(true);
     try {
       const result = await createVerificacao.mutateAsync({
@@ -282,6 +298,8 @@ export default function NovaVerificacao({
         nucleo: nucleo || undefined,
         diretoria: diretoria || undefined,
         observacoes: observacoes || undefined,
+        plantaUrl: plantaUrl || undefined,
+        plantaFileKey: plantaFileKey || undefined,
         respostas: Object.values(respostas).map(r => ({
           itemId: r.itemId,
           resposta: r.resposta,
