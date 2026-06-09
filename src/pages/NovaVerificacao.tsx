@@ -11,6 +11,8 @@ import VoiceRecorderButton from "@/components/VoiceRecorderButton";
 import RespostaFotosUploader, { type RespostaFoto } from "@/components/RespostaFotosUploader";
 import VistoriaFotosUploader from "@/components/VistoriaFotosUploader";
 import { supabase } from "@/integrations/supabase/client";
+import { compressImage } from "@/lib/image-compress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ObraSelect from "@/components/ObraSelect";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
