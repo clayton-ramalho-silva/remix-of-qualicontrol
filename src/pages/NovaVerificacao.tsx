@@ -66,6 +66,11 @@ export default function NovaVerificacao({
   const [respostas, setRespostas] = useState<Record<number, RespostaItem>>({});
   const [expandedSections, setExpandedSections] = useState<Record<number, boolean>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [plantaUrl, setPlantaUrl] = useState<string | null>(null);
+  const [plantaFileKey, setPlantaFileKey] = useState<string | null>(null);
+  const [uploadingPlanta, setUploadingPlanta] = useState(false);
+  const plantaInputRef = useRef<HTMLInputElement>(null);
+  const isVistoria = categoria === "vistoria";
 
   // Auto-save de rascunho — vários rascunhos podem coexistir, identificados
   // pelo parâmetro `?draft=<id>` na URL. Se a URL não trouxer um id, é gerado
