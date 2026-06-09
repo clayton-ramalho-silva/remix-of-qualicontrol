@@ -249,7 +249,7 @@ const queryResolvers: Record<string, Resolver> = {
     }));
     const fotosByItem: Record<number, any[]> = {};
     (fotos || []).forEach((f: any) => {
-      (fotosByItem[f.item_id] ||= []).push({ id: f.id, url: f.url, fileKey: f.file_key, descricao: f.descricao });
+      (fotosByItem[f.item_id] ||= []).push({ id: f.id, url: f.url, fileKey: f.file_key, descricao: f.descricao, pinX: f.pin_x, pinY: f.pin_y });
     });
     return {
       ...mapVerificacaoFromDb(data),
@@ -1147,6 +1147,8 @@ const mutationResolvers: Record<string, Resolver> = {
       diretoria: input.diretoria ?? null,
       observacoes: input.observacoes ?? null,
       categoria,
+      planta_url: input.plantaUrl ?? null,
+      planta_file_key: input.plantaFileKey ?? null,
       score_geral: scoreGeral,
       score_qualidade: scoreQualidade,
       score_cronograma: scoreCronograma,
@@ -1182,6 +1184,8 @@ const mutationResolvers: Record<string, Resolver> = {
             url: f.url,
             file_key: f.fileKey,
             descricao: f.descricao ?? null,
+            pin_x: f.pinX ?? null,
+            pin_y: f.pinY ?? null,
           });
         });
       });
@@ -1222,7 +1226,8 @@ const mutationResolvers: Record<string, Resolver> = {
       status_condicao: statusFromScore(scoreCondicao),
     };
     ["obraId:obra_id", "avaliador:avaliador", "dataVistoria:data_vistoria",
-     "go:go", "gc:gc", "nucleo:nucleo", "diretoria:diretoria", "observacoes:observacoes"
+     "go:go", "gc:gc", "nucleo:nucleo", "diretoria:diretoria", "observacoes:observacoes",
+     "plantaUrl:planta_url", "plantaFileKey:planta_file_key"
     ].forEach(map => {
       const [k, col] = map.split(":");
       if (k in input && input[k] !== undefined) patch[col] = input[k];
@@ -1254,6 +1259,8 @@ const mutationResolvers: Record<string, Resolver> = {
             url: f.url,
             file_key: f.fileKey,
             descricao: f.descricao ?? null,
+            pin_x: f.pinX ?? null,
+            pin_y: f.pinY ?? null,
           });
         });
       });
@@ -1733,6 +1740,8 @@ function mapVerificacaoFromDb(v: any) {
     statusQualidade: v.status_qualidade,
     statusCronograma: v.status_cronograma,
     statusCondicao: v.status_condicao,
+    plantaUrl: v.planta_url ?? null,
+    plantaFileKey: v.planta_file_key ?? null,
   };
 }
 

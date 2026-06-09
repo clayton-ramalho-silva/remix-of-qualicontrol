@@ -9,6 +9,8 @@ export type RespostaFoto = {
   url: string;
   fileKey: string;
   descricao?: string;
+  pinX?: number | null;
+  pinY?: number | null;
 };
 
 type Props = {

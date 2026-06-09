@@ -1729,6 +1729,8 @@ export type Database = {
           file_key: string
           id: number
           item_id: number
+          pin_x: number | null
+          pin_y: number | null
           url: string
           verificacao_id: number
         }
@@ -1738,6 +1740,8 @@ export type Database = {
           file_key: string
           id?: number
           item_id: number
+          pin_x?: number | null
+          pin_y?: number | null
           url: string
           verificacao_id: number
         }
@@ -1747,6 +1751,8 @@ export type Database = {
           file_key?: string
           id?: number
           item_id?: number
+          pin_x?: number | null
+          pin_y?: number | null
           url?: string
           verificacao_id?: number
         }
@@ -1809,6 +1815,8 @@ export type Database = {
           nucleo: string | null
           obra_id: number
           observacoes: string | null
+          planta_file_key: string | null
+          planta_url: string | null
           score_condicao: number | null
           score_cronograma: number | null
           score_geral: number | null
@@ -1834,6 +1842,8 @@ export type Database = {
           nucleo?: string | null
           obra_id: number
           observacoes?: string | null
+          planta_file_key?: string | null
+          planta_url?: string | null
           score_condicao?: number | null
           score_cronograma?: number | null
           score_geral?: number | null
@@ -1859,6 +1869,8 @@ export type Database = {
           nucleo?: string | null
           obra_id?: number
           observacoes?: string | null
+          planta_file_key?: string | null
+          planta_url?: string | null
           score_condicao?: number | null
           score_cronograma?: number | null
           score_geral?: number | null

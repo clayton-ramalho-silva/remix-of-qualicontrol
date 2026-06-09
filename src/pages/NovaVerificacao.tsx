@@ -9,6 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import VoiceRecorderButton from "@/components/VoiceRecorderButton";
 import RespostaFotosUploader, { type RespostaFoto } from "@/components/RespostaFotosUploader";
+import VistoriaFotosUploader from "@/components/VistoriaFotosUploader";
+import { supabase } from "@/integrations/supabase/client";
+import { compressImage } from "@/lib/image-compress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ObraSelect from "@/components/ObraSelect";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -63,6 +66,11 @@ export default function NovaVerificacao({
   const [respostas, setRespostas] = useState<Record<number, RespostaItem>>({});
   const [expandedSections, setExpandedSections] = useState<Record<number, boolean>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [plantaUrl, setPlantaUrl] = useState<string | null>(null);
+  const [plantaFileKey, setPlantaFileKey] = useState<string | null>(null);
+  const [uploadingPlanta, setUploadingPlanta] = useState(false);
+  const plantaInputRef = useRef<HTMLInputElement>(null);
+  const isVistoria = categoria === "vistoria";
 
   // Auto-save de rascunho — vários rascunhos podem coexistir, identificados
   // pelo parâmetro `?draft=<id>` na URL. Se a URL não trouxer um id, é gerado
@@ -88,6 +96,8 @@ export default function NovaVerificacao({
       if (d.diretoria) setDiretoria(d.diretoria);
       if (d.observacoes) setObservacoes(d.observacoes);
       if (d.respostas) setRespostas(d.respostas);
+      if (d.plantaUrl) setPlantaUrl(d.plantaUrl);
+      if (d.plantaFileKey) setPlantaFileKey(d.plantaFileKey);
       setRestoredAt(d.__savedAt ?? Date.now());
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -96,9 +106,37 @@ export default function NovaVerificacao({
 
   const { clearDraft: clearDraftFn, markClean } = useDraftAutosave({
     key: draftKey,
-    data: { obraId, edificioId, andarId, avaliadorId, dataVistoria, goNome, gcNome, nucleo, diretoria, observacoes, respostas },
+    data: { obraId, edificioId, andarId, avaliadorId, dataVistoria, goNome, gcNome, nucleo, diretoria, observacoes, respostas, plantaUrl, plantaFileKey },
 
   });
+
+  const handlePlantaUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploadingPlanta(true);
+    try {
+      const file = files[0];
+      const compressed = await compressImage(file, { maxDim: 2400, quality: 0.85 });
+      const key = `vistoria-plantas/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+      const { error } = await supabase.storage.from("evidencias").upload(key, compressed, {
+        contentType: compressed.type || "image/jpeg",
+        upsert: false,
+      });
+      if (error) throw error;
+      // Remover planta anterior (se houver)
+      if (plantaFileKey) {
+        supabase.storage.from("evidencias").remove([plantaFileKey]).catch(() => {});
+      }
+      const { data: pub } = supabase.storage.from("evidencias").getPublicUrl(key);
+      setPlantaUrl(pub.publicUrl);
+      setPlantaFileKey(key);
+      toast.success("Planta da vistoria carregada.");
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao enviar planta");
+    } finally {
+      setUploadingPlanta(false);
+      if (plantaInputRef.current) plantaInputRef.current.value = "";
+    }
+  };
 
   const discardDraft = () => {
     clearDraftFn();
@@ -229,6 +267,22 @@ export default function NovaVerificacao({
       }
     }
 
+    if (isVistoria) {
+      if (!plantaUrl) {
+        toast.error("Faça upload da planta da vistoria antes de salvar.");
+        return;
+      }
+      const semPin = allItems.some(item => {
+        const r = respostas[item.id];
+        if (!r || r.resposta === "NA") return false;
+        return (r.fotos || []).some(f => f.pinX == null || f.pinY == null);
+      });
+      if (semPin) {
+        toast.error("Há fotos sem pin marcado na planta. Marque o pin em todas as fotos.");
+        return;
+      }
+    }
+
     setSubmitting(true);
     try {
       const result = await createVerificacao.mutateAsync({
@@ -244,6 +298,8 @@ export default function NovaVerificacao({
         nucleo: nucleo || undefined,
         diretoria: diretoria || undefined,
         observacoes: observacoes || undefined,
+        plantaUrl: plantaUrl || undefined,
+        plantaFileKey: plantaFileKey || undefined,
         respostas: Object.values(respostas).map(r => ({
           itemId: r.itemId,
           resposta: r.resposta,
@@ -396,6 +452,56 @@ export default function NovaVerificacao({
             </Select>
           </div>
 
+          {isVistoria && (
+            <div className="md:col-span-2 lg:col-span-3">
+              <Label className="flex items-center gap-1.5">
+                Planta desta vistoria *
+                <Tooltip>
+                  <TooltipTrigger><Info className="h-3.5 w-3.5 text-slate-400" /></TooltipTrigger>
+                  <TooltipContent>Planta avulsa usada apenas nesta vistoria, para posicionar pins das fotos. Não altera o cadastro da obra.</TooltipContent>
+                </Tooltip>
+              </Label>
+              <div className="mt-1 flex items-center gap-3 flex-wrap">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => plantaInputRef.current?.click()}
+                  disabled={!obraId || !andarId || uploadingPlanta}
+                  title={!obraId || !andarId ? "Selecione obra e andar primeiro" : "Selecionar planta"}
+                >
+                  {uploadingPlanta ? "Enviando..." : plantaUrl ? "Substituir planta" : "Selecionar Planta"}
+                </Button>
+                <input
+                  ref={plantaInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handlePlantaUpload(e.target.files)}
+                />
+                {plantaUrl && (
+                  <div className="flex items-center gap-2">
+                    <img src={plantaUrl} alt="Planta da vistoria" className="h-14 w-20 object-cover rounded border" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (plantaFileKey) supabase.storage.from("evidencias").remove([plantaFileKey]).catch(() => {});
+                        setPlantaUrl(null); setPlantaFileKey(null);
+                      }}
+                      className="text-xs text-red-600 hover:underline"
+                    >
+                      Remover
+                    </button>
+                  </div>
+                )}
+                {!plantaUrl && obraId && andarId && (
+                  <span className="text-xs text-muted-foreground">Pode ser uma planta diferente da cadastrada na obra.</span>
+                )}
+              </div>
+            </div>
+          )}
+
+
+
 
         </CardContent>
       </Card>
@@ -478,10 +584,19 @@ export default function NovaVerificacao({
                           </div>
                         )}
                         {exigeFoto && currentResp && currentResp !== "NA" && (
-                          <RespostaFotosUploader
-                            fotos={respostas[item.id]?.fotos || []}
-                            onChange={(f) => setFotosItem(item.id, f)}
-                          />
+                          isVistoria ? (
+                            <VistoriaFotosUploader
+                              fotos={respostas[item.id]?.fotos || []}
+                              onChange={(f) => setFotosItem(item.id, f)}
+                              plantaUrl={plantaUrl}
+                              itemCodigo={item.codigo}
+                            />
+                          ) : (
+                            <RespostaFotosUploader
+                              fotos={respostas[item.id]?.fotos || []}
+                              onChange={(f) => setFotosItem(item.id, f)}
+                            />
+                          )
                         )}
                       </div>
                     );
