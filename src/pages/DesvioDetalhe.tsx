@@ -72,7 +72,8 @@ export default function DesvioDetalhe() {
   const updateDesvio = trpc.desvios.update.useMutation({
     onSuccess: () => {
       utils.desvios.getById.invalidate({ id: desvioId });
-      toast.success("Status atualizado!");
+      utils.desvios.list.invalidate();
+      utils.desvios.stats.invalidate?.();
     },
     onError: (err) => {
       toast.error(err.message || "Erro ao atualizar status.");
