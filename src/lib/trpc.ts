@@ -1184,6 +1184,8 @@ const mutationResolvers: Record<string, Resolver> = {
             url: f.url,
             file_key: f.fileKey,
             descricao: f.descricao ?? null,
+            pin_x: f.pinX ?? null,
+            pin_y: f.pinY ?? null,
           });
         });
       });
