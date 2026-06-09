@@ -1740,6 +1740,8 @@ function mapVerificacaoFromDb(v: any) {
     statusQualidade: v.status_qualidade,
     statusCronograma: v.status_cronograma,
     statusCondicao: v.status_condicao,
+    plantaUrl: v.planta_url ?? null,
+    plantaFileKey: v.planta_file_key ?? null,
   };
 }
 
