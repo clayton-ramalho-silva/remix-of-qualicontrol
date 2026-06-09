@@ -249,7 +249,7 @@ const queryResolvers: Record<string, Resolver> = {
     }));
     const fotosByItem: Record<number, any[]> = {};
     (fotos || []).forEach((f: any) => {
-      (fotosByItem[f.item_id] ||= []).push({ id: f.id, url: f.url, fileKey: f.file_key, descricao: f.descricao });
+      (fotosByItem[f.item_id] ||= []).push({ id: f.id, url: f.url, fileKey: f.file_key, descricao: f.descricao, pinX: f.pin_x, pinY: f.pin_y });
     });
     return {
       ...mapVerificacaoFromDb(data),
