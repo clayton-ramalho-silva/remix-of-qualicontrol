@@ -434,6 +434,56 @@ export default function NovaVerificacao({
             </Select>
           </div>
 
+          {isVistoria && (
+            <div className="md:col-span-2 lg:col-span-3">
+              <Label className="flex items-center gap-1.5">
+                Planta desta vistoria *
+                <Tooltip>
+                  <TooltipTrigger><Info className="h-3.5 w-3.5 text-slate-400" /></TooltipTrigger>
+                  <TooltipContent>Planta avulsa usada apenas nesta vistoria, para posicionar pins das fotos. Não altera o cadastro da obra.</TooltipContent>
+                </Tooltip>
+              </Label>
+              <div className="mt-1 flex items-center gap-3 flex-wrap">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => plantaInputRef.current?.click()}
+                  disabled={!obraId || !andarId || uploadingPlanta}
+                  title={!obraId || !andarId ? "Selecione obra e andar primeiro" : "Selecionar planta"}
+                >
+                  {uploadingPlanta ? "Enviando..." : plantaUrl ? "Substituir planta" : "Selecionar Planta"}
+                </Button>
+                <input
+                  ref={plantaInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handlePlantaUpload(e.target.files)}
+                />
+                {plantaUrl && (
+                  <div className="flex items-center gap-2">
+                    <img src={plantaUrl} alt="Planta da vistoria" className="h-14 w-20 object-cover rounded border" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (plantaFileKey) supabase.storage.from("evidencias").remove([plantaFileKey]).catch(() => {});
+                        setPlantaUrl(null); setPlantaFileKey(null);
+                      }}
+                      className="text-xs text-red-600 hover:underline"
+                    >
+                      Remover
+                    </button>
+                  </div>
+                )}
+                {!plantaUrl && obraId && andarId && (
+                  <span className="text-xs text-muted-foreground">Pode ser uma planta diferente da cadastrada na obra.</span>
+                )}
+              </div>
+            </div>
+          )}
+
+
+
 
         </CardContent>
       </Card>
