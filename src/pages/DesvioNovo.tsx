@@ -467,7 +467,7 @@ export default function DesvioNovo() {
                     <SelectItem value="qualidade" disabled={!allowedVerticais.includes("qualidade")}>Qualidade{!allowedVerticais.includes("qualidade") && " (sem permissão)"}</SelectItem>
                     <SelectItem value="checklist" disabled={!allowedVerticais.includes("checklist")}>Checklist{!allowedVerticais.includes("checklist") && " (sem permissão)"}</SelectItem>
                     <SelectItem value="qsms" disabled={!allowedVerticais.includes("qsms")}>QSMS{!allowedVerticais.includes("qsms") && " (sem permissão)"}</SelectItem>
-                    <SelectItem value="vistoria" disabled={!allowedVerticais.includes("vistoria")}>Vistoria{!allowedVerticais.includes("vistoria") && " (sem permissão)"}</SelectItem>
+                    
                   </SelectContent>
                 </Select>
               </Field>
