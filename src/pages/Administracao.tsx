@@ -30,6 +30,9 @@ export default function Administracao() {
   const createItem = trpc.checklist.createItem.useMutation({
     onSuccess: () => { utils.checklist.getCompleto.invalidate(); toast.success("Item criado!"); setNewItemDialog(false); },
   });
+  const deleteItem = trpc.checklist.deleteItem.useMutation({
+    onSuccess: () => { utils.checklist.getCompleto.invalidate(); toast.success("Item excluído!"); },
+  });
   const updateFaixa = trpc.configFaixas.update.useMutation({
     onSuccess: () => { utils.configFaixas.list.invalidate(); toast.success("Faixa atualizada!"); },
   });
