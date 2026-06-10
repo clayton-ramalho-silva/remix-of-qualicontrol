@@ -522,11 +522,9 @@ export default function ChecklistEditor() {
           </h1>
         </div>
         <div className="flex gap-2">
-          {isEdit && (
-            <Button variant="outline" onClick={() => window.print()}>
-              <Printer className="h-4 w-4 mr-1" /> Imprimir
-            </Button>
-          )}
+          <Button variant="outline" onClick={() => window.print()}>
+            <Printer className="h-4 w-4 mr-1" /> Imprimir
+          </Button>
           <Button
             variant="outline"
             onClick={() => handleSave({ status: "rascunho" })}
