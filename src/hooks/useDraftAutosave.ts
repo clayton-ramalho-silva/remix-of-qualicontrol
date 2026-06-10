@@ -254,6 +254,8 @@ export function useDraftAutosave<T>(opts: DraftAutosaveOptions<T>) {
       const payload = JSON.stringify({ ...JSON.parse(dataStr), __savedAt: Date.now() });
       localStorage.setItem(key, payload);
       lastSavedRef.current = dataStr;
+      // Sincroniza com o backend (debounced) para o rascunho seguir o usuário entre dispositivos
+      try { scheduleRemotePush(key, JSON.parse(payload)); } catch { /* ignore */ }
     } catch (e) {
       // quota exceeded ou similar — silencia (foto não está aqui)
       console.warn("draft autosave failed", e);
