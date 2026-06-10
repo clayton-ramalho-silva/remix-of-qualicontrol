@@ -340,7 +340,7 @@ function DashboardLayoutContent({
       <SidebarInset className="flex-1 min-w-0 overflow-x-hidden">
         <OfflineIndicator />
         {/* Header bar with notification bell */}
-        <div className={`flex border-b h-14 items-center justify-between bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40 ${isMobile ? '' : ''}`}>
+        <div className={`flex border-b h-14 items-center justify-between bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40 no-print print:hidden ${isMobile ? '' : ''}`}>
           <div className="flex items-center gap-2">
             {isMobile && <SidebarTrigger className="h-9 w-9 rounded-lg bg-background" />}
             <span className="tracking-tight text-foreground font-medium text-sm">
