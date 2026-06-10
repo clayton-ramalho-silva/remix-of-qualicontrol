@@ -1755,6 +1755,8 @@ function mapVerificacaoFromDb(v: any) {
   return {
     ...v,
     obraId: v.obra_id,
+    andarId: v.andar_id ?? null,
+    edificioId: v.edificio_id ?? null,
     dataVistoria: v.data_vistoria ? Number(v.data_vistoria) : null,
     scoreGeral: v.score_geral,
     scoreQualidade: v.score_qualidade,
