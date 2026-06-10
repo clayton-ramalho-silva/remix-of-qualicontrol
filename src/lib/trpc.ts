@@ -1771,6 +1771,8 @@ function mapVerificacaoFromDb(v: any) {
     statusCondicao: v.status_condicao,
     plantaUrl: v.planta_url ?? null,
     plantaFileKey: v.planta_file_key ?? null,
+    createdById: v.created_by_id ?? null,
+    createdByName: v.created_by_name ?? null,
   };
 }
 
