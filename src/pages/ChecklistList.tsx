@@ -138,6 +138,7 @@ export default function ChecklistList() {
                 <tr>
                   <th className="text-left p-3">Obra</th>
                   <th className="text-left p-3">Data</th>
+                  <th className="text-left p-3">Autor</th>
                   <th className="text-left p-3">Metragem</th>
                   <th className="text-left p-3">GC / GO</th>
                   <th className="text-left p-3">Condição</th>
@@ -157,6 +158,7 @@ export default function ChecklistList() {
                       </div>
                     </td>
                     <td className="p-3">{new Date(r.data_vistoria).toLocaleDateString("pt-BR")}</td>
+                    <td className="p-3 text-xs">{r.created_by_name || "—"}</td>
                     <td className="p-3">{r.metragem_m2 ? `${r.metragem_m2} m²` : "-"}</td>
                     <td className="p-3 text-xs">
                       <div>GC: {r.gc || "-"}</div>
