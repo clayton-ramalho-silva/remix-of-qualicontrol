@@ -41,7 +41,8 @@ export default function VerificacaoDetalhe({ rotaBase = "/verificacoes", titulo 
   const respostaMap = new Map(data.respostas?.map((r: any) => [r.itemId, r]) || []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 print-report">
+
       <PrintHeader
         title={titulo ? `${titulo} #${data.id}` : `Verificação #${data.id}`}
         subtitle={`${obra ? `${obra.codigo} — ${obra.nome}` : `Obra #${data.obraId}`} • ${new Date(data.dataVistoria).toLocaleDateString("pt-BR")}`}
@@ -119,10 +120,10 @@ export default function VerificacaoDetalhe({ rotaBase = "/verificacoes", titulo 
           { label: "Qualidade de Obra", score: data.scoreQualidade, status: data.statusQualidade },
           { label: "Cronograma", score: data.scoreCronograma, status: data.statusCronograma },
         ].map((item, i) => (
-          <Card key={i}>
+          <Card key={i} className="print-kpi">
             <CardContent className="p-5 text-center">
-              <p className="text-xs text-slate-400 uppercase mb-2">{item.label}</p>
-              <p className="text-3xl font-bold text-slate-900">{item.score ?? "—"}%</p>
+              <p className="print-kpi-label text-xs text-slate-400 uppercase mb-2">{item.label}</p>
+              <p className="print-kpi-value text-3xl font-bold text-slate-900">{item.score ?? "—"}%</p>
               <Badge className={`mt-2 ${statusColors[item.status || ""] || "bg-slate-100 text-slate-600"}`}>
                 {item.status || "—"}
               </Badge>
@@ -164,8 +165,8 @@ export default function VerificacaoDetalhe({ rotaBase = "/verificacoes", titulo 
                 const respInfo = resp ? respIcons[resp.resposta] : null;
                 const Icon = respInfo?.icon || MinusCircle;
                 return (
-                  <div key={item.id} className={`flex items-start gap-3 p-3 rounded-lg ${respInfo?.bg || "bg-slate-50"}`}>
-                    <Icon className={`h-5 w-5 mt-0.5 shrink-0 ${respInfo?.color || "text-slate-300"}`} />
+                  <div key={item.id} className={`print-check-item is-${(resp?.resposta || "na").toLowerCase()} flex items-start gap-3 p-3 rounded-lg ${respInfo?.bg || "bg-slate-50"}`}>
+                    <Icon className={`h-5 w-5 mt-0.5 shrink-0 print:hidden ${respInfo?.color || "text-slate-300"}`} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start gap-2">
                         <Badge variant="outline" className="shrink-0 font-mono text-xs">{item.codigo}</Badge>
@@ -187,7 +188,7 @@ export default function VerificacaoDetalhe({ rotaBase = "/verificacoes", titulo 
                               <img
                                 src={f.url}
                                 alt={`Evidência ${idx + 1}`}
-                                className="h-16 w-16 object-cover rounded-md border border-slate-200 hover:opacity-80 transition-opacity"
+                                className="print-photo h-16 w-16 object-cover rounded-md border border-slate-200 hover:opacity-80 transition-opacity"
                               />
                             </a>
                           ))}
