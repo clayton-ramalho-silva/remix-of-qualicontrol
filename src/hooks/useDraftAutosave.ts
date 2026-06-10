@@ -200,6 +200,8 @@ export function loadDraft<T = unknown>(key: string): T | null {
 
 export function clearDraft(key: string) {
   try { localStorage.removeItem(key); } catch { /* ignore */ }
+  // Também apaga do backend (fire-and-forget)
+  void deleteDraftRemote(key);
 }
 
 export function listDrafts(prefix: string): { key: string; savedAt: number }[] {
