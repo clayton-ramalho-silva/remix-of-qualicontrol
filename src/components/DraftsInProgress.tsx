@@ -65,10 +65,15 @@ export default function DraftsInProgress({
 
   useEffect(() => {
     load();
-    // recarrega ao focar a janela (ex.: voltou do formulário)
+    // recarrega ao focar a janela ou após sync remoto de rascunhos
     const onFocus = () => load();
+    const onSynced = () => load();
     window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
+    window.addEventListener("drafts:synced", onSynced);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("drafts:synced", onSynced);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scope]);
 
