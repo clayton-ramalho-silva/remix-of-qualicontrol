@@ -214,8 +214,9 @@ export default function VerificacaoDetalhe({ rotaBase = "/verificacoes", titulo 
                               <img
                                 src={f.url}
                                 alt={`Evidência ${idx + 1}`}
-                                className="print-photo h-16 w-16 object-cover rounded-md border border-slate-200 hover:opacity-80 transition-opacity"
+                                className="print-photo h-24 w-24 sm:h-28 sm:w-28 object-cover rounded-md border border-slate-200 hover:opacity-80 transition-opacity cursor-zoom-in"
                               />
+
                             </a>
                           ))}
                         </div>
