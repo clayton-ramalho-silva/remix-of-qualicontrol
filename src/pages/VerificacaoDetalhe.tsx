@@ -165,8 +165,8 @@ export default function VerificacaoDetalhe({ rotaBase = "/verificacoes", titulo 
                 const respInfo = resp ? respIcons[resp.resposta] : null;
                 const Icon = respInfo?.icon || MinusCircle;
                 return (
-                  <div key={item.id} className={`flex items-start gap-3 p-3 rounded-lg ${respInfo?.bg || "bg-slate-50"}`}>
-                    <Icon className={`h-5 w-5 mt-0.5 shrink-0 ${respInfo?.color || "text-slate-300"}`} />
+                  <div key={item.id} className={`print-check-item is-${(resp?.resposta || "na").toLowerCase()} flex items-start gap-3 p-3 rounded-lg ${respInfo?.bg || "bg-slate-50"}`}>
+                    <Icon className={`h-5 w-5 mt-0.5 shrink-0 print:hidden ${respInfo?.color || "text-slate-300"}`} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start gap-2">
                         <Badge variant="outline" className="shrink-0 font-mono text-xs">{item.codigo}</Badge>
@@ -188,7 +188,7 @@ export default function VerificacaoDetalhe({ rotaBase = "/verificacoes", titulo 
                               <img
                                 src={f.url}
                                 alt={`Evidência ${idx + 1}`}
-                                className="h-16 w-16 object-cover rounded-md border border-slate-200 hover:opacity-80 transition-opacity"
+                                className="print-photo h-16 w-16 object-cover rounded-md border border-slate-200 hover:opacity-80 transition-opacity"
                               />
                             </a>
                           ))}
