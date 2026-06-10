@@ -301,7 +301,8 @@ function RelatorioDesvios() {
 
     // Detalhamento dos Desvios
     let detailHtml = "";
-    if (desvios.length > 0 && cfg.mostrarDetalhamento !== false) {
+    const desviosDetalhe = filtrarDesviosDetalhe(desvios);
+    if (desviosDetalhe.length > 0 && cfg.mostrarDetalhamento !== false) {
       const buildCard = (d: any) => {
         const tags: string[] = [];
         if (cfg.mostrarTagsClassificacao !== false) {
