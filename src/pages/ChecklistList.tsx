@@ -24,6 +24,7 @@ type Row = {
   condicao: "ruim" | "regular" | "otima";
   total_itens: number;
   status: "rascunho" | "finalizado" | null;
+  created_by_name: string | null;
   obra: { codigo: string; nome: string } | null;
 };
 
