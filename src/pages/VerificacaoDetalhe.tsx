@@ -94,8 +94,14 @@ export default function VerificacaoDetalhe({ rotaBase = "/verificacoes", titulo 
               </Badge>
             </div>
           </div>
-          {(data.go || data.gc || data.nucleo) && (
+          {(data.createdByName || data.go || data.gc || data.nucleo || data.diretoria) && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t">
+              {data.createdByName && (
+                <div>
+                  <p className="text-xs text-slate-400 uppercase">Criado por</p>
+                  <p className="text-sm text-slate-700 flex items-center gap-1"><User className="h-3.5 w-3.5" /> {data.createdByName}</p>
+                </div>
+              )}
               {data.go && <div><p className="text-xs text-slate-400 uppercase">GO</p><p className="text-sm text-slate-700">{data.go}</p></div>}
               {data.gc && <div><p className="text-xs text-slate-400 uppercase">GC</p><p className="text-sm text-slate-700">{data.gc}</p></div>}
               {data.nucleo && <div><p className="text-xs text-slate-400 uppercase">Núcleo</p><p className="text-sm text-slate-700">{data.nucleo}</p></div>}
