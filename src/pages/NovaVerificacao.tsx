@@ -442,7 +442,7 @@ export default function NovaVerificacao({
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder={!edificioId ? "Selecione o edifício primeiro..." : andaresDoEdificio.length === 0 ? "Nenhum andar cadastrado" : "Selecione o andar..."} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-72 overflow-y-auto">
                 {andaresDoEdificio.map((a: any) => (
                   <SelectItem key={a.id} value={String(a.id)}>
                     {a.numero != null ? `${a.numero} - ${a.nome}` : a.nome}
