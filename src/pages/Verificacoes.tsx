@@ -229,10 +229,16 @@ export default function Verificacoes({
                                     <Calendar className="h-3.5 w-3.5" />
                                     {new Date(v.dataVistoria).toLocaleDateString("pt-BR")}
                                   </span>
-                                  <span className="flex items-center gap-1 truncate max-w-[160px]">
+                                  <span className="flex items-center gap-1 truncate max-w-[160px]" title={`Avaliador: ${v.avaliador}`}>
                                     <User className="h-3.5 w-3.5" />
                                     <span className="truncate">{v.avaliador}</span>
                                   </span>
+                                  {v.createdByName && v.createdByName !== v.avaliador && (
+                                    <span className="flex items-center gap-1 truncate max-w-[180px]" title={`Criado por: ${v.createdByName}`}>
+                                      <User className="h-3.5 w-3.5" />
+                                      <span className="truncate">Autor: {v.createdByName}</span>
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                             </div>
