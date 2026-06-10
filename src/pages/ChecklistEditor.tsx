@@ -17,6 +17,7 @@ import {
 import FotosDesvioPicker, { type FotoEscolhida } from "@/components/checklist/FotosDesvioPicker";
 import { useDraftAutosave, loadDraft, clearDraft as clearDraftKey, useDraftId } from "@/hooks/useDraftAutosave";
 import DraftRestoredBanner from "@/components/DraftRestoredBanner";
+import PrintHeader from "@/components/PrintHeader";
 
 type Avaliacao = "ok" | "atencao" | "critico";
 type Condicao = "ruim" | "regular" | "otima";
