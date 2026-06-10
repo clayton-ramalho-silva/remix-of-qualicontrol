@@ -126,6 +126,23 @@ function RelatorioDesvios() {
   const [mostrarPerformanceFornecedores, setMostrarPerformanceFornecedores] = useState(true);
   const [mostrarIndiceDesvios, setMostrarIndiceDesvios] = useState(true);
 
+  // Período específico para listar desvios com descritivo+fotos no detalhamento
+  const [detalheDataInicial, setDetalheDataInicial] = useState("");
+  const [detalheDataFinal, setDetalheDataFinal] = useState("");
+
+  const filtrarDesviosDetalhe = (desvios: any[]) => {
+    const ini = detalheDataInicial ? new Date(detalheDataInicial).getTime() : null;
+    const fim = detalheDataFinal ? new Date(detalheDataFinal + "T23:59:59").getTime() : null;
+    if (ini == null && fim == null) return desvios;
+    return desvios.filter((d: any) => {
+      const ts = d?.dataIdentificacao ? Number(d.dataIdentificacao) : null;
+      if (ts == null) return false;
+      if (ini != null && ts < ini) return false;
+      if (fim != null && ts > fim) return false;
+      return true;
+    });
+  };
+
   // Seção 5 — Formato
   const [formato, setFormato] = useState<"pdf" | "excel">("pdf");
 
