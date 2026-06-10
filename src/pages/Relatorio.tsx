@@ -377,14 +377,14 @@ function RelatorioDesvios() {
         </div>`;
       };
       if (agruparPorAmbiente) {
-        const groups = groupByAmbiente(desvios);
+        const groups = groupByAmbiente(desviosDetalhe);
         const blocks = groups.map((g, i) => {
           const cards = g.items.map(buildCard).join("");
           return `<div style="${i === 0 ? "" : "page-break-before:always;"}margin-top:${i === 0 ? 12 : 0}px"><h3 style="font-size:13px;font-weight:700;color:#0f172a;background:#ecfeff;border-left:4px solid #0d9488;padding:8px 12px;margin-bottom:12px;border-radius:4px">Ambiente: ${g.nome} <span style="color:#64748b;font-weight:500;font-size:11px">— ${g.items.length} desvio${g.items.length > 1 ? "s" : ""}</span></h3>${cards}</div>`;
         }).join("");
         detailHtml = `<div style="margin-top:28px;page-break-before:always"><h2 style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid #0d9488">Detalhamento dos Desvios por Ambiente</h2>${blocks}</div>`;
       } else {
-        const items = desvios.map(buildCard).join("");
+        const items = desviosDetalhe.map(buildCard).join("");
         detailHtml = `<div style="margin-top:28px;page-break-before:always"><h2 style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid #0d9488">Detalhamento dos Desvios</h2>${items}</div>`;
       }
     }
