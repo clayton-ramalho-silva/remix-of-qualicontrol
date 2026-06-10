@@ -528,9 +528,14 @@ export default function ChecklistEditor() {
           <Button variant="ghost" size="sm" onClick={() => navigate("/checklists")}>
             <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
           </Button>
-          <h1 className="text-2xl font-bold">
-            {isEdit ? `Checklist #${id}` : "Novo Checklist de Vistoria"}
-          </h1>
+          <div>
+            <h1 className="text-2xl font-bold">
+              {isEdit ? `Checklist #${id}` : "Novo Checklist de Vistoria"}
+            </h1>
+            {createdByName && (
+              <p className="text-xs text-muted-foreground mt-0.5">Criado por {createdByName}</p>
+            )}
+          </div>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => window.print()}>
