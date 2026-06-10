@@ -381,7 +381,7 @@ export default function NovaVerificacao({
             </Label>
             <Select value={avaliadorId} onValueChange={setAvaliadorId}>
               <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione o avaliador..." /></SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-72 overflow-y-auto">
                 {avaliadores.map(m => (
                   <SelectItem key={m.id} value={String(m.id)}>{m.nome}</SelectItem>
                 ))}
