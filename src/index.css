@@ -131,7 +131,7 @@
 @media print {
   @page {
     size: A4;
-    margin: 22mm 12mm 12mm 12mm;
+    margin: 28mm 14mm 14mm 14mm;
   }
 
   html, body {
@@ -139,7 +139,17 @@
     color: #000 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    overflow: visible !important;
+    width: auto !important;
+    height: auto !important;
   }
+
+  /* Remove qualquer scroll/overflow herdado da UI durante a impressão */
+  *, *::before, *::after {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+  *::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
 
   /* Esconde a UI do app (sidebar, topbar, indicadores etc.) */
   [data-sidebar="sidebar"],
@@ -150,29 +160,33 @@
     display: none !important;
   }
 
-  /* Tira o padding do <main> para o relatório ocupar a página inteira */
+  /* Tira o padding do <main> e garante largura cheia do papel */
   main {
     padding: 0 !important;
     margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
+  [data-sidebar="inset"] { width: 100% !important; max-width: 100% !important; margin: 0 !important; }
 
-  /* Cabeçalho fixo repetido em todas as páginas */
+  /* Cabeçalho repetido em todas as páginas — posicionado DENTRO da margem
+     superior do @page (28mm) para nunca cobrir o conteúdo do relatório. */
   .print-page-header {
     position: fixed;
-    top: 0;
+    top: -22mm;
     left: 0;
     right: 0;
-    height: 16mm;
-    padding: 3mm 12mm;
+    height: 18mm;
+    padding: 2mm 14mm 3mm;
     display: flex !important;
     align-items: center;
     justify-content: space-between;
     border-bottom: 1px solid #0f172a;
-    background: #ffffff;
+    background: #ffffff !important;
     z-index: 9999;
   }
   .print-page-header img {
-    height: 9mm;
+    height: 10mm;
     width: auto;
     object-fit: contain;
   }
@@ -181,18 +195,9 @@
     font-family: Arial, Helvetica, sans-serif;
     color: #0f172a;
   }
-  .print-header-title {
-    font-size: 10pt;
-    font-weight: 700;
-    line-height: 1.15;
-  }
-  .print-header-subtitle {
-    font-size: 8pt;
-    color: #475569;
-    margin-top: 0.5mm;
-  }
+  .print-header-title { font-size: 10pt; font-weight: 700; line-height: 1.15; }
+  .print-header-subtitle { font-size: 8pt; color: #475569; margin-top: 0.5mm; }
 
-  /* Tipografia limpa para impressão */
   body, p, span, div, td, th, h1, h2, h3, h4, li {
     font-family: Arial, Helvetica, sans-serif !important;
   }
@@ -201,27 +206,27 @@
   h2 { font-size: 11.5pt !important; margin: 2mm 0 1mm !important; }
   h3 { font-size: 10pt !important; margin: 1.5mm 0 1mm !important; }
   p, span, div, td, th, li { font-size: 9.5pt; }
-
   a { color: #0f172a !important; text-decoration: none !important; }
 
-  /* ---- Economia de tinta: zera fundos e sombras ---- */
+  /* Tudo branco — sem cinza nas células/linhas para não gastar tinta. */
   .print-report,
   .print-report * {
-    background: transparent !important;
-    background-color: transparent !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
     background-image: none !important;
     box-shadow: none !important;
     text-shadow: none !important;
     color: #0f172a !important;
   }
-  /* Mantém apenas bordas finas e neutras */
+  /* Respiro entre o cabeçalho fixo e o início do conteúdo da 1ª página */
+  .print-report { padding-top: 6mm !important; }
+
   .print-report [class*="rounded-"],
   .print-report .card,
   .print-report [data-slot="card"] {
     border-radius: 2px !important;
     border-color: #cbd5e1 !important;
   }
-  /* Reduz padding de cards para aproveitar a página */
   .print-report [data-slot="card-content"],
   .print-report .card > div {
     padding: 3mm !important;
@@ -229,22 +234,14 @@
   .print-report [data-slot="card-header"] {
     padding: 3mm 3mm 1mm !important;
   }
-  /* Espaçamento vertical entre blocos mais compacto */
-  .print-report > * + * {
-    margin-top: 3mm !important;
-  }
+  .print-report > * + * { margin-top: 3mm !important; }
   .print-report .space-y-6 > * + *,
-  .print-report .space-y-4 > * + * {
-    margin-top: 2.5mm !important;
-  }
-  .print-report .space-y-2 > * + * {
-    margin-top: 1mm !important;
-  }
+  .print-report .space-y-4 > * + * { margin-top: 2.5mm !important; }
+  .print-report .space-y-2 > * + * { margin-top: 1mm !important; }
   .print-report .gap-4 { gap: 2mm !important; }
   .print-report .gap-3 { gap: 1.5mm !important; }
   .print-report .gap-2 { gap: 1mm !important; }
 
-  /* Badges viram texto simples com contorno fino */
   .print-report [data-slot="badge"] {
     border: 0.5pt solid #475569 !important;
     color: #0f172a !important;
@@ -252,9 +249,9 @@
     font-size: 7.5pt !important;
     font-weight: 600 !important;
     border-radius: 2px !important;
+    background: #ffffff !important;
   }
 
-  /* Status cards (Score Geral etc.) — bem compactos */
   .print-report .print-kpi {
     border: 0.6pt solid #94a3b8 !important;
     padding: 2mm !important;
@@ -272,44 +269,41 @@
     margin: 0.5mm 0 !important;
   }
 
-  /* Itens de checklist — sem fundo colorido, só barra lateral */
   .print-report .print-check-item {
     border: 0.4pt solid #cbd5e1 !important;
     border-left-width: 2pt !important;
     padding: 1.2mm 2mm !important;
     page-break-inside: avoid;
+    background: #ffffff !important;
   }
   .print-report .print-check-item.is-at { border-left-color: #059669 !important; }
   .print-report .print-check-item.is-nat { border-left-color: #d97706 !important; }
   .print-report .print-check-item.is-gr { border-left-color: #dc2626 !important; }
   .print-report .print-check-item.is-na { border-left-color: #94a3b8 !important; }
 
-  /* Esconde os ícones decorativos coloridos durante a impressão */
   .print-report .lucide.print\:hidden,
   .print-report svg.print-hide { display: none !important; }
 
-  /* Fotos menores no relatório */
+  /* Fotos maiores no relatório — clicáveis para abrir em nova aba no PDF. */
   .print-report .print-photo {
-    width: 28mm !important;
-    height: 22mm !important;
+    width: 42mm !important;
+    height: 32mm !important;
     object-fit: cover;
     border: 0.4pt solid #94a3b8 !important;
     border-radius: 1px !important;
+    cursor: zoom-in;
   }
 
-  /* Permite quebra dentro de seções longas para evitar páginas em branco */
   .print-report .card,
   .print-report [data-slot="card"] {
     page-break-inside: auto !important;
     break-inside: auto !important;
   }
-  /* Mas evita quebrar título da seção do resto do conteúdo */
   .print-report [data-slot="card-header"] {
     page-break-after: avoid;
     break-after: avoid;
   }
 
-  /* Grids respondem em duas colunas no A4 quando possível */
   .print-report .md\:grid-cols-4 {
     grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   }
@@ -317,3 +311,4 @@
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   }
 }
+
