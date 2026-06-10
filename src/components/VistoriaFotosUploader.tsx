@@ -21,6 +21,7 @@ export default function VistoriaFotosUploader({ fotos, onChange, plantaUrl, item
   const [pendingFoto, setPendingFoto] = useState<RespostaFoto | null>(null);
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [viewOpen, setViewOpen] = useState(false);
+  const confirmedRef = useRef(false);
 
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -34,7 +35,7 @@ export default function VistoriaFotosUploader({ fotos, onChange, plantaUrl, item
       toast.error(`Máximo de ${max} fotos por item`);
       return;
     }
-    const file = files[0]; // upload um por vez para encadear pin
+    const file = files[0];
     setUploading(true);
     try {
       const compressed = await compressImage(file, { maxDim: 1600, quality: 0.8 });
@@ -45,7 +46,7 @@ export default function VistoriaFotosUploader({ fotos, onChange, plantaUrl, item
       });
       if (upErr) throw upErr;
       const { data: pub } = supabase.storage.from("evidencias").getPublicUrl(key);
-      // Abre dialog para marcar pin (obrigatório)
+      confirmedRef.current = false;
       setPendingFoto({ url: pub.publicUrl, fileKey: key });
     } catch (e: any) {
       toast.error(e.message || "Erro ao enviar foto");
@@ -66,15 +67,23 @@ export default function VistoriaFotosUploader({ fotos, onChange, plantaUrl, item
       const nova = [...fotos];
       nova[editingIdx] = { ...nova[editingIdx], pinX: pin.x, pinY: pin.y };
       onChange(nova);
+      confirmedRef.current = true;
       setEditingIdx(null);
     } else if (pendingFoto) {
       onChange([...fotos, { ...pendingFoto, pinX: pin.x, pinY: pin.y }]);
+      confirmedRef.current = true;
       setPendingFoto(null);
     }
   };
 
   const cancelPin = () => {
-    // Foto pendente sem pin é descartada (pin obrigatório)
+    if (confirmedRef.current) {
+      // fechamento após confirmar — não descartar
+      confirmedRef.current = false;
+      setPendingFoto(null);
+      setEditingIdx(null);
+      return;
+    }
     if (pendingFoto) {
       supabase.storage.from("evidencias").remove([pendingFoto.fileKey]).catch(() => {});
       setPendingFoto(null);
