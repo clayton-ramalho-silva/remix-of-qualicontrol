@@ -331,6 +331,18 @@ export default function Administracao() {
                         <Button size="sm" variant="ghost" className="shrink-0" onClick={() => startEditItem(item)}>
                           <Edit2 className="h-3.5 w-3.5" />
                         </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="shrink-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => {
+                            if (confirm(`Excluir o item ${item.codigo}? Esta ação não pode ser desfeita.`)) {
+                              deleteItem.mutate({ id: item.id });
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
                       </>
                     )}
                   </div>
