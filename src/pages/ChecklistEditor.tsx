@@ -518,6 +518,7 @@ export default function ChecklistEditor() {
         subtitle={[
           obraSel ? `${obraSel.codigo} — ${obraSel.nome}` : "",
           dataVistoria ? new Date(dataVistoria).toLocaleDateString("pt-BR") : "",
+          createdByName ? `Criado por ${createdByName}` : "",
         ].filter(Boolean).join(" • ")}
       />
       <DraftRestoredBanner savedAt={restoredAt} onDiscard={discardDraft} className="print:hidden" />
