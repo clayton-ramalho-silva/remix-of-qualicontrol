@@ -17,6 +17,7 @@ import {
 import FotosDesvioPicker, { type FotoEscolhida } from "@/components/checklist/FotosDesvioPicker";
 import { useDraftAutosave, loadDraft, clearDraft as clearDraftKey, useDraftId } from "@/hooks/useDraftAutosave";
 import DraftRestoredBanner from "@/components/DraftRestoredBanner";
+import PrintHeader from "@/components/PrintHeader";
 
 type Avaliacao = "ok" | "atencao" | "critico";
 type Condicao = "ruim" | "regular" | "otima";
@@ -510,6 +511,13 @@ export default function ChecklistEditor() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
+      <PrintHeader
+        title={isEdit ? `Checklist de Vistoria #${id}` : "Checklist de Vistoria"}
+        subtitle={[
+          obraSel ? `${obraSel.codigo} — ${obraSel.nome}` : "",
+          dataVistoria ? new Date(dataVistoria).toLocaleDateString("pt-BR") : "",
+        ].filter(Boolean).join(" • ")}
+      />
       <DraftRestoredBanner savedAt={restoredAt} onDiscard={discardDraft} className="print:hidden" />
       {/* Header bar — hidden on print */}
       <div className="flex items-center justify-between print:hidden">

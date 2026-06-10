@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useLocation, useParams } from "wouter";
+import PrintHeader from "@/components/PrintHeader";
 import {
   ClipboardCheck, ArrowLeft, Calendar, User, Building2,
   CheckCircle2, XCircle, AlertTriangle, MinusCircle, Printer, Pencil
@@ -41,6 +42,10 @@ export default function VerificacaoDetalhe({ rotaBase = "/verificacoes", titulo 
 
   return (
     <div className="space-y-6">
+      <PrintHeader
+        title={titulo ? `${titulo} #${data.id}` : `Verificação #${data.id}`}
+        subtitle={`${obra ? `${obra.codigo} — ${obra.nome}` : `Obra #${data.obraId}`} • ${new Date(data.dataVistoria).toLocaleDateString("pt-BR")}`}
+      />
       {/* Header */}
       <div className="flex items-center justify-between print:hidden">
         <div className="flex items-center gap-3">

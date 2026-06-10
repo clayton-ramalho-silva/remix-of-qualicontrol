@@ -124,3 +124,91 @@
     display: none;
   }
 }
+
+/* ============================================================ */
+/* IMPRESSÃO / PDF                                              */
+/* ============================================================ */
+@media print {
+  @page {
+    size: A4;
+    margin: 28mm 14mm 16mm 14mm;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Esconde a UI do app (sidebar, topbar, indicadores etc.) */
+  [data-sidebar="sidebar"],
+  [data-sidebar="rail"],
+  [data-sidebar="trigger"],
+  [data-sidebar="inset"] > .sticky,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Tira o padding do <main> para o relatório ocupar a página inteira */
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Cabeçalho fixo repetido em todas as páginas */
+  .print-page-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 22mm;
+    padding: 4mm 14mm;
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1.5px solid #0f172a;
+    background: #ffffff;
+    z-index: 9999;
+  }
+  .print-page-header img {
+    height: 12mm;
+    width: auto;
+    object-fit: contain;
+  }
+  .print-header-meta {
+    text-align: right;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #0f172a;
+  }
+  .print-header-title {
+    font-size: 11pt;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .print-header-subtitle {
+    font-size: 8.5pt;
+    color: #475569;
+    margin-top: 1mm;
+  }
+
+  /* Evita quebras feias dentro de cartões */
+  .print-avoid-break,
+  .card,
+  [class*="rounded-xl"],
+  [class*="rounded-lg"] {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Tipografia mais limpa para impressão */
+  body, p, span, div, td, th, h1, h2, h3, h4 {
+    font-family: Arial, Helvetica, sans-serif !important;
+  }
+  h1 { font-size: 16pt !important; }
+  h2 { font-size: 13pt !important; }
+  h3 { font-size: 11pt !important; }
+  p, span, div, td, th { font-size: 10pt; }
+
+  a { color: #0f172a !important; text-decoration: none !important; }
+}
