@@ -78,6 +78,7 @@ export default function ChecklistEditor() {
   const [go, setGo] = useState("");
   const [condicao, setCondicao] = useState<Condicao>("regular");
   const [totalItens, setTotalItens] = useState<string>("");
+  const [createdByName, setCreatedByName] = useState<string | null>(null);
 
   const [items, setItems] = useState<Item[]>([]);
   const [obras, setObras] = useState<{ id: number; id_projeto?: number | null; codigo: string; nome: string; gerente_obra?: string | null; gerente_contrato?: string | null; nucleo?: string | null }[]>([]);
