@@ -50,6 +50,15 @@ function ProtectedShell() {
     if (!loading && !user) navigate("/auth");
   }, [loading, user, navigate]);
 
+  // Sincroniza rascunhos do servidor assim que o usuário estiver autenticado,
+  // para que rascunhos criados em outro dispositivo apareçam aqui também.
+  useEffect(() => {
+    if (!user) return;
+    import("@/hooks/useDraftAutosave").then(({ syncDraftsFromBackend }) => {
+      syncDraftsFromBackend();
+    });
+  }, [user?.id]);
+
   if (loading || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center">

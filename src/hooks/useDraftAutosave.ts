@@ -1,4 +1,118 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
+/**
+ * Parse a draft key like `draft:<scope>:<draftId>`.
+ * The scope itself may contain colons (e.g. `verificacao:qualidade`),
+ * so the draftId is everything after the LAST colon.
+ */
+function parseDraftKey(key: string): { scope: string; draftId: string } | null {
+  if (!key.startsWith("draft:")) return null;
+  const rest = key.slice("draft:".length);
+  const lastColon = rest.lastIndexOf(":");
+  if (lastColon < 0) return null;
+  return { scope: rest.slice(0, lastColon), draftId: rest.slice(lastColon + 1) };
+}
+
+/** Debounced backend upsert tracker (per-key). */
+const remoteTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+async function pushDraftRemote(key: string, dataObj: any) {
+  const parsed = parseDraftKey(key);
+  if (!parsed) return;
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { __savedAt, ...cleanData } = dataObj || {};
+    await supabase.from("user_drafts").upsert(
+      {
+        user_id: user.id,
+        scope: parsed.scope,
+        draft_id: parsed.draftId,
+        data: cleanData,
+        saved_at: new Date(__savedAt ?? Date.now()).toISOString(),
+      },
+      { onConflict: "user_id,scope,draft_id" }
+    );
+  } catch (e) {
+    console.warn("remote draft push failed", e);
+  }
+}
+
+function scheduleRemotePush(key: string, dataObj: any, delayMs = 1500) {
+  const existing = remoteTimers.get(key);
+  if (existing) clearTimeout(existing);
+  const t = setTimeout(() => {
+    remoteTimers.delete(key);
+    pushDraftRemote(key, dataObj);
+  }, delayMs);
+  remoteTimers.set(key, t);
+}
+
+async function deleteDraftRemote(key: string) {
+  const parsed = parseDraftKey(key);
+  if (!parsed) return;
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase
+      .from("user_drafts")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("scope", parsed.scope)
+      .eq("draft_id", parsed.draftId);
+  } catch (e) {
+    console.warn("remote draft delete failed", e);
+  }
+}
+
+/**
+ * Puxa todos os rascunhos do usuário autenticado e os hidrata em localStorage.
+ * Para cada rascunho remoto, se a versão local for mais antiga (ou inexistente),
+ * sobrescreve. Se a local for mais nova, faz push para o servidor.
+ * Deve ser chamado logo após o usuário estar autenticado.
+ */
+export async function syncDraftsFromBackend(): Promise<number> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return 0;
+    const { data, error } = await supabase
+      .from("user_drafts")
+      .select("scope, draft_id, data, saved_at")
+      .eq("user_id", user.id);
+    if (error || !data) return 0;
+    let hydrated = 0;
+    for (const row of data) {
+      const key = `draft:${row.scope}:${row.draft_id}`;
+      const remoteSavedAt = row.saved_at ? new Date(row.saved_at).getTime() : 0;
+      let localSavedAt = 0;
+      try {
+        const raw = localStorage.getItem(key);
+        if (raw) localSavedAt = JSON.parse(raw)?.__savedAt ?? 0;
+      } catch { /* ignore */ }
+      if (remoteSavedAt >= localSavedAt) {
+        const payload = { ...(row.data as any), __savedAt: remoteSavedAt || Date.now() };
+        try {
+          localStorage.setItem(key, JSON.stringify(payload));
+          hydrated++;
+        } catch { /* ignore */ }
+      } else {
+        // local é mais novo — manda pro servidor
+        try {
+          const raw = localStorage.getItem(key);
+          if (raw) pushDraftRemote(key, JSON.parse(raw));
+        } catch { /* ignore */ }
+      }
+    }
+    if (hydrated > 0) {
+      try { window.dispatchEvent(new CustomEvent("drafts:synced")); } catch { /* ignore */ }
+    }
+    return hydrated;
+  } catch (e) {
+    console.warn("syncDraftsFromBackend failed", e);
+    return 0;
+  }
+}
 
 /** Gera um id curto e único para identificar um rascunho. */
 export function newDraftId(): string {
@@ -89,6 +203,8 @@ export function loadDraft<T = unknown>(key: string): T | null {
 
 export function clearDraft(key: string) {
   try { localStorage.removeItem(key); } catch { /* ignore */ }
+  // Também apaga do backend (fire-and-forget)
+  void deleteDraftRemote(key);
 }
 
 export function listDrafts(prefix: string): { key: string; savedAt: number }[] {
@@ -143,6 +259,8 @@ export function useDraftAutosave<T>(opts: DraftAutosaveOptions<T>) {
       const payload = JSON.stringify({ ...JSON.parse(dataStr), __savedAt: Date.now() });
       localStorage.setItem(key, payload);
       lastSavedRef.current = dataStr;
+      // Sincroniza com o backend (debounced) para o rascunho seguir o usuário entre dispositivos
+      try { scheduleRemotePush(key, JSON.parse(payload)); } catch { /* ignore */ }
     } catch (e) {
       // quota exceeded ou similar — silencia (foto não está aqui)
       console.warn("draft autosave failed", e);
