@@ -170,79 +170,118 @@ export default function Verificacoes({
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
-          {visiveis.map((v: any) => (
-            <Card key={v.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`${rotaBase}/${v.id}`)}>
-              <CardContent className="p-4 sm:p-6 overflow-hidden">
-                <div className="flex items-center justify-between gap-3 min-w-0">
-                  <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                    <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-teal-50 text-teal-600 shrink-0">
-                      <ClipboardList className="h-6 w-6" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap min-w-0">
-                        <h3 className="font-semibold text-slate-900 truncate max-w-full">{getObraNome(v.obraId)}</h3>
-                        {v.status === "rascunho" && (
-                          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Rascunho</Badge>
-                        )}
-                        <Badge className={statusColors[v.statusGeral || ""] || "bg-slate-100 text-slate-600"}>
-                          {statusIcon(v.statusGeral)} {v.statusGeral || "—"}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-3 sm:gap-4 mt-1 text-xs sm:text-sm text-slate-500 flex-wrap">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3.5 w-3.5" />
-                          {new Date(v.dataVistoria).toLocaleDateString("pt-BR")}
-                        </span>
-                        <span className="flex items-center gap-1 truncate max-w-[140px]">
-                          <User className="h-3.5 w-3.5" />
-                          <span className="truncate">{v.avaliador}</span>
-                        </span>
-                      </div>
-                    </div>
+        <Accordion
+          type="multiple"
+          defaultValue={grupos.map((g) => `obra-${g.obraId}`)}
+          className="space-y-3"
+        >
+          {grupos.map((g) => (
+            <AccordionItem
+              key={g.obraId}
+              value={`obra-${g.obraId}`}
+              className="border border-slate-200 rounded-lg bg-white overflow-hidden"
+            >
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-slate-50">
+                <div className="flex items-center gap-3 min-w-0 flex-1 text-left">
+                  <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-teal-50 text-teal-600 shrink-0">
+                    <Building2 className="h-5 w-5" />
                   </div>
-
-                  <div className="flex items-center gap-6 shrink-0">
-                    {/* Scores */}
-                    <div className="hidden md:flex items-center gap-4">
-                      <div className="text-center">
-                        <p className="text-xs text-slate-400 uppercase">Geral</p>
-                        <p className="text-xl font-bold text-slate-900">{v.scoreGeral ?? "—"}%</p>
-                      </div>
-                      <div className="w-px h-10 bg-slate-200" />
-                      <div className="text-center">
-                        <p className="text-xs text-slate-400 uppercase">Condição</p>
-                        <p className="text-lg font-semibold text-slate-700">{v.scoreCondicao ?? "—"}%</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-xs text-slate-400 uppercase">Qualidade</p>
-                        <p className="text-lg font-semibold text-slate-700">{v.scoreQualidade ?? "—"}%</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-xs text-slate-400 uppercase">Cronograma</p>
-                        <p className="text-lg font-semibold text-slate-700">{v.scoreCronograma ?? "—"}%</p>
-                      </div>
-                    </div>
-                    <Button variant="outline" size="sm" className="shrink-0">
-                      <Eye className="h-4 w-4 mr-1" /> Ver
-                    </Button>
-                    {isAdmin && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-                        onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(v.id); }}
-                        title="Excluir verificação"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-slate-900 truncate">{g.nome}</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {g.items.length} {g.items.length === 1 ? "vistoria" : "vistorias"}
+                    </p>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4 pt-0">
+                <div className="grid gap-3">
+                  {g.items.map((v: any) => {
+                    const andarLabel = getAndarLabel(v);
+                    return (
+                      <Card key={v.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`${rotaBase}/${v.id}`)}>
+                        <CardContent className="p-4 overflow-hidden">
+                          <div className="flex items-center justify-between gap-3 min-w-0">
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-teal-50 text-teal-600 shrink-0">
+                                <ClipboardList className="h-5 w-5" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2 flex-wrap min-w-0">
+                                  <h4 className="font-medium text-slate-900 truncate max-w-full">
+                                    {andarLabel ? andarLabel : "Sem andar"}
+                                    <span className="text-slate-400 font-normal"> · #{v.id}</span>
+                                  </h4>
+                                  {v.status === "rascunho" && (
+                                    <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Rascunho</Badge>
+                                  )}
+                                  <Badge className={statusColors[v.statusGeral || ""] || "bg-slate-100 text-slate-600"}>
+                                    {statusIcon(v.statusGeral)} {v.statusGeral || "—"}
+                                  </Badge>
+                                </div>
+                                <div className="flex items-center gap-3 sm:gap-4 mt-1 text-xs sm:text-sm text-slate-500 flex-wrap">
+                                  {andarLabel && (
+                                    <span className="flex items-center gap-1">
+                                      <Layers className="h-3.5 w-3.5" /> {andarLabel}
+                                    </span>
+                                  )}
+                                  <span className="flex items-center gap-1">
+                                    <Calendar className="h-3.5 w-3.5" />
+                                    {new Date(v.dataVistoria).toLocaleDateString("pt-BR")}
+                                  </span>
+                                  <span className="flex items-center gap-1 truncate max-w-[160px]">
+                                    <User className="h-3.5 w-3.5" />
+                                    <span className="truncate">{v.avaliador}</span>
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-4 shrink-0">
+                              <div className="hidden md:flex items-center gap-4">
+                                <div className="text-center">
+                                  <p className="text-xs text-slate-400 uppercase">Geral</p>
+                                  <p className="text-lg font-bold text-slate-900">{v.scoreGeral ?? "—"}%</p>
+                                </div>
+                                <div className="w-px h-8 bg-slate-200" />
+                                <div className="text-center">
+                                  <p className="text-xs text-slate-400 uppercase">Cond.</p>
+                                  <p className="text-sm font-semibold text-slate-700">{v.scoreCondicao ?? "—"}%</p>
+                                </div>
+                                <div className="text-center">
+                                  <p className="text-xs text-slate-400 uppercase">Qual.</p>
+                                  <p className="text-sm font-semibold text-slate-700">{v.scoreQualidade ?? "—"}%</p>
+                                </div>
+                                <div className="text-center">
+                                  <p className="text-xs text-slate-400 uppercase">Cron.</p>
+                                  <p className="text-sm font-semibold text-slate-700">{v.scoreCronograma ?? "—"}%</p>
+                                </div>
+                              </div>
+                              <Button variant="outline" size="sm" className="shrink-0">
+                                <Eye className="h-4 w-4 mr-1" /> Ver
+                              </Button>
+                              {isAdmin && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                                  onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(v.id); }}
+                                  title="Excluir verificação"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
           ))}
-        </div>
+        </Accordion>
       )}
       <AlertDialog open={confirmDeleteId !== null} onOpenChange={(o) => !o && setConfirmDeleteId(null)}>
         <AlertDialogContent>
