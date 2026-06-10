@@ -126,6 +126,23 @@ function RelatorioDesvios() {
   const [mostrarPerformanceFornecedores, setMostrarPerformanceFornecedores] = useState(true);
   const [mostrarIndiceDesvios, setMostrarIndiceDesvios] = useState(true);
 
+  // Período específico para listar desvios com descritivo+fotos no detalhamento
+  const [detalheDataInicial, setDetalheDataInicial] = useState("");
+  const [detalheDataFinal, setDetalheDataFinal] = useState("");
+
+  const filtrarDesviosDetalhe = (desvios: any[]) => {
+    const ini = detalheDataInicial ? new Date(detalheDataInicial).getTime() : null;
+    const fim = detalheDataFinal ? new Date(detalheDataFinal + "T23:59:59").getTime() : null;
+    if (ini == null && fim == null) return desvios;
+    return desvios.filter((d: any) => {
+      const ts = d?.dataIdentificacao ? Number(d.dataIdentificacao) : null;
+      if (ts == null) return false;
+      if (ini != null && ts < ini) return false;
+      if (fim != null && ts > fim) return false;
+      return true;
+    });
+  };
+
   // Seção 5 — Formato
   const [formato, setFormato] = useState<"pdf" | "excel">("pdf");
 
@@ -284,7 +301,8 @@ function RelatorioDesvios() {
 
     // Detalhamento dos Desvios
     let detailHtml = "";
-    if (desvios.length > 0 && cfg.mostrarDetalhamento !== false) {
+    const desviosDetalhe = filtrarDesviosDetalhe(desvios);
+    if (desviosDetalhe.length > 0 && cfg.mostrarDetalhamento !== false) {
       const buildCard = (d: any) => {
         const tags: string[] = [];
         if (cfg.mostrarTagsClassificacao !== false) {
@@ -359,14 +377,14 @@ function RelatorioDesvios() {
         </div>`;
       };
       if (agruparPorAmbiente) {
-        const groups = groupByAmbiente(desvios);
+        const groups = groupByAmbiente(desviosDetalhe);
         const blocks = groups.map((g, i) => {
           const cards = g.items.map(buildCard).join("");
           return `<div style="${i === 0 ? "" : "page-break-before:always;"}margin-top:${i === 0 ? 12 : 0}px"><h3 style="font-size:13px;font-weight:700;color:#0f172a;background:#ecfeff;border-left:4px solid #0d9488;padding:8px 12px;margin-bottom:12px;border-radius:4px">Ambiente: ${g.nome} <span style="color:#64748b;font-weight:500;font-size:11px">— ${g.items.length} desvio${g.items.length > 1 ? "s" : ""}</span></h3>${cards}</div>`;
         }).join("");
         detailHtml = `<div style="margin-top:28px;page-break-before:always"><h2 style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid #0d9488">Detalhamento dos Desvios por Ambiente</h2>${blocks}</div>`;
       } else {
-        const items = desvios.map(buildCard).join("");
+        const items = desviosDetalhe.map(buildCard).join("");
         detailHtml = `<div style="margin-top:28px;page-break-before:always"><h2 style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid #0d9488">Detalhamento dos Desvios</h2>${items}</div>`;
       }
     }
@@ -765,6 +783,48 @@ function RelatorioDesvios() {
 
           <Separator />
 
+          {/* Período do detalhamento (descritivos + fotos) */}
+          <div>
+            <h3 className="text-sm font-semibold mb-1 flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-primary" />
+              Período que os desvios serão listados com fotos no relatório
+            </h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              Filtra apenas os cards de detalhamento (descritivo + fotos). Os indicadores e KPIs continuam usando o período definido nos filtros principais no topo.
+            </p>
+            <div className="flex flex-wrap items-end gap-3">
+              <div>
+                <Label className="text-xs">De</Label>
+                <input
+                  type="date"
+                  value={detalheDataInicial}
+                  onChange={(e) => setDetalheDataInicial(e.target.value)}
+                  className="block mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Até</Label>
+                <input
+                  type="date"
+                  value={detalheDataFinal}
+                  onChange={(e) => setDetalheDataFinal(e.target.value)}
+                  className="block mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              {(detalheDataInicial || detalheDataFinal) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => { setDetalheDataInicial(""); setDetalheDataFinal(""); }}
+                >
+                  Limpar
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <Separator />
+
           {/* Seção 5 — Formato e Botão */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
@@ -1109,7 +1169,7 @@ function RelatorioDesvios() {
               )}
 
               {/* Detalhe de cada desvio */}
-              {data.desvios && data.desvios.length > 0 && data.config?.mostrarDetalhamento !== false && (
+              {data.desvios && data.config?.mostrarDetalhamento !== false && filtrarDesviosDetalhe(data.desvios as any[]).length > 0 && (
                 <>
                   <Separator className="my-6" />
                   <div className="section">
@@ -1118,9 +1178,10 @@ function RelatorioDesvios() {
                       {agruparPorAmbiente ? "Detalhamento dos Desvios por Ambiente" : "Detalhamento dos Desvios"}
                     </h2>
                     {(() => {
+                      const desviosDet = filtrarDesviosDetalhe(data.desvios as any[]);
                       const groups = agruparPorAmbiente
-                        ? groupByAmbiente(data.desvios)
-                        : [{ nome: "", items: data.desvios as any[] }];
+                        ? groupByAmbiente(desviosDet)
+                        : [{ nome: "", items: desviosDet }];
                       return (
                         <div className="space-y-6">
                           {groups.map((g, gi) => (
