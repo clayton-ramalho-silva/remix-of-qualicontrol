@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import {
   ArrowLeft, Save, Plus, Trash2, ChevronDown, ChevronUp,
@@ -627,7 +628,7 @@ export default function ChecklistEditor() {
             return (
               <div key={idx} className="border rounded-lg overflow-hidden">
                 <div className="grid grid-cols-12 gap-2 p-3 items-start bg-muted/20">
-                  <div className="col-span-12 lg:col-span-3 min-w-0">
+                  <div className="col-span-12 lg:col-span-4 min-w-0">
                     <Label className="text-xs">Disciplina</Label>
                     <Select
                       value={it.disciplina_id ? String(it.disciplina_id) : ""}
@@ -660,45 +661,63 @@ export default function ChecklistEditor() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="col-span-12 sm:col-span-6 lg:col-span-3 min-w-0">
+                  <div className="col-span-12 lg:col-span-8 min-w-0">
                     <Label className="text-xs">Fornecedor</Label>
-                    <Select
-                      value={fornecedorSelecionado ? fornecedorValue(fornecedorSelecionado) : ""}
-                      onValueChange={(v) => {
-                        const match = fornsDaDisc.find((f) => fornecedorValue(f) === v);
-                        updItem(idx, {
-                          fornecedor_nome: match?.nome || "",
-                          fornecedor_id: match?.id || null,
-                          fotos: [],
-                        });
-                      }}
-                      disabled={!it.disciplina_nome}
-                    >
-                      <SelectTrigger className="mt-1 h-9 w-full min-w-0">
-                        <SelectValue placeholder={it.disciplina_nome ? (fornsDaDisc.length ? "Selecione" : "Sem fornecedor") : "Escolha a disciplina"} />
-                      </SelectTrigger>
-                      <SelectContent align="start" className="w-[var(--radix-select-trigger-width)]">
-                        {fornsDaDisc.length === 0 ? (
-                          <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                            Nenhum fornecedor com desvios nesta disciplina
-                          </div>
-                        ) : (
-                          fornsDaDisc.map((f) => (
-                            <SelectItem key={`${f.id}-${f.nome}`} value={fornecedorValue(f)} className="truncate">
-                              {f.nome}
-                            </SelectItem>
-                          ))
+                    <TooltipProvider delayDuration={200}>
+                      <Tooltip>
+                        <Select
+                          value={fornecedorSelecionado ? fornecedorValue(fornecedorSelecionado) : ""}
+                          onValueChange={(v) => {
+                            const match = fornsDaDisc.find((f) => fornecedorValue(f) === v);
+                            updItem(idx, {
+                              fornecedor_nome: match?.nome || "",
+                              fornecedor_id: match?.id || null,
+                              fotos: [],
+                            });
+                          }}
+                          disabled={!it.disciplina_nome}
+                        >
+                          <TooltipTrigger asChild>
+                            <SelectTrigger
+                              className="mt-1 h-9 w-full min-w-0"
+                              onClick={(e) => {
+                                // permite que mobile mostre tooltip via long-press do navegador
+                                (e.currentTarget as HTMLElement).title = it.fornecedor_nome || "";
+                              }}
+                            >
+                              <SelectValue placeholder={it.disciplina_nome ? (fornsDaDisc.length ? "Selecione" : "Sem fornecedor") : "Escolha a disciplina"} />
+                            </SelectTrigger>
+                          </TooltipTrigger>
+                          <SelectContent align="start" className="w-[var(--radix-select-trigger-width)]">
+                            {fornsDaDisc.length === 0 ? (
+                              <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                                Nenhum fornecedor com desvios nesta disciplina
+                              </div>
+                            ) : (
+                              fornsDaDisc.map((f) => (
+                                <SelectItem key={`${f.id}-${f.nome}`} value={fornecedorValue(f)} className="truncate">
+                                  {f.nome}
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                        {it.fornecedor_nome && (
+                          <TooltipContent side="top" className="max-w-[420px] break-words">
+                            {it.fornecedor_nome}
+                          </TooltipContent>
                         )}
-                      </SelectContent>
-                    </Select>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
-                  <div className="col-span-12 sm:col-span-6 lg:col-span-3 min-w-0">
+                  <div className="col-span-12 lg:col-span-8 min-w-0">
                     <Label className="text-xs">Equipe Alocada</Label>
                     <Input
                       list={`equipelist-${idx}`}
                       className="mt-1 h-9 w-full min-w-0"
                       value={it.equipe_nome}
                       onChange={(e) => updItem(idx, { equipe_nome: e.target.value })}
+                      title={it.equipe_nome || undefined}
                     />
                     <datalist id={`equipelist-${idx}`}>
                       {sugs.map((s) => <option key={s} value={s} />)}
@@ -718,7 +737,7 @@ export default function ChecklistEditor() {
                       </div>
                     )}
                   </div>
-                  <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+                  <div className="col-span-12 lg:col-span-4">
                     <Label className="text-xs">Avaliação</Label>
                     <div className="flex gap-1 mt-1">
                       {(Object.keys(avalConfig) as Avaliacao[]).map((a) => {
