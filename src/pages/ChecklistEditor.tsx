@@ -251,6 +251,7 @@ export default function ChecklistEditor() {
         setGo((ent as any).go || "");
         setCondicao((ent as any).condicao);
         setTotalItens(String((ent as any).total_itens || ""));
+        setCreatedByName((ent as any).created_by_name || null);
         serverLoadedAtRef.current = new Date((ent as any).updated_at || (ent as any).created_at || (ent as any).data_vistoria || 0).getTime();
       }
       const { data: its } = await supabase
