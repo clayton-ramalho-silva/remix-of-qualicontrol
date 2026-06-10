@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useLocation, useParams } from "wouter";
+import PrintHeader from "@/components/PrintHeader";
 import {
   ClipboardCheck, ArrowLeft, Calendar, User, Building2,
   CheckCircle2, XCircle, AlertTriangle, MinusCircle, Printer, Pencil
