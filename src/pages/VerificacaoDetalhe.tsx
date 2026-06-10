@@ -37,8 +37,9 @@ export default function VerificacaoDetalhe({ rotaBase = "/verificacoes", titulo 
   if (isLoading) return <div className="text-center py-12 text-slate-500">Carregando...</div>;
   if (!data) return <div className="text-center py-12 text-slate-500">Verificação não encontrada</div>;
 
-  const obra = obras?.find(o => o.id === data.obraId);
+  const obra = obras?.find(o => o.id === data.obraId) as any;
   const respostaMap = new Map(data.respostas?.map((r: any) => [r.itemId, r]) || []);
+  const isVistoria = !!titulo && /vistoria/i.test(titulo);
 
   return (
     <div className="space-y-6 print-report">
@@ -95,6 +96,28 @@ export default function VerificacaoDetalhe({ rotaBase = "/verificacoes", titulo 
               </Badge>
             </div>
           </div>
+          {((data as any).edificioNome || (data as any).andarNome || obra?.endereco) && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t">
+              {(data as any).edificioNome && (
+                <div>
+                  <p className="text-xs text-slate-400 uppercase">Prédio / Edifício</p>
+                  <p className="text-sm text-slate-700 flex items-center gap-1"><Building2 className="h-3.5 w-3.5" /> {(data as any).edificioNome}</p>
+                </div>
+              )}
+              {(data as any).andarNome && (
+                <div>
+                  <p className="text-xs text-slate-400 uppercase">Andar</p>
+                  <p className="text-sm text-slate-700">{(data as any).andarNome}</p>
+                </div>
+              )}
+              {obra?.endereco && (
+                <div className="col-span-2">
+                  <p className="text-xs text-slate-400 uppercase">Endereço</p>
+                  <p className="text-sm text-slate-700">{obra.endereco}</p>
+                </div>
+              )}
+            </div>
+          )}
           {(data.createdByName || data.go || data.gc || data.nucleo || data.diretoria) && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t">
               {data.createdByName && (
@@ -112,25 +135,28 @@ export default function VerificacaoDetalhe({ rotaBase = "/verificacoes", titulo 
         </CardContent>
       </Card>
 
-      {/* Scores */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: "Score Geral", score: data.scoreGeral, status: data.statusGeral },
-          { label: "Condição de Obra", score: data.scoreCondicao, status: data.statusCondicao },
-          { label: "Qualidade de Obra", score: data.scoreQualidade, status: data.statusQualidade },
-          { label: "Cronograma", score: data.scoreCronograma, status: data.statusCronograma },
-        ].map((item, i) => (
-          <Card key={i} className="print-kpi">
-            <CardContent className="p-5 text-center">
-              <p className="print-kpi-label text-xs text-slate-400 uppercase mb-2">{item.label}</p>
-              <p className="print-kpi-value text-3xl font-bold text-slate-900">{item.score ?? "—"}%</p>
-              <Badge className={`mt-2 ${statusColors[item.status || ""] || "bg-slate-100 text-slate-600"}`}>
-                {item.status || "—"}
-              </Badge>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* Scores (ocultos no relatório de Vistoria de Recebimento) */}
+      {!isVistoria && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { label: "Score Geral", score: data.scoreGeral, status: data.statusGeral },
+            { label: "Condição de Obra", score: data.scoreCondicao, status: data.statusCondicao },
+            { label: "Qualidade de Obra", score: data.scoreQualidade, status: data.statusQualidade },
+            { label: "Cronograma", score: data.scoreCronograma, status: data.statusCronograma },
+          ].map((item, i) => (
+            <Card key={i} className="print-kpi">
+              <CardContent className="p-5 text-center">
+                <p className="print-kpi-label text-xs text-slate-400 uppercase mb-2">{item.label}</p>
+                <p className="print-kpi-value text-3xl font-bold text-slate-900">{item.score ?? "—"}%</p>
+                <Badge className={`mt-2 ${statusColors[item.status || ""] || "bg-slate-100 text-slate-600"}`}>
+                  {item.status || "—"}
+                </Badge>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
 
       {/* Checklist Detalhado */}
       {data.checklist?.map((secao: any) => {
@@ -188,8 +214,9 @@ export default function VerificacaoDetalhe({ rotaBase = "/verificacoes", titulo 
                               <img
                                 src={f.url}
                                 alt={`Evidência ${idx + 1}`}
-                                className="print-photo h-16 w-16 object-cover rounded-md border border-slate-200 hover:opacity-80 transition-opacity"
+                                className="print-photo h-24 w-24 sm:h-28 sm:w-28 object-cover rounded-md border border-slate-200 hover:opacity-80 transition-opacity cursor-zoom-in"
                               />
+
                             </a>
                           ))}
                         </div>

@@ -270,8 +270,23 @@ const queryResolvers: Record<string, Resolver> = {
     (fotos || []).forEach((f: any) => {
       (fotosByItem[f.item_id] ||= []).push({ id: f.id, url: f.url, fileKey: f.file_key, descricao: f.descricao, pinX: f.pin_x, pinY: f.pin_y });
     });
+    // Nome do edifício e do andar (para exibir no cabeçalho do relatório)
+    let edificioNome: string | null = null;
+    let andarNome: string | null = null;
+    const edId = (data as any).edificio_id;
+    const anId = (data as any).andar_id;
+    if (edId) {
+      const { data: ed } = await (supabase.from("edificios" as any) as any).select("nome").eq("id", edId).maybeSingle();
+      edificioNome = (ed as any)?.nome ?? null;
+    }
+    if (anId) {
+      const { data: an } = await (supabase.from("andares" as any) as any).select("nome").eq("id", anId).maybeSingle();
+      andarNome = (an as any)?.nome ?? null;
+    }
     return {
       ...mapVerificacaoFromDb(data),
+      edificioNome,
+      andarNome,
       checklist,
       respostas: (respostas || []).map((r: any) => ({
         id: r.id,
@@ -282,6 +297,7 @@ const queryResolvers: Record<string, Resolver> = {
       })),
     };
   },
+
 
   // --- CHECKLIST ---
   "checklist.getCompleto": async (input: any = {}) => {
