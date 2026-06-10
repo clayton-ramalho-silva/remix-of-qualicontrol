@@ -204,6 +204,25 @@ const queryResolvers: Record<string, Resolver> = {
     const d: any = data;
     return { ...d, edificioId: d.edificio_id };
   },
+  "andares.listAll": async (_input?: any) => {
+    const { data: ans, error } = await (supabase.from("andares" as any) as any).select("*").eq("ativo", 1).order("numero").order("ordem");
+    if (error) throw error;
+    const edIds = Array.from(new Set((ans || []).map((a: any) => a.edificio_id).filter(Boolean)));
+    let edMap = new Map<number, any>();
+    if (edIds.length > 0) {
+      const { data: eds } = await (supabase.from("edificios" as any) as any).select("id, nome, obra_id").in("id", edIds);
+      (eds || []).forEach((e: any) => edMap.set(e.id, e));
+    }
+    return (ans || []).map((a: any) => {
+      const ed = edMap.get(a.edificio_id);
+      return {
+        ...a,
+        edificioId: a.edificio_id,
+        edificioNome: ed?.nome ?? null,
+        obraId: ed?.obra_id ?? null,
+      };
+    });
+  },
 
   "plantas.getById": async ({ id }: { id: number }) => {
     const { data, error } = await supabase.from("plantas").select("*").eq("id", id).maybeSingle();
@@ -1736,6 +1755,8 @@ function mapVerificacaoFromDb(v: any) {
   return {
     ...v,
     obraId: v.obra_id,
+    andarId: v.andar_id ?? null,
+    edificioId: v.edificio_id ?? null,
     dataVistoria: v.data_vistoria ? Number(v.data_vistoria) : null,
     scoreGeral: v.score_geral,
     scoreQualidade: v.score_qualidade,
