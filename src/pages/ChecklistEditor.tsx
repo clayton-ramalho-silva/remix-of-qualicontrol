@@ -78,6 +78,7 @@ export default function ChecklistEditor() {
   const [go, setGo] = useState("");
   const [condicao, setCondicao] = useState<Condicao>("regular");
   const [totalItens, setTotalItens] = useState<string>("");
+  const [createdByName, setCreatedByName] = useState<string | null>(null);
 
   const [items, setItems] = useState<Item[]>([]);
   const [obras, setObras] = useState<{ id: number; id_projeto?: number | null; codigo: string; nome: string; gerente_obra?: string | null; gerente_contrato?: string | null; nucleo?: string | null }[]>([]);
@@ -250,6 +251,7 @@ export default function ChecklistEditor() {
         setGo((ent as any).go || "");
         setCondicao((ent as any).condicao);
         setTotalItens(String((ent as any).total_itens || ""));
+        setCreatedByName((ent as any).created_by_name || null);
         serverLoadedAtRef.current = new Date((ent as any).updated_at || (ent as any).created_at || (ent as any).data_vistoria || 0).getTime();
       }
       const { data: its } = await supabase
@@ -516,6 +518,7 @@ export default function ChecklistEditor() {
         subtitle={[
           obraSel ? `${obraSel.codigo} — ${obraSel.nome}` : "",
           dataVistoria ? new Date(dataVistoria).toLocaleDateString("pt-BR") : "",
+          createdByName ? `Criado por ${createdByName}` : "",
         ].filter(Boolean).join(" • ")}
       />
       <DraftRestoredBanner savedAt={restoredAt} onDiscard={discardDraft} className="print:hidden" />
@@ -525,9 +528,14 @@ export default function ChecklistEditor() {
           <Button variant="ghost" size="sm" onClick={() => navigate("/checklists")}>
             <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
           </Button>
-          <h1 className="text-2xl font-bold">
-            {isEdit ? `Checklist #${id}` : "Novo Checklist de Vistoria"}
-          </h1>
+          <div>
+            <h1 className="text-2xl font-bold">
+              {isEdit ? `Checklist #${id}` : "Novo Checklist de Vistoria"}
+            </h1>
+            {createdByName && (
+              <p className="text-xs text-muted-foreground mt-0.5">Criado por {createdByName}</p>
+            )}
+          </div>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => window.print()}>

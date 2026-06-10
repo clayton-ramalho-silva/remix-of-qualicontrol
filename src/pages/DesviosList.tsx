@@ -317,6 +317,12 @@ export default function DesviosList() {
                         )}
                         <span className="text-border">|</span>
                         <span>{new Date(desvio.dataIdentificacao).toLocaleDateString("pt-BR")}</span>
+                        {desvio.createdByName && (
+                          <>
+                            <span className="text-border">|</span>
+                            <span title={`Criado por ${desvio.createdByName}`}>Autor: {desvio.createdByName}</span>
+                          </>
+                        )}
                       </div>
                     </div>
                     <ArrowRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0 mt-1" />
