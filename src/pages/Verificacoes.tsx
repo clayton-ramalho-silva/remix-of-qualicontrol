@@ -55,6 +55,7 @@ export default function Verificacoes({
     onError: (e: any) => toast.error(e?.message || "Erro ao excluir"),
   });
   const { data: obras } = trpc.obras.list.useQuery();
+  const { data: andaresAll } = trpc.andares.listAll.useQuery();
   const [obraFilter, setObraFilter] = useState<string>("all");
   const [mostrarRascunhos, setMostrarRascunhos] = useState(false);
   const { data: verificacoes, isLoading } = trpc.verificacoes.list.useQuery({
@@ -68,10 +69,40 @@ export default function Verificacoes({
     return obra ? `${obra.codigo} — ${obra.nome}` : `Obra #${obraId}`;
   };
 
+  const andaresById = useMemo(() => {
+    const m = new Map<number, any>();
+    (andaresAll || []).forEach((a: any) => m.set(a.id, a));
+    return m;
+  }, [andaresAll]);
+
+  const getAndarLabel = (v: any) => {
+    if (!v?.andarId) return null;
+    const a = andaresById.get(v.andarId);
+    if (!a) return null;
+    const ed = a.edificioNome ? `${a.edificioNome} • ` : "";
+    return `${ed}${a.nome}`;
+  };
+
   const rascunhoCount = (verificacoes || []).filter((v: any) => v.status === "rascunho").length;
   const visiveis = (verificacoes || []).filter((v: any) =>
     mostrarRascunhos ? true : v.status !== "rascunho"
   );
+
+  const grupos = useMemo(() => {
+    const map = new Map<number, any[]>();
+    visiveis.forEach((v: any) => {
+      const arr = map.get(v.obraId) || [];
+      arr.push(v);
+      map.set(v.obraId, arr);
+    });
+    return Array.from(map.entries())
+      .map(([obraId, items]) => ({
+        obraId,
+        nome: getObraNome(obraId),
+        items: items.sort((a, b) => (b.dataVistoria || 0) - (a.dataVistoria || 0)),
+      }))
+      .sort((a, b) => a.nome.localeCompare(b.nome));
+  }, [visiveis, obras]);
 
   return (
     <div className="space-y-6">
