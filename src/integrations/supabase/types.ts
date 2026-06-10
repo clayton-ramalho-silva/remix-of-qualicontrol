@@ -1806,6 +1806,8 @@ export type Database = {
           avaliador: string
           categoria: string
           created_at: string
+          created_by_id: string | null
+          created_by_name: string | null
           data_vistoria: number
           diretoria: string | null
           edificio_id: number | null
@@ -1833,6 +1835,8 @@ export type Database = {
           avaliador: string
           categoria?: string
           created_at?: string
+          created_by_id?: string | null
+          created_by_name?: string | null
           data_vistoria: number
           diretoria?: string | null
           edificio_id?: number | null
@@ -1860,6 +1864,8 @@ export type Database = {
           avaliador?: string
           categoria?: string
           created_at?: string
+          created_by_id?: string | null
+          created_by_name?: string | null
           data_vistoria?: number
           diretoria?: string | null
           edificio_id?: number | null
