@@ -104,6 +104,9 @@ export async function syncDraftsFromBackend(): Promise<number> {
         } catch { /* ignore */ }
       }
     }
+    if (hydrated > 0) {
+      try { window.dispatchEvent(new CustomEvent("drafts:synced")); } catch { /* ignore */ }
+    }
     return hydrated;
   } catch (e) {
     console.warn("syncDraftsFromBackend failed", e);
