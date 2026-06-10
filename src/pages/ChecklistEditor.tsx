@@ -511,6 +511,13 @@ export default function ChecklistEditor() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
+      <PrintHeader
+        title={isEdit ? `Checklist de Vistoria #${id}` : "Checklist de Vistoria"}
+        subtitle={[
+          obraSel ? `${obraSel.codigo} — ${obraSel.nome}` : "",
+          dataVistoria ? new Date(dataVistoria).toLocaleDateString("pt-BR") : "",
+        ].filter(Boolean).join(" • ")}
+      />
       <DraftRestoredBanner savedAt={restoredAt} onDiscard={discardDraft} className="print:hidden" />
       {/* Header bar — hidden on print */}
       <div className="flex items-center justify-between print:hidden">
