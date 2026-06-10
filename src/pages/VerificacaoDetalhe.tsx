@@ -120,10 +120,10 @@ export default function VerificacaoDetalhe({ rotaBase = "/verificacoes", titulo 
           { label: "Qualidade de Obra", score: data.scoreQualidade, status: data.statusQualidade },
           { label: "Cronograma", score: data.scoreCronograma, status: data.statusCronograma },
         ].map((item, i) => (
-          <Card key={i}>
+          <Card key={i} className="print-kpi">
             <CardContent className="p-5 text-center">
-              <p className="text-xs text-slate-400 uppercase mb-2">{item.label}</p>
-              <p className="text-3xl font-bold text-slate-900">{item.score ?? "—"}%</p>
+              <p className="print-kpi-label text-xs text-slate-400 uppercase mb-2">{item.label}</p>
+              <p className="print-kpi-value text-3xl font-bold text-slate-900">{item.score ?? "—"}%</p>
               <Badge className={`mt-2 ${statusColors[item.status || ""] || "bg-slate-100 text-slate-600"}`}>
                 {item.status || "—"}
               </Badge>
