@@ -41,7 +41,8 @@ export default function VerificacaoDetalhe({ rotaBase = "/verificacoes", titulo 
   const respostaMap = new Map(data.respostas?.map((r: any) => [r.itemId, r]) || []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 print-report">
+
       <PrintHeader
         title={titulo ? `${titulo} #${data.id}` : `Verificação #${data.id}`}
         subtitle={`${obra ? `${obra.codigo} — ${obra.nome}` : `Obra #${data.obraId}`} • ${new Date(data.dataVistoria).toLocaleDateString("pt-BR")}`}
