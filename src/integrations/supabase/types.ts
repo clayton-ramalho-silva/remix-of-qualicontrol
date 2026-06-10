@@ -1701,6 +1701,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_drafts: {
+        Row: {
+          created_at: string
+          data: Json
+          draft_id: string
+          id: string
+          saved_at: string
+          scope: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data: Json
+          draft_id: string
+          id?: string
+          saved_at?: string
+          scope: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          draft_id?: string
+          id?: string
+          saved_at?: string
+          scope?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
