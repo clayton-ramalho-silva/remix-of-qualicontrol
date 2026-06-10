@@ -1169,7 +1169,7 @@ function RelatorioDesvios() {
               )}
 
               {/* Detalhe de cada desvio */}
-              {data.desvios && data.desvios.length > 0 && data.config?.mostrarDetalhamento !== false && (
+              {data.desvios && data.config?.mostrarDetalhamento !== false && filtrarDesviosDetalhe(data.desvios as any[]).length > 0 && (
                 <>
                   <Separator className="my-6" />
                   <div className="section">
@@ -1178,9 +1178,10 @@ function RelatorioDesvios() {
                       {agruparPorAmbiente ? "Detalhamento dos Desvios por Ambiente" : "Detalhamento dos Desvios"}
                     </h2>
                     {(() => {
+                      const desviosDet = filtrarDesviosDetalhe(data.desvios as any[]);
                       const groups = agruparPorAmbiente
-                        ? groupByAmbiente(data.desvios)
-                        : [{ nome: "", items: data.desvios as any[] }];
+                        ? groupByAmbiente(desviosDet)
+                        : [{ nome: "", items: desviosDet }];
                       return (
                         <div className="space-y-6">
                           {groups.map((g, gi) => (
