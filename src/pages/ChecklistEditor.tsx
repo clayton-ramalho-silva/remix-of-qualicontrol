@@ -512,7 +512,7 @@ export default function ChecklistEditor() {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+    <div className="space-y-6 max-w-6xl mx-auto pb-12 print-report">
       <PrintHeader
         title={isEdit ? `Checklist de Vistoria #${id}` : "Checklist de Vistoria"}
         subtitle={[
