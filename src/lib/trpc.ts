@@ -1306,6 +1306,11 @@ const mutationResolvers: Record<string, Resolver> = {
     if (error) throw error;
     return data;
   },
+  "checklist.deleteItem": async (input: any) => {
+    const { error } = await supabase.from("checklist_itens").update({ ativo: 0 }).eq("id", input.id);
+    if (error) throw error;
+    return { success: true };
+  },
   "checklist.createSecao": async (input: any) => {
     const categoria = input.categoria || "qualidade";
     // próximo numero/ordem dentro da categoria

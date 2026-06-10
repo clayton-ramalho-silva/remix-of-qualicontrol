@@ -30,6 +30,9 @@ export default function Administracao() {
   const createItem = trpc.checklist.createItem.useMutation({
     onSuccess: () => { utils.checklist.getCompleto.invalidate(); toast.success("Item criado!"); setNewItemDialog(false); },
   });
+  const deleteItem = trpc.checklist.deleteItem.useMutation({
+    onSuccess: () => { utils.checklist.getCompleto.invalidate(); toast.success("Item excluído!"); },
+  });
   const updateFaixa = trpc.configFaixas.update.useMutation({
     onSuccess: () => { utils.configFaixas.list.invalidate(); toast.success("Faixa atualizada!"); },
   });
@@ -327,6 +330,18 @@ export default function Administracao() {
                         <p className="text-sm text-slate-700 flex-1">{item.descricao}</p>
                         <Button size="sm" variant="ghost" className="shrink-0" onClick={() => startEditItem(item)}>
                           <Edit2 className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="shrink-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => {
+                            if (confirm(`Excluir o item ${item.codigo}? Esta ação não pode ser desfeita.`)) {
+                              deleteItem.mutate({ id: item.id });
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </>
                     )}
