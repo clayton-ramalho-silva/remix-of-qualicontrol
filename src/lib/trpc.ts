@@ -1154,6 +1154,7 @@ const mutationResolvers: Record<string, Resolver> = {
     const { scoreGeral, scoreQualidade, scoreCronograma, scoreCondicao, statusFromScore } =
       await computeVerificacaoScores(respostasArr, categoria);
 
+    const { data: { user: _vUser } } = await supabase.auth.getUser();
     const insertObj: any = {
       obra_id: input.obraId,
       edificio_id: input.edificioId ?? null,
@@ -1176,6 +1177,8 @@ const mutationResolvers: Record<string, Resolver> = {
       status_qualidade: statusFromScore(scoreQualidade),
       status_cronograma: statusFromScore(scoreCronograma),
       status_condicao: statusFromScore(scoreCondicao),
+      created_by_id: _vUser?.id ?? null,
+      created_by_name: _vUser?.user_metadata?.name || _vUser?.email || input.avaliador || null,
     };
 
 
