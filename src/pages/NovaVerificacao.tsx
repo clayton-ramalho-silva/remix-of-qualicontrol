@@ -453,7 +453,7 @@ export default function NovaVerificacao({
           </div>
 
           {isVistoria && (
-            <div className="md:col-span-2 lg:col-span-3">
+            <div>
               <Label className="flex items-center gap-1.5">
                 Planta desta vistoria *
                 <Tooltip>
@@ -461,15 +461,16 @@ export default function NovaVerificacao({
                   <TooltipContent>Planta avulsa usada apenas nesta vistoria, para posicionar pins das fotos. Não altera o cadastro da obra.</TooltipContent>
                 </Tooltip>
               </Label>
-              <div className="mt-1 flex items-center gap-3 flex-wrap">
+              <div className="mt-1 flex items-center gap-2 flex-wrap">
                 <Button
                   type="button"
                   variant="outline"
+                  size="sm"
                   onClick={() => plantaInputRef.current?.click()}
                   disabled={!obraId || !andarId || uploadingPlanta}
                   title={!obraId || !andarId ? "Selecione obra e andar primeiro" : "Selecionar planta"}
                 >
-                  {uploadingPlanta ? "Enviando..." : plantaUrl ? "Substituir planta" : "Selecionar Planta"}
+                  {uploadingPlanta ? "Enviando..." : plantaUrl ? "Substituir" : "Selecionar Planta"}
                 </Button>
                 <input
                   ref={plantaInputRef}
@@ -479,8 +480,8 @@ export default function NovaVerificacao({
                   onChange={(e) => handlePlantaUpload(e.target.files)}
                 />
                 {plantaUrl && (
-                  <div className="flex items-center gap-2">
-                    <img src={plantaUrl} alt="Planta da vistoria" className="h-14 w-20 object-cover rounded border" />
+                  <>
+                    <img src={plantaUrl} alt="Planta da vistoria" className="h-9 w-12 object-cover rounded border" />
                     <button
                       type="button"
                       onClick={() => {
@@ -491,14 +492,12 @@ export default function NovaVerificacao({
                     >
                       Remover
                     </button>
-                  </div>
-                )}
-                {!plantaUrl && obraId && andarId && (
-                  <span className="text-xs text-muted-foreground">Pode ser uma planta diferente da cadastrada na obra.</span>
+                  </>
                 )}
               </div>
             </div>
           )}
+
 
 
 
