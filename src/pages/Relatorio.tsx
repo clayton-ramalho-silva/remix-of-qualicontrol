@@ -783,6 +783,48 @@ function RelatorioDesvios() {
 
           <Separator />
 
+          {/* Período do detalhamento (descritivos + fotos) */}
+          <div>
+            <h3 className="text-sm font-semibold mb-1 flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-primary" />
+              Período que os desvios serão listados com fotos no relatório
+            </h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              Filtra apenas os cards de detalhamento (descritivo + fotos). Os indicadores e KPIs continuam usando o período definido nos filtros principais no topo.
+            </p>
+            <div className="flex flex-wrap items-end gap-3">
+              <div>
+                <Label className="text-xs">De</Label>
+                <input
+                  type="date"
+                  value={detalheDataInicial}
+                  onChange={(e) => setDetalheDataInicial(e.target.value)}
+                  className="block mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Até</Label>
+                <input
+                  type="date"
+                  value={detalheDataFinal}
+                  onChange={(e) => setDetalheDataFinal(e.target.value)}
+                  className="block mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              {(detalheDataInicial || detalheDataFinal) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => { setDetalheDataInicial(""); setDetalheDataFinal(""); }}
+                >
+                  Limpar
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <Separator />
+
           {/* Seção 5 — Formato e Botão */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
