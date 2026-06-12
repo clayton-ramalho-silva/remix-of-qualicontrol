@@ -202,22 +202,32 @@ export default function VerificacaoDetalhe({ rotaBase = "/verificacoes", titulo 
                         <p className="mt-1 text-sm text-slate-500 italic ml-0">Obs: {resp.observacao}</p>
                       )}
                       {resp?.fotos && resp.fotos.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-2">
+                        <div className="mt-2 flex flex-wrap gap-3">
                           {resp.fotos.map((f: any, idx: number) => (
-                            <a
-                              key={idx}
-                              href={f.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="block"
-                            >
-                              <img
-                                src={f.url}
-                                alt={`Evidência ${idx + 1}`}
-                                className="print-photo h-24 w-24 sm:h-28 sm:w-28 object-cover rounded-md border border-slate-200 hover:opacity-80 transition-opacity cursor-zoom-in"
-                              />
-
-                            </a>
+                            <div key={idx} className="flex flex-col gap-1 w-[140px]">
+                              <a
+                                href={f.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="relative block"
+                              >
+                                <img
+                                  src={f.url}
+                                  alt={`Evidência ${idx + 1}`}
+                                  className="print-photo h-[110px] w-[140px] object-cover rounded-md border border-slate-200 hover:opacity-80 transition-opacity cursor-zoom-in"
+                                />
+                                {f.pinX != null && f.pinY != null && (
+                                  <span className="absolute -top-2 -left-2 bg-red-600 text-white text-[11px] font-bold rounded-full h-6 w-6 flex items-center justify-center shadow ring-2 ring-white">
+                                    {idx + 1}
+                                  </span>
+                                )}
+                              </a>
+                              {f.descricao && (
+                                <p className="text-xs text-slate-600 leading-snug break-words">
+                                  {f.descricao}
+                                </p>
+                              )}
+                            </div>
                           ))}
                         </div>
                       )}
