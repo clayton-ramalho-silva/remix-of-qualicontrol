@@ -39,7 +39,12 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
   const [respostas, setRespostas] = useState<Record<number, { itemId: number; resposta: Resposta; observacao: string; fotos?: RespostaFoto[] }>>({});
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [plantaUrl, setPlantaUrl] = useState<string | null>(null);
+  const [plantaFileKey, setPlantaFileKey] = useState<string | null>(null);
+  const [uploadingPlanta, setUploadingPlanta] = useState(false);
+  const plantaInputRef = useRef<HTMLInputElement>(null);
 
+  const isVistoria = (verificacao as any)?.categoria === "vistoria";
   const exigeFoto = (verificacao as any)?.categoria === "vistoria";
   const draftKey = `draft:verificacao-edit:${id}`;
   const restoredRef = useRef(false);
