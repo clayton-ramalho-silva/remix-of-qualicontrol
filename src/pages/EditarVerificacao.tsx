@@ -57,6 +57,8 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
     setNucleo(verificacao.nucleo || "");
     setDiretoria(verificacao.diretoria || "");
     setObservacoes(verificacao.observacoes || "");
+    setPlantaUrl((verificacao as any).plantaUrl || null);
+    setPlantaFileKey((verificacao as any).plantaFileKey || null);
     const map: Record<number, any> = {};
     (verificacao.respostas || []).forEach((r: any) => {
       map[r.itemId] = {
