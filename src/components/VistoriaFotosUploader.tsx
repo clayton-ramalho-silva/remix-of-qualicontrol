@@ -23,11 +23,13 @@ type Props = {
 };
 
 export default function VistoriaFotosUploader({ fotos, onChange, plantaUrl, itemCodigo, max }: Props) {
-  const inputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [pendingFoto, setPendingFoto] = useState<RespostaFoto | null>(null);
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [viewOpen, setViewOpen] = useState(false);
+  const [sourceOpen, setSourceOpen] = useState(false);
   const confirmedRef = useRef(false);
 
   const handleFiles = async (files: FileList | null) => {
