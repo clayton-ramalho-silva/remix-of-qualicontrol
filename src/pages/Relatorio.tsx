@@ -307,7 +307,7 @@ function RelatorioDesvios() {
         const groups = groupByAmbiente(desvios);
         const blocks = groups.map((g, i) => {
           const rows = g.items.map(buildRow).join("");
-          return `<div style="margin-top:${i === 0 ? 12 : 18}px;page-break-inside:avoid"><h3 style="font-size:12px;font-weight:600;color:#0f172a;background:#ecfeff;border-left:3px solid #0d9488;padding:5px 10px;margin-bottom:6px;border-radius:3px">${g.nome} <span style="color:#64748b;font-weight:500">— ${g.items.length} desvio${g.items.length > 1 ? "s" : ""}</span></h3><table style="width:100%;border-collapse:collapse;font-size:10px">${tableHead}<tbody>${rows}</tbody></table></div>`;
+          return `<div style="margin-top:${i === 0 ? 12 : 18}px;page-break-inside:avoid"><h3 style="font-size:12px;font-weight:600;color:#0f172a;background:#ecfeff;border-left:3px solid #0d9488;padding:5px 10px;margin-bottom:6px;border-radius:3px">${esc(g.nome)} <span style="color:#64748b;font-weight:500">— ${g.items.length} desvio${g.items.length > 1 ? "s" : ""}</span></h3><table style="width:100%;border-collapse:collapse;font-size:10px">${tableHead}<tbody>${rows}</tbody></table></div>`;
         }).join("");
         indexHtml = `<div style="margin-top:28px;page-break-before:always"><h2 style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #0d9488">Índice de Desvios por Ambiente (${desvios.length})</h2>${blocks}</div>`;
       } else {
@@ -331,12 +331,12 @@ function RelatorioDesvios() {
         }
 
         let metaItems = [
-          `<div><strong>Grupo:</strong> ${d.disciplina}</div>`,
-          `<div><strong>Local:</strong> ${d.localizacao || "—"}</div>`,
+          `<div><strong>Grupo:</strong> ${esc(d.disciplina)}</div>`,
+          `<div><strong>Local:</strong> ${esc(d.localizacao || "—")}</div>`,
           `<div><strong>Identificação:</strong> ${fmtDate(d.dataIdentificacao)}</div>`,
         ];
-        if (cfg.mostrarVertical) metaItems.splice(1, 0, `<div><strong>Vertical:</strong> ${oLabels[d.origem] || d.origem}</div>`);
-        if (cfg.mostrarFornecedores) metaItems.splice(1, 0, `<div><strong>Fornecedor:</strong> ${d.fornecedor || "—"}</div>`);
+        if (cfg.mostrarVertical) metaItems.splice(1, 0, `<div><strong>Vertical:</strong> ${esc(oLabels[d.origem] || d.origem)}</div>`);
+        if (cfg.mostrarFornecedores) metaItems.splice(1, 0, `<div><strong>Fornecedor:</strong> ${esc(d.fornecedor || "—")}</div>`);
         if (cfg.mostrarDataPrevista) metaItems.push(`<div><strong>Data Prevista:</strong> ${fmtDate(d.prazoSugerido)}</div>`);
         if (cfg.mostrarDataFinalizacao) metaItems.push(`<div><strong>Fechamento:</strong> ${fmtDate(d.dataFechamento)}</div>`);
 
@@ -346,7 +346,7 @@ function RelatorioDesvios() {
           const pItems = d.planos.map((p: any) => {
             const dotColor = p.status === "concluido" ? "#16a34a" : p.status === "em_andamento" ? "#2563eb" : "#d97706";
             const prioHtml = p.prioridade ? ` <span style="font-size:9px;padding:1px 5px;border-radius:4px;${p.prioridade === 'urgente' ? 'background:#fef2f2;color:#dc2626' : p.prioridade === 'baixa' ? 'background:#f1f5f9;color:#475569' : 'background:#eff6ff;color:#2563eb'}">${p.prioridade}</span>` : "";
-            return `<div style="display:flex;align-items:center;gap:6px;font-size:10px;background:#f8fafc;border-radius:4px;padding:4px 8px;margin-bottom:3px"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${dotColor};flex-shrink:0"></span><strong>${p.acao}</strong> — ${p.responsavel}${prioHtml}</div>`;
+            return `<div style="display:flex;align-items:center;gap:6px;font-size:10px;background:#f8fafc;border-radius:4px;padding:4px 8px;margin-bottom:3px"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${dotColor};flex-shrink:0"></span><strong>${esc(p.acao)}</strong> — ${esc(p.responsavel)}${prioHtml}</div>`;
           }).join("");
           planosHtml = `<div style="margin-top:8px"><div style="font-size:10px;font-weight:600;margin-bottom:4px">Planos de Ação:</div>${pItems}</div>`;
         }
@@ -354,8 +354,8 @@ function RelatorioDesvios() {
         // Fotos
         let fotosHtml = "";
         if (cfg.mostrarFotos) {
-          const aberturaImgs = (d.fotosAbertura || []).map((url: string, i: number) => `<img src="${url}" alt="Abertura ${i+1}" style="width:130px;height:100px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0" />`).join("");
-          const fechamentoImgs = (d.fotosFechamento || []).map((url: string, i: number) => `<img src="${url}" alt="Fechamento ${i+1}" style="width:130px;height:100px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0" />`).join("");
+          const aberturaImgs = (d.fotosAbertura || []).map((url: string, i: number) => `<a href="${escUrl(url)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none"><img src="${escUrl(url)}" alt="Abertura ${i+1}" style="width:130px;height:100px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;cursor:pointer" /></a>`).join("");
+          const fechamentoImgs = (d.fotosFechamento || []).map((url: string, i: number) => `<a href="${escUrl(url)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none"><img src="${escUrl(url)}" alt="Fechamento ${i+1}" style="width:130px;height:100px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;cursor:pointer" /></a>`).join("");
           if (aberturaImgs || fechamentoImgs) {
             fotosHtml = `<div style="display:flex;flex-wrap:wrap;gap:16px;margin-top:10px">`;
             if (aberturaImgs) fotosHtml += `<div><div style="font-size:9px;font-weight:600;color:#64748b;text-transform:uppercase;margin-bottom:4px">Evidências Abertura</div><div style="display:flex;gap:6px;flex-wrap:wrap">${aberturaImgs}</div></div>`;
@@ -370,11 +370,11 @@ function RelatorioDesvios() {
           const px = Number(d.pinX);
           const py = Number(d.pinY);
           plantaHtml = `<div style="margin-top:10px">
-            <div style="font-size:9px;font-weight:600;color:#64748b;text-transform:uppercase;margin-bottom:4px">Localização na Planta${d.plantaNome ? ` — ${d.plantaNome}` : ""}</div>
+            <div style="font-size:9px;font-weight:600;color:#64748b;text-transform:uppercase;margin-bottom:4px">Localização na Planta${d.plantaNome ? ` — ${esc(d.plantaNome)}` : ""}</div>
             <div style="position:relative;display:inline-block;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;max-width:350px">
-              <img src="${d.plantaUrl}" alt="Planta" style="width:100%;display:block" />
-              <div style="position:absolute;left:${px}%;top:${py}%;transform:translate(-50%,-50%);width:20px;height:20px;border-radius:50%;border:3px solid #ef4444;background:rgba(239,68,68,0.25)"></div>
-              <div style="position:absolute;left:${px}%;top:${py}%;transform:translate(-50%,-50%);width:8px;height:8px;border-radius:50%;background:#ef4444"></div>
+              <a href="${escUrl(d.plantaUrl)}" target="_blank" rel="noopener noreferrer"><img src="${escUrl(d.plantaUrl)}" alt="Planta" style="width:100%;display:block;cursor:pointer" /></a>
+              <div style="position:absolute;left:${px}%;top:${py}%;transform:translate(-50%,-50%);width:20px;height:20px;border-radius:50%;border:3px solid #ef4444;background:rgba(239,68,68,0.25);pointer-events:none"></div>
+              <div style="position:absolute;left:${px}%;top:${py}%;transform:translate(-50%,-50%);width:8px;height:8px;border-radius:50%;background:#ef4444;pointer-events:none"></div>
             </div>
           </div>`;
         }
@@ -384,10 +384,10 @@ function RelatorioDesvios() {
             <div style="font-size:13px;font-weight:600"><span style="color:#94a3b8;margin-right:6px">#${d.id}</span>Desvio</div>
             <div style="display:flex;gap:6px;align-items:center">${atrasoBadgePdf(d)} ${cfg.mostrarSeveridade !== false ? sevBadge(d.severidade) : ""} ${stBadge(d.status)}</div>
           </div>
-          <div style="font-size:11px;color:#1e293b;background:#f8fafc;border-left:3px solid #0d9488;padding:6px 10px;border-radius:4px;margin-bottom:8px;white-space:pre-wrap;word-break:break-word"><strong style="color:#0f172a">Descrição:</strong> ${d.descricao}</div>
+          <div style="font-size:11px;color:#1e293b;background:#f8fafc;border-left:3px solid #0d9488;padding:6px 10px;border-radius:4px;margin-bottom:8px;white-space:pre-wrap;word-break:break-word"><strong style="color:#0f172a">Descrição:</strong> ${esc(d.descricao)}</div>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px 12px;font-size:10px;color:#475569;margin-bottom:6px">${metaItems.join("")}</div>
           ${tags.length > 0 ? `<div style="display:flex;gap:4px;margin-bottom:6px">${tags.join("")}</div>` : ""}
-          ${cfg.mostrarAprovacoes !== false && d.aprovacoes && d.aprovacoes.length > 0 ? `<div style="margin-top:6px;font-size:10px"><strong>Aprovações:</strong> ${d.aprovacoes.map((a: any) => `<span style="display:inline-block;padding:2px 6px;border-radius:4px;margin-right:4px;${a.decisao === 'aprovado' ? 'background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0' : 'background:#fef2f2;color:#dc2626;border:1px solid #fecaca'}">${a.tipo === 'gerenciadora' ? 'Gerenciadora' : 'Arquitetura'} ${a.decisao === 'aprovado' ? '✓' : '✗'}${a.aprovador_nome ? ' — ' + a.aprovador_nome : ''}${a.comentario ? ' (' + a.comentario + ')' : ''}</span>`).join("")}</div>` : ""}
+          ${cfg.mostrarAprovacoes !== false && d.aprovacoes && d.aprovacoes.length > 0 ? `<div style="margin-top:6px;font-size:10px"><strong>Aprovações:</strong> ${d.aprovacoes.map((a: any) => `<span style="display:inline-block;padding:2px 6px;border-radius:4px;margin-right:4px;${a.decisao === 'aprovado' ? 'background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0' : 'background:#fef2f2;color:#dc2626;border:1px solid #fecaca'}">${a.tipo === 'gerenciadora' ? 'Gerenciadora' : 'Arquitetura'} ${a.decisao === 'aprovado' ? '✓' : '✗'}${a.aprovador_nome ? ' — ' + esc(a.aprovador_nome) : ''}${a.comentario ? ' (' + esc(a.comentario) + ')' : ''}</span>`).join("")}</div>` : ""}
           ${planosHtml}
           ${fotosHtml}
           ${plantaHtml}
