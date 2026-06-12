@@ -1,11 +1,18 @@
 import { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Camera, X, Loader2, MapPin, Eye } from "lucide-react";
+import { Camera, X, Loader2, MapPin, Eye, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { compressImage } from "@/lib/image-compress";
 import type { RespostaFoto } from "@/components/RespostaFotosUploader";
 import VistoriaPlantaDialog from "@/components/VistoriaPlantaDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 type Props = {
   fotos: RespostaFoto[];
