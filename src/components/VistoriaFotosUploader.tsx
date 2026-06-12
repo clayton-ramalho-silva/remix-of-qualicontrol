@@ -30,6 +30,7 @@ export default function VistoriaFotosUploader({ fotos, onChange, plantaUrl, item
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [viewOpen, setViewOpen] = useState(false);
   const [sourceOpen, setSourceOpen] = useState(false);
+  const [zoomFoto, setZoomFoto] = useState<RespostaFoto | null>(null);
   const confirmedRef = useRef(false);
 
   const handleFiles = async (files: FileList | null) => {
@@ -115,40 +116,44 @@ export default function VistoriaFotosUploader({ fotos, onChange, plantaUrl, item
         {fotos.map((f, idx) => (
           <div key={idx} className="flex flex-col gap-1 w-full sm:w-[140px]">
             <div className="relative group">
-              <img
-                src={f.url}
-                alt={`Evidência ${idx + 1}`}
-                className="h-56 sm:h-[110px] w-full sm:w-[140px] object-cover rounded-md border border-slate-200"
-              />
-              <span className="absolute -top-2 -left-2 bg-red-600 text-white text-[11px] font-bold rounded-full h-6 w-6 flex items-center justify-center shadow ring-2 ring-white">
+              <button
+                type="button"
+                onClick={() => setZoomFoto(f)}
+                className="block w-full"
+                aria-label={`Ampliar foto ${idx + 1}`}
+              >
+                <img
+                  src={f.url}
+                  alt={`Evidência ${idx + 1}`}
+                  className="h-56 sm:h-[110px] w-full sm:w-[140px] object-cover rounded-md border border-slate-200"
+                />
+              </button>
+              <span className="absolute -top-2 -left-2 bg-red-600 text-white text-[11px] font-bold rounded-full h-6 w-6 flex items-center justify-center shadow ring-2 ring-white pointer-events-none">
                 {idx + 1}
               </span>
-              {f.pinX != null && f.pinY != null && (
-                <MapPin className="absolute -bottom-1 -left-1 h-4 w-4 text-red-600 fill-red-500 drop-shadow" />
-              )}
               <button
                 type="button"
                 onClick={() => remover(idx)}
-                className="absolute -top-1.5 -right-1.5 bg-red-600 text-white rounded-full h-5 w-5 flex items-center justify-center shadow opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                className="absolute -top-1.5 -right-1.5 bg-red-600 text-white rounded-full h-7 w-7 sm:h-5 sm:w-5 flex items-center justify-center shadow transition-opacity"
                 aria-label="Remover foto"
               >
-                <X className="h-3 w-3" />
+                <X className="h-4 w-4 sm:h-3 sm:w-3" />
               </button>
               <button
                 type="button"
                 onClick={() => setEditingIdx(idx)}
-                className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 bg-black/50 text-white text-[11px] py-1 rounded-b-md transition-opacity"
+                className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-black/60 text-white text-xs py-1.5 sm:py-1 rounded-b-md"
                 title="Reposicionar pin"
               >
-                <MapPin className="h-3 w-3" /> Reposicionar
+                <MapPin className="h-3.5 w-3.5" /> Reposicionar
               </button>
             </div>
             <textarea
               value={f.descricao || ""}
               onChange={(e) => updateDescricao(idx, e.target.value)}
               placeholder={`Descrição do pin ${idx + 1}`}
-              rows={2}
-              className="w-full text-sm sm:text-xs px-2 py-1.5 rounded border border-slate-200 focus:border-teal-400 focus:outline-none resize-none"
+              rows={3}
+              className="w-full text-sm sm:text-xs px-2 py-1.5 rounded border border-slate-200 focus:border-teal-400 focus:outline-none resize-y min-h-[72px]"
             />
           </div>
         ))}
@@ -260,6 +265,41 @@ export default function VistoriaFotosUploader({ fotos, onChange, plantaUrl, item
           itemCodigo={itemCodigo}
         />
       )}
+
+      {/* Lightbox: ampliar foto da miniatura */}
+      <Dialog open={!!zoomFoto} onOpenChange={(v) => !v && setZoomFoto(null)}>
+        <DialogContent className="max-w-3xl p-0 gap-0 max-h-[92vh] overflow-hidden flex flex-col">
+          <DialogHeader className="flex flex-row items-center justify-between gap-2 px-4 py-3 border-b bg-white sticky top-0 z-10 space-y-0">
+            <DialogTitle className="text-base">Foto da evidência</DialogTitle>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => setZoomFoto(null)}
+              className="h-9 px-3 gap-1.5 bg-red-600 hover:bg-red-700 text-white shadow"
+            >
+              <X className="h-4 w-4" /> Fechar
+            </Button>
+          </DialogHeader>
+          {zoomFoto && (
+            <div className="space-y-3 overflow-y-auto p-4 pb-8">
+              <img src={zoomFoto.url} alt="Evidência ampliada" className="w-full h-auto rounded-md" />
+              {zoomFoto.descricao && (
+                <p className="text-sm text-slate-700 bg-slate-50 border-l-4 border-teal-500 p-3 rounded whitespace-pre-wrap break-words">
+                  {zoomFoto.descricao}
+                </p>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setZoomFoto(null)}
+                className="w-full"
+              >
+                Fechar
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
