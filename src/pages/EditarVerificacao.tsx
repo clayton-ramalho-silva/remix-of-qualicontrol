@@ -261,6 +261,50 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
         </CardContent>
       </Card>
 
+      {isVistoria && (
+        <Card>
+          <CardHeader><CardTitle className="text-lg">Planta da Vistoria</CardTitle></CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-3 flex-wrap">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => plantaInputRef.current?.click()}
+                disabled={uploadingPlanta}
+              >
+                {uploadingPlanta ? "Enviando..." : plantaUrl ? "Substituir planta" : "Selecionar planta"}
+              </Button>
+              <input
+                ref={plantaInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => handlePlantaUpload(e.target.files)}
+              />
+              {plantaUrl && (
+                <>
+                  <img src={plantaUrl} alt="Planta da vistoria" className="h-12 w-16 object-cover rounded border" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (plantaFileKey) supabase.storage.from("evidencias").remove([plantaFileKey]).catch(() => {});
+                      setPlantaUrl(null); setPlantaFileKey(null);
+                    }}
+                    className="text-xs text-red-600 hover:underline"
+                  >
+                    Remover
+                  </button>
+                </>
+              )}
+              {!plantaUrl && (
+                <p className="text-xs text-amber-700">A planta é obrigatória para marcar os pins das fotos.</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {checklist.map((secao: any) => {
         const isExp = expanded[secao.id] !== false;
         return (
