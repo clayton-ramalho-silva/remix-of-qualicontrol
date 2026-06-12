@@ -113,14 +113,13 @@ export default function VistoriaFotosUploader({ fotos, onChange, plantaUrl, item
     <div className="space-y-3">
       <div className="flex items-start gap-2 flex-wrap">
         {fotos.map((f, idx) => (
-          <div key={idx} className="flex flex-col gap-1 w-[140px]">
+          <div key={idx} className="flex flex-col gap-1 w-full sm:w-[140px]">
             <div className="relative group">
               <img
                 src={f.url}
                 alt={`Evidência ${idx + 1}`}
-                className="h-[110px] w-[140px] object-cover rounded-md border border-slate-200"
+                className="h-56 sm:h-[110px] w-full sm:w-[140px] object-cover rounded-md border border-slate-200"
               />
-              {/* Número da foto/pin */}
               <span className="absolute -top-2 -left-2 bg-red-600 text-white text-[11px] font-bold rounded-full h-6 w-6 flex items-center justify-center shadow ring-2 ring-white">
                 {idx + 1}
               </span>
@@ -130,7 +129,7 @@ export default function VistoriaFotosUploader({ fotos, onChange, plantaUrl, item
               <button
                 type="button"
                 onClick={() => remover(idx)}
-                className="absolute -top-1.5 -right-1.5 bg-red-600 text-white rounded-full h-5 w-5 flex items-center justify-center shadow opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute -top-1.5 -right-1.5 bg-red-600 text-white rounded-full h-5 w-5 flex items-center justify-center shadow opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                 aria-label="Remover foto"
               >
                 <X className="h-3 w-3" />
@@ -138,7 +137,7 @@ export default function VistoriaFotosUploader({ fotos, onChange, plantaUrl, item
               <button
                 type="button"
                 onClick={() => setEditingIdx(idx)}
-                className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 bg-black/50 text-white text-[10px] py-1 rounded-b-md transition-opacity"
+                className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 bg-black/50 text-white text-[11px] py-1 rounded-b-md transition-opacity"
                 title="Reposicionar pin"
               >
                 <MapPin className="h-3 w-3" /> Reposicionar
@@ -149,7 +148,7 @@ export default function VistoriaFotosUploader({ fotos, onChange, plantaUrl, item
               onChange={(e) => updateDescricao(idx, e.target.value)}
               placeholder={`Descrição do pin ${idx + 1}`}
               rows={2}
-              className="w-full text-xs px-2 py-1 rounded border border-slate-200 focus:border-teal-400 focus:outline-none resize-none"
+              className="w-full text-sm sm:text-xs px-2 py-1.5 rounded border border-slate-200 focus:border-teal-400 focus:outline-none resize-none"
             />
           </div>
         ))}
@@ -160,7 +159,7 @@ export default function VistoriaFotosUploader({ fotos, onChange, plantaUrl, item
             size="sm"
             onClick={() => setSourceOpen(true)}
             disabled={uploading || !plantaUrl}
-            className="h-[110px] w-[140px] flex flex-col items-center justify-center gap-1 border-dashed text-slate-500 hover:text-teal-600 hover:border-teal-400"
+            className="h-32 sm:h-[110px] w-full sm:w-[140px] flex flex-col items-center justify-center gap-1 border-dashed text-slate-500 hover:text-teal-600 hover:border-teal-400"
             title={!plantaUrl ? "Faça upload da planta primeiro" : "Adicionar foto"}
           >
             {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Camera className="h-6 w-6" />}
