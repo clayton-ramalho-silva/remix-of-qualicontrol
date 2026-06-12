@@ -94,35 +94,54 @@ export default function VistoriaFotosUploader({ fotos, onChange, plantaUrl, item
 
   const fotosComPin = fotos.filter(f => f.pinX != null && f.pinY != null);
 
+  const updateDescricao = (idx: number, descricao: string) => {
+    const nova = [...fotos];
+    nova[idx] = { ...nova[idx], descricao };
+    onChange(nova);
+  };
+
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2 flex-wrap">
+    <div className="space-y-3">
+      <div className="flex items-start gap-2 flex-wrap">
         {fotos.map((f, idx) => (
-          <div key={idx} className="relative group">
-            <img
-              src={f.url}
-              alt={`Evidência ${idx + 1}`}
-              className="h-16 w-16 object-cover rounded-md border border-slate-200"
+          <div key={idx} className="flex flex-col gap-1 w-[140px]">
+            <div className="relative group">
+              <img
+                src={f.url}
+                alt={`Evidência ${idx + 1}`}
+                className="h-[110px] w-[140px] object-cover rounded-md border border-slate-200"
+              />
+              {/* Número da foto/pin */}
+              <span className="absolute -top-2 -left-2 bg-red-600 text-white text-[11px] font-bold rounded-full h-6 w-6 flex items-center justify-center shadow ring-2 ring-white">
+                {idx + 1}
+              </span>
+              {f.pinX != null && f.pinY != null && (
+                <MapPin className="absolute -bottom-1 -left-1 h-4 w-4 text-red-600 fill-red-500 drop-shadow" />
+              )}
+              <button
+                type="button"
+                onClick={() => remover(idx)}
+                className="absolute -top-1.5 -right-1.5 bg-red-600 text-white rounded-full h-5 w-5 flex items-center justify-center shadow opacity-0 group-hover:opacity-100 transition-opacity"
+                aria-label="Remover foto"
+              >
+                <X className="h-3 w-3" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingIdx(idx)}
+                className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 bg-black/50 text-white text-[10px] py-1 rounded-b-md transition-opacity"
+                title="Reposicionar pin"
+              >
+                <MapPin className="h-3 w-3" /> Reposicionar
+              </button>
+            </div>
+            <textarea
+              value={f.descricao || ""}
+              onChange={(e) => updateDescricao(idx, e.target.value)}
+              placeholder={`Descrição do pin ${idx + 1}`}
+              rows={2}
+              className="w-full text-xs px-2 py-1 rounded border border-slate-200 focus:border-teal-400 focus:outline-none resize-none"
             />
-            {f.pinX != null && f.pinY != null && (
-              <MapPin className="absolute -bottom-1 -left-1 h-4 w-4 text-red-600 fill-red-500 drop-shadow" />
-            )}
-            <button
-              type="button"
-              onClick={() => remover(idx)}
-              className="absolute -top-1.5 -right-1.5 bg-red-600 text-white rounded-full h-5 w-5 flex items-center justify-center shadow opacity-0 group-hover:opacity-100 transition-opacity"
-              aria-label="Remover foto"
-            >
-              <X className="h-3 w-3" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setEditingIdx(idx)}
-              className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/30 rounded-md transition-opacity text-white text-[10px] font-medium"
-              title="Reposicionar pin"
-            >
-              <MapPin className="h-4 w-4" />
-            </button>
           </div>
         ))}
         {(typeof max !== "number" || fotos.length < max) && (
@@ -132,25 +151,26 @@ export default function VistoriaFotosUploader({ fotos, onChange, plantaUrl, item
             size="sm"
             onClick={() => inputRef.current?.click()}
             disabled={uploading || !plantaUrl}
-            className="h-16 w-16 flex flex-col items-center justify-center gap-1 border-dashed text-slate-500 hover:text-teal-600 hover:border-teal-400"
+            className="h-[110px] w-[140px] flex flex-col items-center justify-center gap-1 border-dashed text-slate-500 hover:text-teal-600 hover:border-teal-400"
             title={!plantaUrl ? "Faça upload da planta primeiro" : "Adicionar foto"}
           >
-            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-5 w-5" />}
-            <span className="text-[10px] leading-none">{typeof max === "number" ? `${fotos.length}/${max}` : fotos.length}</span>
-          </Button>
-        )}
-        {fotosComPin.length > 0 && plantaUrl && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setViewOpen(true)}
-            className="h-9 gap-1.5 text-teal-700 border-teal-300 hover:bg-teal-50"
-          >
-            <Eye className="h-4 w-4" /> Ver na planta ({fotosComPin.length})
+            {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Camera className="h-6 w-6" />}
+            <span className="text-[11px] leading-none">Adicionar foto</span>
+            <span className="text-[10px] text-slate-400">{typeof max === "number" ? `${fotos.length}/${max}` : fotos.length}</span>
           </Button>
         )}
       </div>
+      {fotosComPin.length > 0 && plantaUrl && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setViewOpen(true)}
+          className="h-9 gap-1.5 text-teal-700 border-teal-300 hover:bg-teal-50"
+        >
+          <Eye className="h-4 w-4" /> Ver pins na planta ({fotosComPin.length})
+        </Button>
+      )}
       <input
         ref={inputRef}
         type="file"
