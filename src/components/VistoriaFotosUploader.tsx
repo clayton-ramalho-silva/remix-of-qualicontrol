@@ -265,6 +265,41 @@ export default function VistoriaFotosUploader({ fotos, onChange, plantaUrl, item
           itemCodigo={itemCodigo}
         />
       )}
+
+      {/* Lightbox: ampliar foto da miniatura */}
+      <Dialog open={!!zoomFoto} onOpenChange={(v) => !v && setZoomFoto(null)}>
+        <DialogContent className="max-w-3xl p-0 gap-0 max-h-[92vh] overflow-hidden flex flex-col">
+          <DialogHeader className="flex flex-row items-center justify-between gap-2 px-4 py-3 border-b bg-white sticky top-0 z-10 space-y-0">
+            <DialogTitle className="text-base">Foto da evidência</DialogTitle>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => setZoomFoto(null)}
+              className="h-9 px-3 gap-1.5 bg-red-600 hover:bg-red-700 text-white shadow"
+            >
+              <X className="h-4 w-4" /> Fechar
+            </Button>
+          </DialogHeader>
+          {zoomFoto && (
+            <div className="space-y-3 overflow-y-auto p-4 pb-8">
+              <img src={zoomFoto.url} alt="Evidência ampliada" className="w-full h-auto rounded-md" />
+              {zoomFoto.descricao && (
+                <p className="text-sm text-slate-700 bg-slate-50 border-l-4 border-teal-500 p-3 rounded whitespace-pre-wrap break-words">
+                  {zoomFoto.descricao}
+                </p>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setZoomFoto(null)}
+                className="w-full"
+              >
+                Fechar
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
