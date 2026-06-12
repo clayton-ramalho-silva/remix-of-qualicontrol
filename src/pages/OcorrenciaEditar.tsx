@@ -206,7 +206,7 @@ export default function OcorrenciaEditar() {
   if (!ocorrencia) return <div className="text-center py-12 text-slate-500">Ocorrência não encontrada</div>;
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="aw-form space-y-6 max-w-4xl">
       <DraftRestoredBanner savedAt={restoredAt} onDiscard={discardDraft} />
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" onClick={() => navigate(`/qsms/ocorrencias/${id}`)}>

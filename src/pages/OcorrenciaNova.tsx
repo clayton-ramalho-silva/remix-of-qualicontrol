@@ -185,7 +185,7 @@ export default function OcorrenciaNova() {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="aw-form space-y-6 max-w-4xl">
       <DraftRestoredBanner savedAt={restoredAt} onDiscard={discardDraft} />
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" onClick={() => navigate("/qsms/ocorrencias")}>
