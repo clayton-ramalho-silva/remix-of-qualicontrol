@@ -263,8 +263,11 @@ export default function Verificacoes({
                                   <p className="text-sm font-semibold text-slate-700">{v.scoreCronograma ?? "—"}%</p>
                                 </div>
                               </div>
-                              <Button variant="outline" size="sm" className="shrink-0">
+                              <Button variant="outline" size="sm" className="shrink-0 hidden sm:inline-flex">
                                 <Eye className="h-4 w-4 mr-1" /> Ver
+                              </Button>
+                              <Button variant="outline" size="icon" className="shrink-0 sm:hidden h-9 w-9" aria-label="Ver">
+                                <Eye className="h-4 w-4" />
                               </Button>
                               {isAdmin && (
                                 <Button
