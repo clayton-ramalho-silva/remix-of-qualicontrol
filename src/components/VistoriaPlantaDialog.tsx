@@ -81,14 +81,18 @@ export default function VistoriaPlantaDialog({
                   onClick={(e) => { e.stopPropagation(); setZoomFoto(f); }}
                   className="absolute -translate-x-1/2 -translate-y-full group"
                   style={{ left: `${f.pinX * 100}%`, top: `${f.pinY * 100}%` }}
-                  title="Clique para ampliar a foto"
+                  title={f.descricao || `Foto ${idx + 1}`}
                 >
                   <div className="relative">
                     <img
                       src={f.url}
                       alt={`Foto ${idx + 1}`}
-                      className="h-14 w-14 object-cover rounded-md border-2 border-red-500 shadow-lg group-hover:scale-110 transition-transform"
+                      className="h-16 w-16 object-cover rounded-md border-2 border-red-500 shadow-lg group-hover:scale-110 transition-transform"
                     />
+                    {/* Número do pin */}
+                    <span className="absolute -top-2 -left-2 bg-red-600 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center shadow ring-2 ring-white">
+                      {idx + 1}
+                    </span>
                     <MapPin className="absolute -bottom-3 left-1/2 -translate-x-1/2 h-5 w-5 text-red-600 fill-red-500 drop-shadow" />
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 rounded-md transition-opacity">
                       <ZoomIn className="h-5 w-5 text-white" />
