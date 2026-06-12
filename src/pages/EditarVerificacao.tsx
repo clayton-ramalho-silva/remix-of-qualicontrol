@@ -9,6 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import VoiceRecorderButton from "@/components/VoiceRecorderButton";
 import RespostaFotosUploader, { type RespostaFoto } from "@/components/RespostaFotosUploader";
+import VistoriaFotosUploader from "@/components/VistoriaFotosUploader";
+import { supabase } from "@/integrations/supabase/client";
+import { compressImage } from "@/lib/image-compress";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useLocation, useParams } from "wouter";
@@ -36,7 +39,12 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
   const [respostas, setRespostas] = useState<Record<number, { itemId: number; resposta: Resposta; observacao: string; fotos?: RespostaFoto[] }>>({});
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [plantaUrl, setPlantaUrl] = useState<string | null>(null);
+  const [plantaFileKey, setPlantaFileKey] = useState<string | null>(null);
+  const [uploadingPlanta, setUploadingPlanta] = useState(false);
+  const plantaInputRef = useRef<HTMLInputElement>(null);
 
+  const isVistoria = (verificacao as any)?.categoria === "vistoria";
   const exigeFoto = (verificacao as any)?.categoria === "vistoria";
   const draftKey = `draft:verificacao-edit:${id}`;
   const restoredRef = useRef(false);
@@ -49,6 +57,8 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
     setNucleo(verificacao.nucleo || "");
     setDiretoria(verificacao.diretoria || "");
     setObservacoes(verificacao.observacoes || "");
+    setPlantaUrl((verificacao as any).plantaUrl || null);
+    setPlantaFileKey((verificacao as any).plantaFileKey || null);
     const map: Record<number, any> = {};
     (verificacao.respostas || []).forEach((r: any) => {
       map[r.itemId] = {
@@ -70,6 +80,8 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
         if (d.diretoria !== undefined) setDiretoria(d.diretoria);
         if (d.observacoes !== undefined) setObservacoes(d.observacoes);
         if (d.respostas) setRespostas(d.respostas);
+        if (d.plantaUrl !== undefined) setPlantaUrl(d.plantaUrl);
+        if (d.plantaFileKey !== undefined) setPlantaFileKey(d.plantaFileKey);
         setRestoredAt(d.__savedAt ?? Date.now());
       }
       restoredRef.current = true;
@@ -78,9 +90,36 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
 
   const { clearDraft: clearDraftFn, markClean } = useDraftAutosave({
     key: verificacao ? draftKey : null,
-    data: { dataVistoria, nucleo, diretoria, observacoes, respostas },
+    data: { dataVistoria, nucleo, diretoria, observacoes, respostas, plantaUrl, plantaFileKey },
     enabled: !!verificacao,
   });
+
+  const handlePlantaUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploadingPlanta(true);
+    try {
+      const file = files[0];
+      const compressed = await compressImage(file, { maxDim: 2400, quality: 0.85 });
+      const key = `vistoria-plantas/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+      const { error } = await supabase.storage.from("evidencias").upload(key, compressed, {
+        contentType: compressed.type || "image/jpeg",
+        upsert: false,
+      });
+      if (error) throw error;
+      if (plantaFileKey) {
+        supabase.storage.from("evidencias").remove([plantaFileKey]).catch(() => {});
+      }
+      const { data: pub } = supabase.storage.from("evidencias").getPublicUrl(key);
+      setPlantaUrl(pub.publicUrl);
+      setPlantaFileKey(key);
+      toast.success("Planta da vistoria carregada.");
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao enviar planta");
+    } finally {
+      setUploadingPlanta(false);
+      if (plantaInputRef.current) plantaInputRef.current.value = "";
+    }
+  };
 
   const discardDraft = () => {
     clearDraftFn();
@@ -133,6 +172,20 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
         return;
       }
     }
+    if (isVistoria) {
+      if (!plantaUrl) {
+        toast.error("Faça upload da planta da vistoria antes de salvar.");
+        return;
+      }
+      const semPin = Object.values(respostas).some(r => {
+        if (r.resposta === "NA") return false;
+        return (r.fotos || []).some((f: any) => f.pinX == null || f.pinY == null);
+      });
+      if (semPin) {
+        toast.error("Há fotos sem pin marcado na planta. Marque o pin em todas as fotos.");
+        return;
+      }
+    }
     setSubmitting(true);
     try {
       const result = await updateVerificacao.mutateAsync({
@@ -141,6 +194,8 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
         nucleo: nucleo || null,
         diretoria: diretoria || null,
         observacoes: observacoes || null,
+        plantaUrl: plantaUrl || null,
+        plantaFileKey: plantaFileKey || null,
         respostas: Object.values(respostas).map(r => ({
           itemId: r.itemId,
           resposta: r.resposta,
@@ -206,6 +261,50 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
         </CardContent>
       </Card>
 
+      {isVistoria && (
+        <Card>
+          <CardHeader><CardTitle className="text-lg">Planta da Vistoria</CardTitle></CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-3 flex-wrap">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => plantaInputRef.current?.click()}
+                disabled={uploadingPlanta}
+              >
+                {uploadingPlanta ? "Enviando..." : plantaUrl ? "Substituir planta" : "Selecionar planta"}
+              </Button>
+              <input
+                ref={plantaInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => handlePlantaUpload(e.target.files)}
+              />
+              {plantaUrl && (
+                <>
+                  <img src={plantaUrl} alt="Planta da vistoria" className="h-12 w-16 object-cover rounded border" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (plantaFileKey) supabase.storage.from("evidencias").remove([plantaFileKey]).catch(() => {});
+                      setPlantaUrl(null); setPlantaFileKey(null);
+                    }}
+                    className="text-xs text-red-600 hover:underline"
+                  >
+                    Remover
+                  </button>
+                </>
+              )}
+              {!plantaUrl && (
+                <p className="text-xs text-amber-700">A planta é obrigatória para marcar os pins das fotos.</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {checklist.map((secao: any) => {
         const isExp = expanded[secao.id] !== false;
         return (
@@ -262,10 +361,19 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
                         </div>
                       )}
                       {exigeFoto && cur && cur !== "NA" && (
-                        <RespostaFotosUploader
-                          fotos={respostas[item.id]?.fotos || []}
-                          onChange={(f) => setFotosItem(item.id, f)}
-                        />
+                        isVistoria ? (
+                          <VistoriaFotosUploader
+                            fotos={respostas[item.id]?.fotos || []}
+                            onChange={(f) => setFotosItem(item.id, f)}
+                            plantaUrl={plantaUrl}
+                            itemCodigo={item.codigo}
+                          />
+                        ) : (
+                          <RespostaFotosUploader
+                            fotos={respostas[item.id]?.fotos || []}
+                            onChange={(f) => setFotosItem(item.id, f)}
+                          />
+                        )
                       )}
                     </div>
                   );
