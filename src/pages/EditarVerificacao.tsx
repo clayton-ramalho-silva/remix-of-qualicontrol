@@ -172,6 +172,20 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
         return;
       }
     }
+    if (isVistoria) {
+      if (!plantaUrl) {
+        toast.error("Faça upload da planta da vistoria antes de salvar.");
+        return;
+      }
+      const semPin = Object.values(respostas).some(r => {
+        if (r.resposta === "NA") return false;
+        return (r.fotos || []).some((f: any) => f.pinX == null || f.pinY == null);
+      });
+      if (semPin) {
+        toast.error("Há fotos sem pin marcado na planta. Marque o pin em todas as fotos.");
+        return;
+      }
+    }
     setSubmitting(true);
     try {
       const result = await updateVerificacao.mutateAsync({
@@ -180,6 +194,8 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
         nucleo: nucleo || null,
         diretoria: diretoria || null,
         observacoes: observacoes || null,
+        plantaUrl: plantaUrl || null,
+        plantaFileKey: plantaFileKey || null,
         respostas: Object.values(respostas).map(r => ({
           itemId: r.itemId,
           resposta: r.resposta,
