@@ -2,6 +2,8 @@
 // Recebe { audioBase64, mimeType } e retorna { texto } transcrito + limpo (PT-BR).
 // Usa Lovable AI Gateway (Gemini 2.5 Flash) para transcrição multimodal e limpeza.
 
+import { requireAuth } from "../_shared/auth.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -19,6 +21,10 @@ function json(body: unknown, status = 200) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  const auth = await requireAuth(req);
+  if (!auth.ok) return auth.response;
+
 
   try {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
