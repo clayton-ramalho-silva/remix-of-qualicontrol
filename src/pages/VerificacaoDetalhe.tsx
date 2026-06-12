@@ -49,23 +49,21 @@ export default function VerificacaoDetalhe({ rotaBase = "/verificacoes", titulo 
         subtitle={`${obra ? `${obra.codigo} — ${obra.nome}` : `Obra #${data.obraId}`} • ${new Date(data.dataVistoria).toLocaleDateString("pt-BR")}`}
       />
       {/* Header */}
-      <div className="flex items-center justify-between print:hidden">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => navigate(rotaBase)}>
+      <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <Button variant="ghost" size="sm" onClick={() => navigate(rotaBase)} className="shrink-0">
             <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
           </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-              <ClipboardCheck className="h-7 w-7 text-teal-600" />
-              {titulo ? `${titulo} #${data.id}` : `Verificação #${data.id}`}
-            </h1>
-          </div>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2 min-w-0">
+            <ClipboardCheck className="h-6 w-6 sm:h-7 sm:w-7 text-teal-600 shrink-0" />
+            <span className="break-words">{titulo ? `${titulo} #${data.id}` : `Verificação #${data.id}`}</span>
+          </h1>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate(`${rotaBase}/${data.id}/editar`)}>
+        <div className="flex gap-2 shrink-0 flex-wrap">
+          <Button variant="outline" size="sm" onClick={() => navigate(`${rotaBase}/${data.id}/editar`)}>
             <Pencil className="h-4 w-4 mr-2" /> Editar
           </Button>
-          <Button variant="outline" onClick={() => window.print()}>
+          <Button variant="outline" size="sm" onClick={() => window.print()}>
             <Printer className="h-4 w-4 mr-2" /> Imprimir
           </Button>
         </div>
