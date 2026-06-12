@@ -80,6 +80,8 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
         if (d.diretoria !== undefined) setDiretoria(d.diretoria);
         if (d.observacoes !== undefined) setObservacoes(d.observacoes);
         if (d.respostas) setRespostas(d.respostas);
+        if (d.plantaUrl !== undefined) setPlantaUrl(d.plantaUrl);
+        if (d.plantaFileKey !== undefined) setPlantaFileKey(d.plantaFileKey);
         setRestoredAt(d.__savedAt ?? Date.now());
       }
       restoredRef.current = true;
@@ -88,9 +90,36 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
 
   const { clearDraft: clearDraftFn, markClean } = useDraftAutosave({
     key: verificacao ? draftKey : null,
-    data: { dataVistoria, nucleo, diretoria, observacoes, respostas },
+    data: { dataVistoria, nucleo, diretoria, observacoes, respostas, plantaUrl, plantaFileKey },
     enabled: !!verificacao,
   });
+
+  const handlePlantaUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploadingPlanta(true);
+    try {
+      const file = files[0];
+      const compressed = await compressImage(file, { maxDim: 2400, quality: 0.85 });
+      const key = `vistoria-plantas/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+      const { error } = await supabase.storage.from("evidencias").upload(key, compressed, {
+        contentType: compressed.type || "image/jpeg",
+        upsert: false,
+      });
+      if (error) throw error;
+      if (plantaFileKey) {
+        supabase.storage.from("evidencias").remove([plantaFileKey]).catch(() => {});
+      }
+      const { data: pub } = supabase.storage.from("evidencias").getPublicUrl(key);
+      setPlantaUrl(pub.publicUrl);
+      setPlantaFileKey(key);
+      toast.success("Planta da vistoria carregada.");
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao enviar planta");
+    } finally {
+      setUploadingPlanta(false);
+      if (plantaInputRef.current) plantaInputRef.current.value = "";
+    }
+  };
 
   const discardDraft = () => {
     clearDraftFn();
