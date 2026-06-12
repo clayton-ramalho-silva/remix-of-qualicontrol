@@ -2,6 +2,8 @@
 // Proxy para a API externa AW que lista subatividades de inspeção
 // para um determinado IdAtividadeInspecao (grupo).
 
+import { requireAuth } from "../_shared/auth.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":

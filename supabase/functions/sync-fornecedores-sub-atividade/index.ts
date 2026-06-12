@@ -2,6 +2,8 @@
 // Proxy para a API externa AW que lista fornecedores
 // de um projeto + subatividade de inspeção.
 
+import { requireAuth } from "../_shared/auth.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":

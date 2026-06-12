@@ -3,6 +3,7 @@
 // nas subatividades retornadas pela API externa AW para cada grupo.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { requireAuth } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
