@@ -2,6 +2,8 @@
 // Proxy para a API externa AW que lista fornecedores
 // de um projeto + subatividade de inspeção.
 
+import { requireAuth } from "../_shared/auth.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -10,7 +12,7 @@ const corsHeaders = {
 };
 
 const AW_BASE_URL = "https://gateway.athiewohnrath.com.br/aw-api-hub";
-const AW_API_KEY = "Y30KrdWrst7kkOIcT5xy3RwtSSNM9h03";
+const AW_API_KEY = Deno.env.get("AW_API_KEY") ?? "";
 
 interface FornecedorApi {
   IdFornecedor: number;
@@ -22,6 +24,9 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const auth = await requireAuth(req);
+  if (!auth.ok) return auth.response;
 
   try {
     let idProjeto: string | null = null;

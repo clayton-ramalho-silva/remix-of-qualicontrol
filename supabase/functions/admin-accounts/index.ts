@@ -26,7 +26,7 @@ const BOOTSTRAP_ADMINS = [
   { email: "cecilio.perez@awnet.com.br", name: "Cecilio Perez" },
   { email: "clayton@agenciamore.com.br", name: "Clayton Silva" },
 ];
-const BOOTSTRAP_PASSWORD = "123@ano2026";
+const BOOTSTRAP_PASSWORD = Deno.env.get("BOOTSTRAP_PASSWORD") ?? "";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -283,6 +283,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "bootstrap_admins") {
+      if (!BOOTSTRAP_PASSWORD) return json({ error: "BOOTSTRAP_PASSWORD não configurada" }, 500);
       const all = await listAllAuthUsers();
       const results: any[] = [];
       for (const a of BOOTSTRAP_ADMINS) {
