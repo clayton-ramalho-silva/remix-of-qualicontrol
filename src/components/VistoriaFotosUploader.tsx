@@ -36,7 +36,7 @@ export default function VistoriaFotosUploader({ fotos, onChange, plantaUrl, item
     if (!files || files.length === 0) return;
     if (!plantaUrl) {
       toast.error("Faça o upload da planta da vistoria antes de adicionar fotos.");
-      if (inputRef.current) inputRef.current.value = "";
+      if (cameraInputRef.current) cameraInputRef.current.value = "";
       return;
     }
     const slotsLeft = typeof max === "number" ? max - fotos.length : files.length;
@@ -61,7 +61,7 @@ export default function VistoriaFotosUploader({ fotos, onChange, plantaUrl, item
       toast.error(e.message || "Erro ao enviar foto");
     } finally {
       setUploading(false);
-      if (inputRef.current) inputRef.current.value = "";
+      if (cameraInputRef.current) cameraInputRef.current.value = "";
     }
   };
 
@@ -158,7 +158,7 @@ export default function VistoriaFotosUploader({ fotos, onChange, plantaUrl, item
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => inputRef.current?.click()}
+            onClick={() => cameraInputRef.current?.click()}
             disabled={uploading || !plantaUrl}
             className="h-[110px] w-[140px] flex flex-col items-center justify-center gap-1 border-dashed text-slate-500 hover:text-teal-600 hover:border-teal-400"
             title={!plantaUrl ? "Faça upload da planta primeiro" : "Adicionar foto"}
