@@ -30,6 +30,7 @@ export default function VistoriaFotosUploader({ fotos, onChange, plantaUrl, item
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [viewOpen, setViewOpen] = useState(false);
   const [sourceOpen, setSourceOpen] = useState(false);
+  const [zoomFoto, setZoomFoto] = useState<RespostaFoto | null>(null);
   const confirmedRef = useRef(false);
 
   const handleFiles = async (files: FileList | null) => {
