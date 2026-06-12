@@ -38,6 +38,23 @@ const statusColors: Record<string, string> = {
   aguardando_aceite: "bg-purple-100 text-purple-700",
 };
 
+// Escapa strings inseridas em HTML do relatório (previne XSS)
+function esc(v: unknown): string {
+  return String(v ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+function escUrl(v: unknown): string {
+  const s = String(v ?? "").trim();
+  if (/^javascript:/i.test(s)) return "";
+  return esc(s);
+}
+
+
+
 function groupByAmbiente(desvios: any[]): { nome: string; items: any[] }[] {
   const map = new Map<string, any[]>();
   for (const d of desvios) {
