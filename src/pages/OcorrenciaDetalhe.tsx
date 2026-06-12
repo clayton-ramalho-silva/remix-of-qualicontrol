@@ -54,7 +54,7 @@ export default function OcorrenciaDetalhe() {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="aw-form space-y-6 max-w-5xl">
       <div className="flex items-center gap-3 flex-wrap">
         <Button variant="ghost" size="sm" onClick={() => navigate("/qsms/ocorrencias")}>
           <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
