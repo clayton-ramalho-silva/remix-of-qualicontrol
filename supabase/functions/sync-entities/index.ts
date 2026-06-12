@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 const AW_BASE_URL = "https://gateway.athiewohnrath.com.br/aw-api-hub";
-const AW_API_KEY = "Y30KrdWrst7kkOIcT5xy3RwtSSNM9h03";
+const AW_API_KEY = Deno.env.get("AW_API_KEY") ?? "";
 
 function joinEndereco(p: any): string | null {
   const parts = [p.Endereco, p.ComplementoEndereco, p.Bairro, p.Cidade, p.Cep].filter(
