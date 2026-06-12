@@ -158,7 +158,7 @@ export default function VistoriaFotosUploader({ fotos, onChange, plantaUrl, item
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => cameraInputRef.current?.click()}
+            onClick={() => setSourceOpen(true)}
             disabled={uploading || !plantaUrl}
             className="h-[110px] w-[140px] flex flex-col items-center justify-center gap-1 border-dashed text-slate-500 hover:text-teal-600 hover:border-teal-400"
             title={!plantaUrl ? "Faça upload da planta primeiro" : "Adicionar foto"}
@@ -180,14 +180,53 @@ export default function VistoriaFotosUploader({ fotos, onChange, plantaUrl, item
           <Eye className="h-4 w-4" /> Ver pins na planta ({fotosComPin.length})
         </Button>
       )}
+      {/* Câmera (abre a câmera diretamente no mobile) */}
       <input
-        ref={inputRef}
+        ref={cameraInputRef}
         type="file"
         accept="image/*"
         capture="environment"
         className="hidden"
         onChange={e => handleFiles(e.target.files)}
       />
+      {/* Arquivo / Galeria (sem capture) */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={e => handleFiles(e.target.files)}
+      />
+
+      {/* Diálogo: escolher origem da foto (Câmera ou Arquivo), em PT-BR */}
+      <Dialog open={sourceOpen} onOpenChange={setSourceOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Adicionar foto</DialogTitle>
+            <DialogDescription>De onde você quer adicionar a foto?</DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-3 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-24 flex flex-col items-center justify-center gap-2"
+              onClick={() => { setSourceOpen(false); setTimeout(() => cameraInputRef.current?.click(), 60); }}
+            >
+              <Camera className="h-7 w-7 text-teal-600" />
+              <span className="text-sm font-medium">Câmera</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-24 flex flex-col items-center justify-center gap-2"
+              onClick={() => { setSourceOpen(false); setTimeout(() => fileInputRef.current?.click(), 60); }}
+            >
+              <ImageIcon className="h-7 w-7 text-teal-600" />
+              <span className="text-sm font-medium">Arquivo</span>
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
       {fotos.length === 0 && (
         <p className="text-xs text-amber-700">📸 Foto + pin na planta obrigatórios</p>
       )}
