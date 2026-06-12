@@ -109,6 +109,28 @@ export default function VistoriaPlantaDialog({
             </p>
           )}
 
+          {/* Legenda de pins (modo view) */}
+          {mode === "view" && fotos.some(f => f.pinX != null) && (
+            <div className="mt-2 max-h-40 overflow-auto rounded-md border bg-slate-50 p-2 space-y-1">
+              <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Legenda dos pins</p>
+              {fotos.filter(f => f.pinX != null).map((f, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setZoomFoto(f)}
+                  className="w-full flex items-start gap-2 text-left p-1.5 rounded hover:bg-white transition-colors"
+                >
+                  <span className="shrink-0 bg-red-600 text-white text-[11px] font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                    {idx + 1}
+                  </span>
+                  <span className="text-xs text-slate-700 flex-1">
+                    {f.descricao || <em className="text-slate-400">Sem descrição</em>}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+
           <DialogFooter>
             {mode === "place" ? (
               <>
@@ -133,7 +155,14 @@ export default function VistoriaPlantaDialog({
         <DialogContent className="max-w-3xl">
           <DialogHeader><DialogTitle>Foto da evidência</DialogTitle></DialogHeader>
           {zoomFoto && (
-            <img src={zoomFoto.url} alt="Evidência ampliada" className="w-full h-auto rounded-md" />
+            <div className="space-y-3">
+              <img src={zoomFoto.url} alt="Evidência ampliada" className="w-full h-auto rounded-md" />
+              {zoomFoto.descricao && (
+                <p className="text-sm text-slate-700 bg-slate-50 border-l-4 border-teal-500 p-3 rounded">
+                  {zoomFoto.descricao}
+                </p>
+              )}
+            </div>
           )}
         </DialogContent>
       </Dialog>
