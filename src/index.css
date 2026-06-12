@@ -126,6 +126,34 @@
 }
 
 /* ============================================================ */
+/* Tipografia de formulários (Ocorrências / Planos de Ação)     */
+/* Labels +1pt em negrito; conteúdo dos campos em 16px.         */
+/* Não aplicar em @media print para não bagunçar o relatório.   */
+/* ============================================================ */
+@media screen {
+  .aw-form label,
+  .aw-form .field-label {
+    font-size: 15px !important;
+    font-weight: 700 !important;
+  }
+  .aw-form input,
+  .aw-form textarea,
+  .aw-form select,
+  .aw-form [data-slot="select-trigger"],
+  .aw-form [data-slot="select-value"],
+  .aw-form .field-value {
+    font-size: 16px !important;
+  }
+  /* Conteúdo descritivo (descrição, observações, comentários, pings) */
+  .aw-form .field-content,
+  .aw-form .comment-body,
+  .aw-form .ping-body {
+    font-size: 16px !important;
+    line-height: 1.5;
+  }
+}
+
+/* ============================================================ */
 /* IMPRESSÃO / PDF                                              */
 /* ============================================================ */
 @media print {
