@@ -317,10 +317,19 @@ export default function EditarVerificacao({ rotaBase = "/verificacoes" }: Props)
                         </div>
                       )}
                       {exigeFoto && cur && cur !== "NA" && (
-                        <RespostaFotosUploader
-                          fotos={respostas[item.id]?.fotos || []}
-                          onChange={(f) => setFotosItem(item.id, f)}
-                        />
+                        isVistoria ? (
+                          <VistoriaFotosUploader
+                            fotos={respostas[item.id]?.fotos || []}
+                            onChange={(f) => setFotosItem(item.id, f)}
+                            plantaUrl={plantaUrl}
+                            itemCodigo={item.codigo}
+                          />
+                        ) : (
+                          <RespostaFotosUploader
+                            fotos={respostas[item.id]?.fotos || []}
+                            onChange={(f) => setFotosItem(item.id, f)}
+                          />
+                        )
                       )}
                     </div>
                   );
