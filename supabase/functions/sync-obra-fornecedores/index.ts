@@ -178,6 +178,9 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const auth = await requireAuth(req);
+  if (!auth.ok) return auth.response;
   try {
     const body = await req.json().catch(() => ({}));
     const obraId = Number(body?.obraId);

@@ -23,6 +23,9 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const auth = await requireAuth(req);
+  if (!auth.ok) return auth.response;
+
   try {
     let idProjeto: string | null = null;
     let idSubAtividade: string | null = null;

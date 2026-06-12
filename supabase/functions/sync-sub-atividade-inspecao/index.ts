@@ -24,6 +24,9 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const auth = await requireAuth(req);
+  if (!auth.ok) return auth.response;
+
   try {
     let idAtividade: string | null = null;
     const url = new URL(req.url);
