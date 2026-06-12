@@ -99,7 +99,7 @@ export default function PlanoAcaoNovo() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="aw-form max-w-3xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate("/planos-acao")}>
           <ArrowLeft className="h-4 w-4" />
