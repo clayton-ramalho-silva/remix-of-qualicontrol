@@ -283,6 +283,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "bootstrap_admins") {
+      if (!BOOTSTRAP_PASSWORD) return json({ error: "BOOTSTRAP_PASSWORD não configurada" }, 500);
       const all = await listAllAuthUsers();
       const results: any[] = [];
       for (const a of BOOTSTRAP_ADMINS) {
